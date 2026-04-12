@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: vitalia
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn mediapp:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PORT
+        value: 10000
+      - key: RENDER_DATA_DIR
+        value: /data
+    disk:
+      name: vitalia-data
+      mountPath: /data
+      sizeGB: 1

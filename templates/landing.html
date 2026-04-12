@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>VitalIA — Tu Doctor Digital Inteligente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary:    #0ea5e9;
+      --primary-d:  #0284c7;
+      --secondary:  #10b981;
+      --accent:     #8b5cf6;
+      --dark:       #0f172a;
+      --dark2:      #1e293b;
+      --text:       #f8fafc;
+      --text2:      #94a3b8;
+      --text-dark:  #1e293b;
+      --border:     rgba(255,255,255,0.1);
+      --glass:      rgba(255,255,255,0.05);
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--dark); color: var(--text); overflow-x: hidden; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 40px;
+      background: rgba(15,23,42,0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .nav-logo-text {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 22px; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a { color: var(--text2); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--primary), var(--primary-d));
+      color: #fff; border: none; padding: 10px 22px; border-radius: 24px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; text-decoration: none; transition: all .2s;
+      box-shadow: 0 0 20px rgba(14,165,233,0.3);
+    }
+    .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(14,165,233,0.5); }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+    .hamburger span { width: 24px; height: 2px; background: var(--text); border-radius: 2px; transition: all .3s; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 120px 40px 80px;
+      position: relative; overflow: hidden;
+      text-align: center;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 50% 20%, rgba(14,165,233,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 80%, rgba(139,92,246,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 30% at 10% 60%, rgba(16,185,129,0.08) 0%, transparent 50%);
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .hero-content { position: relative; max-width: 800px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(14,165,233,0.12); border: 1px solid rgba(14,165,233,0.3);
+      border-radius: 24px; padding: 8px 18px; margin-bottom: 28px;
+      font-size: 13px; font-weight: 600; color: var(--primary);
+    }
+    .hero-badge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
+    .hero h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(40px, 7vw, 72px);
+      font-weight: 900; line-height: 1.1; margin-bottom: 24px;
+      letter-spacing: -2px;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 50%, var(--secondary) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-desc {
+      font-size: clamp(16px, 2.5vw, 20px); color: var(--text2);
+      max-width: 600px; margin: 0 auto 40px; line-height: 1.7;
+    }
+    .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn-hero-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-d));
+      color: #fff; border: none; padding: 16px 36px; border-radius: 50px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700;
+      cursor: pointer; text-decoration: none; transition: all .2s;
+      box-shadow: 0 0 30px rgba(14,165,233,0.4);
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(14,165,233,0.6); }
+    .btn-hero-ghost {
+      background: var(--glass); color: var(--text);
+      border: 1px solid var(--border); padding: 16px 32px; border-radius: 50px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 600;
+      cursor: pointer; text-decoration: none; transition: all .2s;
+      display: inline-flex; align-items: center; gap: 8px;
+      backdrop-filter: blur(10px);
+    }
+    .btn-hero-ghost:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+
+    /* ── STATS ── */
+    .stats {
+      display: flex; justify-content: center; gap: 60px;
+      padding: 60px 40px; flex-wrap: wrap;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat { text-align: center; }
+    .stat-val {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 36px; font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-lbl { font-size: 13px; color: var(--text2); margin-top: 4px; font-weight: 500; }
+
+    /* ── FEATURES ── */
+    section { padding: 100px 40px; }
+    .section-tag {
+      font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--primary); margin-bottom: 14px;
+    }
+    .section-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(28px, 4vw, 44px); font-weight: 800;
+      margin-bottom: 16px; letter-spacing: -1px;
+    }
+    .section-sub { font-size: 17px; color: var(--text2); max-width: 560px; line-height: 1.7; margin-bottom: 60px; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
+    .feature-card {
+      background: var(--glass); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px;
+      backdrop-filter: blur(12px);
+      transition: all .3s;
+    }
+    .feature-card:hover { border-color: rgba(14,165,233,0.4); transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .feature-icon {
+      width: 56px; height: 56px; border-radius: 16px; margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: center; font-size: 26px;
+    }
+    .feature-icon.blue  { background: rgba(14,165,233,0.15);  border: 1px solid rgba(14,165,233,0.3); }
+    .feature-icon.green { background: rgba(16,185,129,0.15);  border: 1px solid rgba(16,185,129,0.3); }
+    .feature-icon.purple{ background: rgba(139,92,246,0.15);  border: 1px solid rgba(139,92,246,0.3); }
+    .feature-icon.rose  { background: rgba(244,63,94,0.15);   border: 1px solid rgba(244,63,94,0.3); }
+    .feature-icon.amber { background: rgba(245,158,11,0.15);  border: 1px solid rgba(245,158,11,0.3); }
+    .feature-icon.cyan  { background: rgba(6,182,212,0.15);   border: 1px solid rgba(6,182,212,0.3); }
+    .feature-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .feature-desc { font-size: 14px; color: var(--text2); line-height: 1.7; }
+
+    /* ── HOW IT WORKS ── */
+    .how-bg { background: linear-gradient(180deg, var(--dark) 0%, var(--dark2) 50%, var(--dark) 100%); }
+    .steps-container { max-width: 900px; margin: 0 auto; }
+    .step { display: flex; gap: 32px; align-items: flex-start; margin-bottom: 56px; }
+    .step:last-child { margin-bottom: 0; }
+    .step-num {
+      width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 900;
+      box-shadow: 0 0 24px rgba(14,165,233,0.4);
+    }
+    .step-content h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .step-content p { font-size: 15px; color: var(--text2); line-height: 1.7; }
+
+    /* ── DR. VITALIA SHOWCASE ── */
+    .dr-section { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; max-width: 1100px; margin: 0 auto; }
+    .dr-visual {
+      background: var(--glass); border: 1px solid var(--border);
+      border-radius: 24px; padding: 32px;
+      backdrop-filter: blur(12px);
+    }
+    .dr-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+    .dr-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; box-shadow: 0 0 20px rgba(14,165,233,0.4);
+    }
+    .dr-name { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 16px; }
+    .dr-subtitle { font-size: 12px; color: var(--secondary); font-weight: 600; }
+    .chat-bubble {
+      border-radius: 16px; padding: 14px 18px; margin-bottom: 12px; font-size: 14px; line-height: 1.6;
+    }
+    .bubble-user { background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.2); margin-left: 40px; color: var(--text2); }
+    .bubble-dr { background: var(--dark2); border: 1px solid var(--border); margin-right: 20px; }
+    .bubble-dr strong { color: var(--primary); }
+    .typing { display: flex; gap: 5px; padding: 14px 18px; background: var(--dark2); border: 1px solid var(--border); border-radius: 16px; width: fit-content; }
+    .typing span { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); animation: bounce .8s infinite; }
+    .typing span:nth-child(2) { animation-delay: .15s; }
+    .typing span:nth-child(3) { animation-delay: .3s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
+
+    /* ── INDICATORS DEMO ── */
+    .indicators-demo { display: flex; flex-direction: column; gap: 10px; }
+    .ind-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-radius: 12px;
+      background: var(--dark2); border: 1px solid var(--border);
+    }
+    .ind-name { font-size: 13px; font-weight: 600; }
+    .ind-val { font-family: monospace; font-size: 13px; font-weight: 700; }
+    .ind-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .ind-normal { background: rgba(16,185,129,0.15); color: #10b981; }
+    .ind-alto   { background: rgba(239,68,68,0.15);  color: #ef4444; }
+    .ind-bajo   { background: rgba(245,158,11,0.15); color: #f59e0b; }
+
+    /* ── PRICING / CTA ── */
+    .cta-section {
+      text-align: center; padding: 120px 40px;
+      background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(139,92,246,0.08));
+      position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: ''; position: absolute;
+      width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(14,165,233,0.12), transparent 70%);
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+    }
+    .cta-content { position: relative; }
+    .cta-section h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(32px, 5vw, 52px); font-weight: 900; margin-bottom: 16px; letter-spacing: -1.5px; }
+    .cta-section p { font-size: 18px; color: var(--text2); margin-bottom: 40px; }
+    .disclaimer {
+      display: inline-block; margin-top: 24px;
+      padding: 12px 24px; border-radius: 12px;
+      background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+      font-size: 13px; color: #f59e0b; max-width: 600px; line-height: 1.6;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--dark2); border-top: 1px solid var(--border);
+      padding: 60px 40px 30px;
+    }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; max-width: 1100px; margin: 0 auto 40px; }
+    .footer-brand p { font-size: 14px; color: var(--text2); margin-top: 12px; line-height: 1.7; max-width: 280px; }
+    .footer-col h4 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; margin-bottom: 16px; font-size: 14px; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-col a { font-size: 13px; color: var(--text2); text-decoration: none; transition: color .2s; }
+    .footer-col a:hover { color: var(--primary); }
+    .footer-bottom { border-top: 1px solid var(--border); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto; }
+    .footer-bottom p { font-size: 13px; color: var(--text2); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 14px 20px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .hero { padding: 100px 20px 60px; }
+      section { padding: 70px 20px; }
+      .stats { gap: 36px; padding: 50px 20px; }
+      .dr-section { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .step { gap: 20px; }
+      .cta-section { padding: 80px 20px; }
+      footer { padding: 50px 20px 24px; }
+      .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+    }
+    @media (max-width: 480px) {
+      .footer-grid { grid-template-columns: 1fr; }
+      .hero-actions { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">🩺</div>
+    <span class="nav-logo-text">VitalIA</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Funciones</a></li>
+    <li><a href="#como-funciona">Cómo funciona</a></li>
+    <li><a href="#dr-digital">Dr. Digital</a></li>
+  </ul>
+  <a href="/app" class="nav-cta">Iniciar análisis →</a>
+  <button class="hamburger" onclick="toggleMenu()" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div id="mobile-menu" style="display:none;position:fixed;top:70px;left:0;right:0;z-index:99;background:rgba(15,23,42,0.98);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.1);padding:24px;">
+  <a href="#features" style="display:block;padding:14px 0;color:#94a3b8;text-decoration:none;font-size:16px;border-bottom:1px solid rgba(255,255,255,0.08);" onclick="toggleMenu()">Funciones</a>
+  <a href="#como-funciona" style="display:block;padding:14px 0;color:#94a3b8;text-decoration:none;font-size:16px;border-bottom:1px solid rgba(255,255,255,0.08);" onclick="toggleMenu()">Cómo funciona</a>
+  <a href="#dr-digital" style="display:block;padding:14px 0;color:#94a3b8;text-decoration:none;font-size:16px;border-bottom:1px solid rgba(255,255,255,0.08);" onclick="toggleMenu()">Dr. Digital</a>
+  <a href="/app" style="display:block;margin-top:20px;text-align:center;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;padding:14px;border-radius:24px;font-weight:700;text-decoration:none;">Iniciar análisis →</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <div class="hero-badge-dot"></div>
+      Inteligencia Artificial Médica · Powered by Claude AI
+    </div>
+    <h1>Tu <span>Doctor Digital</span><br>disponible 24/7</h1>
+    <p class="hero-desc">
+      Sube tu examen médico, obtén una interpretación detallada con IA, y consulta con nuestro Dr. Digital sobre tu salud. Rápido, preciso y siempre disponible.
+    </p>
+    <div class="hero-actions">
+      <a href="/app" class="btn-hero-primary">
+        🩺 Analizar mi examen
+      </a>
+      <a href="#como-funciona" class="btn-hero-ghost">
+        ▶ Ver cómo funciona
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="stat-val">200+</div><div class="stat-lbl">Tipos de indicadores</div></div>
+  <div class="stat"><div class="stat-val">99%</div><div class="stat-lbl">Precisión OCR</div></div>
+  <div class="stat"><div class="stat-val">24/7</div><div class="stat-lbl">Disponibilidad</div></div>
+  <div class="stat"><div class="stat-val">&lt;30s</div><div class="stat-lbl">Análisis completo</div></div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div style="text-align:center;max-width:700px;margin:0 auto;">
+    <div class="section-tag">Funcionalidades</div>
+    <h2 class="section-title">Todo lo que necesitas<br>para tu salud</h2>
+    <p class="section-sub">Tecnología médica de vanguardia al alcance de tu mano. Sin filas, sin esperas, sin complicaciones.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon blue">🔬</div>
+      <div class="feature-title">OCR Médico Inteligente</div>
+      <div class="feature-desc">Sube una foto de tu examen y nuestra IA extrae automáticamente todos los indicadores, valores y rangos de referencia con alta precisión.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon green">📊</div>
+      <div class="feature-title">Análisis de Indicadores</div>
+      <div class="feature-desc">Visualiza de forma clara qué valores están normales, altos o bajos. Cada indicador viene con explicación en lenguaje simple.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon purple">🤖</div>
+      <div class="feature-title">Dr. Digital con IA</div>
+      <div class="feature-desc">Conversa con nuestro médico digital entrenado con IA. Pregunta sobre remedios, síntomas, dieta y recibe orientación personalizada.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon rose">❤️</div>
+      <div class="feature-title">Alertas de Salud</div>
+      <div class="feature-desc">Detección automática de valores críticos con alertas inmediatas y recomendación de acción urgente cuando es necesario.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon amber">💊</div>
+      <div class="feature-title">Recomendaciones Médicas</div>
+      <div class="feature-desc">Recibe sugerencias personalizadas de dieta, medicamentos, ejercicio y estilo de vida basadas en tu historial de exámenes.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon cyan">📋</div>
+      <div class="feature-title">Historial Médico Digital</div>
+      <div class="feature-desc">Todos tus exámenes almacenados de forma segura. Compara evolución en el tiempo y lleva un registro completo de tu salud.</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="como-funciona" class="how-bg">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div class="section-tag">Proceso</div>
+    <h2 class="section-title">3 pasos hacia una<br>mejor salud</h2>
+    <p class="section-sub">Tan simple como tomar una foto. Tu salud analizada en segundos.</p>
+    <div class="steps-container">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>📷 Sube tu examen</h3>
+          <p>Toma una foto o sube el archivo PDF/imagen de tu examen de laboratorio. Compatible con hemograma, perfil bioquímico, orina, hormonas, y más de 50 tipos de exámenes.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>🧠 La IA lo analiza todo</h3>
+          <p>Nuestro sistema extrae automáticamente todos los indicadores y valores. Claude AI interpreta los resultados considerando rangos de referencia y posibles relaciones entre indicadores.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>💬 Consulta con el Dr. Digital</h3>
+          <p>Recibe un informe detallado y chatea en tiempo real con el Dr. VitalIA. Pregunta lo que necesites: qué significa un valor, qué alimentos evitar, si debes consultar a un especialista y mucho más.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DR. DIGITAL SHOWCASE -->
+<section id="dr-digital">
+  <div class="dr-section">
+    <div>
+      <div class="section-tag">Dr. Digital</div>
+      <h2 class="section-title">Un médico siempre<br>a tu lado</h2>
+      <p style="font-size:16px;color:var(--text2);line-height:1.8;margin-bottom:24px;">
+        El Dr. VitalIA es un asistente médico con IA entrenado para interpretar exámenes, explicar diagnósticos y orientarte sobre tu salud de forma empática y profesional.
+      </p>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:14px;margin-bottom:36px;">
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="color:#10b981;font-size:18px;margin-top:1px;">✓</span>
+          <div><strong>Interpretación en lenguaje simple</strong><br><span style="color:var(--text2);font-size:14px;">Sin tecnicismos, explicaciones claras para todos</span></div>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="color:#10b981;font-size:18px;margin-top:1px;">✓</span>
+          <div><strong>Orientación sobre medicamentos</strong><br><span style="color:var(--text2);font-size:14px;">Información general sobre tratamientos y remedios</span></div>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="color:#10b981;font-size:18px;margin-top:1px;">✓</span>
+          <div><strong>Recomendaciones de estilo de vida</strong><br><span style="color:var(--text2);font-size:14px;">Dieta, ejercicio y hábitos según tus resultados</span></div>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="color:#10b981;font-size:18px;margin-top:1px;">✓</span>
+          <div><strong>Derivación oportuna</strong><br><span style="color:var(--text2);font-size:14px;">Te indica cuándo consultar a un especialista</span></div>
+        </li>
+      </ul>
+      <a href="/app" class="btn-hero-primary">Consultar ahora →</a>
+    </div>
+    <div class="dr-visual">
+      <div class="dr-header">
+        <div class="dr-avatar">🩺</div>
+        <div>
+          <div class="dr-name">Dr. VitalIA</div>
+          <div class="dr-subtitle">● En línea — Médico Digital IA</div>
+        </div>
+      </div>
+      <div class="chat-bubble bubble-user">¿Qué significa tener el colesterol LDL en 145?</div>
+      <div class="chat-bubble bubble-dr">
+        <strong>🩺 Dr. VitalIA:</strong><br><br>
+        El colesterol LDL de <strong>145 mg/dL</strong> está <strong>levemente elevado</strong> (el valor óptimo es &lt;130 mg/dL).<br><br>
+        Esto aumenta ligeramente el riesgo cardiovascular. Te recomiendo:<br>
+        🥗 Reducir grasas saturadas<br>
+        🏃 30 min de ejercicio diario<br>
+        🐟 Aumentar omega-3 (salmón, nueces)<br><br>
+        Si tienes historial familiar de enfermedades del corazón, consulta a tu cardiólogo.
+      </div>
+      <div class="chat-bubble bubble-user">¿Debo tomar estatinas?</div>
+      <div class="typing">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INDICATORS DEMO -->
+<section style="background:var(--dark2);padding:80px 40px;">
+  <div style="max-width:900px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;">
+    <div>
+      <div class="section-tag">Dashboard</div>
+      <h2 class="section-title" style="font-size:clamp(24px,3.5vw,38px);">Tus indicadores,<br>al instante</h2>
+      <p style="color:var(--text2);font-size:15px;line-height:1.8;">
+        Cada valor de tu examen se clasifica automáticamente. Verde para normal, rojo para alto, amarillo para bajo. Visualización clara e intuitiva.
+      </p>
+    </div>
+    <div class="indicators-demo">
+      <div class="ind-row"><span class="ind-name">Glucosa</span><span class="ind-val">92 mg/dL</span><span class="ind-badge ind-normal">Normal</span></div>
+      <div class="ind-row"><span class="ind-name">Colesterol Total</span><span class="ind-val">218 mg/dL</span><span class="ind-badge ind-alto">Alto</span></div>
+      <div class="ind-row"><span class="ind-name">Triglicéridos</span><span class="ind-val">165 mg/dL</span><span class="ind-badge ind-normal">Normal</span></div>
+      <div class="ind-row"><span class="ind-name">Hemoglobina</span><span class="ind-val">11.2 g/dL</span><span class="ind-badge ind-bajo">Bajo</span></div>
+      <div class="ind-row"><span class="ind-name">Vitamina D</span><span class="ind-val">28 ng/mL</span><span class="ind-badge ind-bajo">Bajo</span></div>
+      <div class="ind-row"><span class="ind-name">TSH</span><span class="ind-val">2.1 mUI/L</span><span class="ind-badge ind-normal">Normal</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-content">
+    <h2>Conoce tu salud hoy.<br>No esperes más.</h2>
+    <p>Gratis, sin registro, sin esperas. Solo sube tu examen y obtén un análisis completo.</p>
+    <a href="/app" class="btn-hero-primary" style="font-size:18px;padding:18px 44px;">
+      🩺 Comenzar gratis ahora
+    </a>
+    <div class="disclaimer">
+      ⚠️ <strong>Aviso importante:</strong> VitalIA es una herramienta de orientación informativa. No reemplaza la consulta médica presencial. Ante cualquier duda sobre tu salud, consulta siempre con tu médico.
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo" style="margin-bottom:12px;">
+        <div class="nav-logo-icon">🩺</div>
+        <span class="nav-logo-text">VitalIA</span>
+      </div>
+      <p>Tu doctor digital con inteligencia artificial. Análisis de exámenes médicos rápido, preciso y siempre disponible.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Producto</h4>
+      <ul>
+        <li><a href="/app">Analizar examen</a></li>
+        <li><a href="#features">Funciones</a></li>
+        <li><a href="#como-funciona">Cómo funciona</a></li>
+        <li><a href="#dr-digital">Dr. Digital</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <ul>
+        <li><a href="#">Términos de uso</a></li>
+        <li><a href="#">Privacidad</a></li>
+        <li><a href="#">Aviso médico</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Tecnología</h4>
+      <ul>
+        <li><a href="#">Claude AI (Anthropic)</a></li>
+        <li><a href="#">OCR Médico</a></li>
+        <li><a href="#">Seguridad</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 VitalIA — Todos los derechos reservados</p>
+    <p style="color:var(--text2);">Hecho con 💙 para tu salud</p>
+  </div>
+</footer>
+
+<script>
+function toggleMenu() {
+  const m = document.getElementById('mobile-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+// Cerrar menu al hacer scroll
+window.addEventListener('scroll', () => {
+  document.getElementById('mobile-menu').style.display = 'none';
+});
+</script>
+</body>
+</html>

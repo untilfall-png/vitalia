@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <title>VitalIA — Panel de Salud</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:         #0a0f1e;
+      --bg2:        #0f172a;
+      --bg3:        #1e293b;
+      --glass:      rgba(255,255,255,0.04);
+      --glass-b:    rgba(255,255,255,0.08);
+      --primary:    #0ea5e9;
+      --primary-d:  #0284c7;
+      --primary-s:  rgba(14,165,233,0.12);
+      --primary-g:  rgba(14,165,233,0.3);
+      --secondary:  #10b981;
+      --sec-s:      rgba(16,185,129,0.12);
+      --accent:     #8b5cf6;
+      --acc-s:      rgba(139,92,246,0.12);
+      --danger:     #ef4444;
+      --danger-s:   rgba(239,68,68,0.12);
+      --warning:    #f59e0b;
+      --warn-s:     rgba(245,158,11,0.12);
+      --text:       #f1f5f9;
+      --text2:      #94a3b8;
+      --text3:      #475569;
+      --border:     rgba(255,255,255,0.08);
+      --r:          16px;
+      --r-sm:       10px;
+      --sidebar-w:  260px;
+    }
+    html,body { height: 100%; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg); color: var(--text);
+      overflow: hidden;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 10% 10%, rgba(14,165,233,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 90% 80%, rgba(139,92,246,0.06) 0%, transparent 50%);
+    }
+
+    /* ── LAYOUT ── */
+    .app-layout { display: flex; height: 100vh; position: relative; z-index: 1; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w); flex-shrink: 0;
+      background: var(--bg2); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden; transition: transform .3s;
+    }
+    .sidebar-header {
+      padding: 20px 18px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .sidebar-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+    .logo-icon {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+      box-shadow: 0 0 16px var(--primary-g);
+    }
+    .logo-text {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 18px; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .sidebar-close { display: none; background: none; border: none; color: var(--text2); cursor: pointer; padding: 4px; }
+    .nav-section { padding: 12px 10px 4px; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px; margin: 2px 8px;
+      cursor: pointer; color: var(--text2); font-size: 14px; font-weight: 500;
+      transition: all .15s; border: 1px solid transparent; text-decoration: none;
+    }
+    .nav-item:hover { background: var(--glass); color: var(--text); }
+    .nav-item.active { background: var(--primary-s); color: var(--primary); border-color: rgba(14,165,233,0.2); }
+    .nav-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+    .nav-badge { margin-left: auto; background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 20px; }
+    .sidebar-footer { margin-top: auto; padding: 16px; border-top: 1px solid var(--border); }
+    .api-status {
+      display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+      background: var(--glass); border-radius: 10px; font-size: 12px; color: var(--text2);
+    }
+    .api-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .api-dot.ok { background: var(--secondary); box-shadow: 0 0 6px var(--secondary); }
+    .api-dot.fail { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+
+    /* ── MAIN ── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      height: 58px; flex-shrink: 0;
+      background: rgba(10,15,30,0.9); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 20px; gap: 14px;
+    }
+    .menu-btn { display: none; background: none; border: none; color: var(--text); cursor: pointer; padding: 6px; border-radius: 8px; }
+    .topbar-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; flex: 1; }
+    .topbar-actions { display: flex; gap: 10px; }
+    .btn-top {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 20px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 700;
+      cursor: pointer; border: none; transition: all .2s;
+    }
+    .btn-top-primary { background: linear-gradient(135deg, var(--primary), var(--primary-d)); color: #fff; box-shadow: 0 0 16px var(--primary-g); }
+    .btn-top-primary:hover { transform: translateY(-1px); box-shadow: 0 0 24px var(--primary-g); }
+    .btn-top-ghost { background: var(--glass); color: var(--text2); border: 1px solid var(--border); }
+    .btn-top-ghost:hover { color: var(--text); background: var(--glass-b); }
+
+    /* ── CONTENT ── */
+    .content { flex: 1; overflow-y: auto; padding: 24px; }
+    .content::-webkit-scrollbar { width: 4px; }
+    .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ── PANELS (views) ── */
+    .panel { display: none; animation: fadeIn .25s ease; }
+    .panel.active { display: block; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--glass); border: 1px solid var(--border);
+      border-radius: var(--r); backdrop-filter: blur(12px);
+      margin-bottom: 16px; overflow: hidden; transition: border-color .2s;
+    }
+    .card-header {
+      padding: 16px 20px 12px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .card-title svg { color: var(--primary); width: 16px; height: 16px; }
+    .card-body { padding: 20px; }
+
+    /* ── STATS GRID ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .stat-card {
+      background: var(--glass); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 18px; transition: all .2s;
+    }
+    .stat-card:hover { border-color: rgba(14,165,233,0.3); transform: translateY(-2px); }
+    .stat-card-icon { font-size: 24px; margin-bottom: 10px; }
+    .stat-card-val { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 700; }
+    .stat-card-lbl { font-size: 12px; color: var(--text2); margin-top: 3px; }
+    .stat-blue  { border-left: 3px solid var(--primary); }
+    .stat-green { border-left: 3px solid var(--secondary); }
+    .stat-red   { border-left: 3px solid var(--danger); }
+    .stat-purple{ border-left: 3px solid var(--accent); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      border: none; border-radius: var(--r-sm);
+      padding: 10px 18px; font-size: 14px; font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-d)); color: #fff; box-shadow: 0 0 18px var(--primary-g); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 28px var(--primary-g); }
+    .btn-success { background: linear-gradient(135deg, var(--secondary), #059669); color: #fff; }
+    .btn-danger { background: var(--danger-s); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); }
+    .btn-ghost { background: var(--glass); color: var(--text2); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); background: var(--glass-b); }
+    .btn-block { width: 100%; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; }
+
+    /* ── FORM ── */
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; display: block; }
+    .form-control {
+      width: 100%; padding: 11px 14px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: var(--r-sm); color: var(--text); font-size: 14px;
+      font-family: 'Inter', sans-serif; outline: none; transition: all .2s;
+    }
+    .form-control::placeholder { color: var(--text3); }
+    .form-control:focus { border-color: var(--primary); background: rgba(14,165,233,0.06); box-shadow: 0 0 0 3px rgba(14,165,233,0.12); }
+    select.form-control option { background: #1e293b; }
+    .form-row { display: flex; gap: 12px; }
+    .form-row .form-group { flex: 1; }
+
+    /* ── UPLOAD ZONE ── */
+    .upload-zone {
+      border: 2px dashed rgba(14,165,233,0.4); border-radius: var(--r);
+      padding: 48px 24px; text-align: center;
+      background: rgba(14,165,233,0.05); cursor: pointer; transition: all .2s;
+      position: relative; overflow: hidden;
+    }
+    .upload-zone::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(14,165,233,0.08), transparent 70%);
+    }
+    .upload-zone:hover { border-color: rgba(14,165,233,0.7); background: rgba(14,165,233,0.1); }
+    .upload-zone-icon { font-size: 52px; margin-bottom: 14px; position: relative; }
+    .upload-zone-text { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; color: var(--primary); position: relative; }
+    .upload-zone-sub { font-size: 13px; color: var(--text2); margin-top: 6px; position: relative; }
+    #upload-input { display: none; }
+    #upload-preview { max-width: 100%; border-radius: var(--r); margin-bottom: 14px; display: none; border: 1px solid var(--border); }
+
+    /* ── BADGE ── */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-success { background: var(--sec-s); color: var(--secondary); }
+    .badge-warning { background: var(--warn-s); color: var(--warning); }
+    .badge-danger  { background: var(--danger-s); color: var(--danger); }
+    .badge-primary { background: var(--primary-s); color: var(--primary); }
+    .badge-purple  { background: var(--acc-s); color: var(--accent); }
+
+    /* ── EXAM LIST ── */
+    .exam-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; border-radius: var(--r);
+      background: var(--glass); border: 1px solid var(--border);
+      margin-bottom: 10px; cursor: pointer; transition: all .2s;
+    }
+    .exam-item:hover { border-color: rgba(14,165,233,0.3); background: var(--glass-b); transform: translateX(3px); }
+    .exam-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--primary-s); border: 1px solid rgba(14,165,233,0.2); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .exam-info { flex: 1; min-width: 0; }
+    .exam-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .exam-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .exam-risk { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .risk-normal  { background: var(--secondary); }
+    .risk-medio   { background: var(--warning); }
+    .risk-alto    { background: var(--danger); }
+    .risk-critico { background: var(--danger); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── INDICATORS TABLE ── */
+    .indicators-table { width: 100%; border-collapse: collapse; }
+    .indicators-table th { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    .indicators-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; vertical-align: middle; }
+    .indicators-table tr:last-child td { border-bottom: none; }
+    .indicators-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .ind-name-cell { font-weight: 600; }
+    .ind-val-cell { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary); }
+    .ind-desc-cell { font-size: 12px; color: var(--text2); max-width: 240px; }
+
+    /* ── RECOMENDACIONES ── */
+    .rec-card {
+      display: flex; gap: 14px; padding: 14px 16px;
+      border-radius: 12px; border: 1px solid var(--border);
+      background: var(--glass); margin-bottom: 10px;
+    }
+    .rec-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .rec-icon.dieta    { background: var(--sec-s); }
+    .rec-icon.ejercicio{ background: rgba(14,165,233,0.12); }
+    .rec-icon.consulta { background: var(--danger-s); }
+    .rec-icon.medicamento { background: var(--acc-s); }
+    .rec-icon.estilo_vida { background: var(--warn-s); }
+    .rec-icon.general  { background: var(--glass-b); }
+    .rec-content { flex: 1; }
+    .rec-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+    .rec-desc { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+    /* ── PROGRESS BAR ── */
+    .progress-bar { height: 5px; background: rgba(255,255,255,0.07); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width .5s; }
+
+    /* ── CHAT ── */
+    .chat-layout { display: flex; flex-direction: column; height: calc(100vh - 58px - 48px); }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .chat-bubble { max-width: 80%; padding: 14px 18px; border-radius: 18px; font-size: 14px; line-height: 1.7; }
+    .bubble-user { align-self: flex-end; background: linear-gradient(135deg, var(--primary), var(--primary-d)); color: #fff; border-radius: 18px 18px 4px 18px; }
+    .bubble-dr { align-self: flex-start; background: var(--bg3); border: 1px solid var(--border); border-radius: 18px 18px 18px 4px; }
+    .bubble-dr .dr-header-chat { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .dr-avatar-chat { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .dr-name-chat { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 700; color: var(--primary); }
+    .bubble-dr .md-content h1,.bubble-dr .md-content h2,.bubble-dr .md-content h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; margin: 10px 0 6px; }
+    .bubble-dr .md-content p { margin-bottom: 8px; }
+    .bubble-dr .md-content ul,.bubble-dr .md-content ol { margin: 6px 0 8px 18px; }
+    .bubble-dr .md-content li { margin-bottom: 4px; }
+    .bubble-dr .md-content strong { color: var(--primary); }
+    .bubble-dr .md-content hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+    .bubble-dr .md-content code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 4px; }
+    .chat-typing { align-self: flex-start; background: var(--bg3); border: 1px solid var(--border); padding: 14px 18px; border-radius: 18px; display: flex; gap: 5px; }
+    .chat-typing span { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); animation: bounce .8s infinite; }
+    .chat-typing span:nth-child(2) { animation-delay: .15s; }
+    .chat-typing span:nth-child(3) { animation-delay: .3s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
+    .chat-input-bar {
+      padding: 14px 20px; border-top: 1px solid var(--border);
+      background: rgba(10,15,30,0.9); backdrop-filter: blur(12px);
+      display: flex; gap: 10px; align-items: flex-end;
+    }
+    .chat-textarea {
+      flex: 1; background: var(--glass); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text); font-family: 'Inter', sans-serif;
+      font-size: 14px; padding: 12px 16px; resize: none; outline: none;
+      min-height: 46px; max-height: 120px; transition: border-color .2s;
+    }
+    .chat-textarea::placeholder { color: var(--text3); }
+    .chat-textarea:focus { border-color: var(--primary); }
+    .chat-send-btn {
+      width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--primary), var(--primary-d));
+      border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 16px var(--primary-g); transition: all .2s;
+    }
+    .chat-send-btn:hover { transform: scale(1.08); box-shadow: 0 0 24px var(--primary-g); }
+    .chat-send-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .chat-quick-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .quick-btn {
+      background: var(--glass); border: 1px solid var(--border);
+      border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600;
+      color: var(--text2); cursor: pointer; transition: all .15s;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .quick-btn:hover { color: var(--primary); border-color: rgba(14,165,233,0.4); background: var(--primary-s); }
+
+    /* ── SPINNER ── */
+    .spinner { width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--primary-s); border-top-color: var(--primary); animation: spin .7s linear infinite; margin: 20px auto; box-shadow: 0 0 14px var(--primary-g); }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* ── EMPTY STATE ── */
+    .empty { text-align: center; padding: 60px 24px; color: var(--text2); }
+    .empty-icon { font-size: 52px; margin-bottom: 14px; }
+    .empty-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .empty-sub { font-size: 14px; }
+
+    /* ── MODAL ── */
+    .modal-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal { background: #0f172a; border: 1px solid var(--border); border-radius: 24px 24px 0 0; width: 100%; max-width: 520px; padding: 24px 22px 36px; transform: translateY(100%); transition: transform .28s cubic-bezier(.4,0,.2,1); max-height: 90vh; overflow-y: auto; }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-drag { width: 40px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 4px; margin: 0 auto 20px; }
+    .modal-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 20px; }
+
+    /* ── TOAST ── */
+    #toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-100px); background: rgba(15,23,42,0.95); border: 1px solid var(--border); backdrop-filter: blur(16px); color: var(--text); padding: 12px 22px; border-radius: 30px; font-size: 14px; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif; z-index: 400; transition: transform .3s cubic-bezier(.4,0,.2,1); white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── RISK SUMMARY ── */
+    .risk-banner { border-radius: var(--r); padding: 18px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; }
+    .risk-banner.normal  { background: var(--sec-s); border: 1px solid rgba(16,185,129,0.3); }
+    .risk-banner.medio   { background: var(--warn-s); border: 1px solid rgba(245,158,11,0.3); }
+    .risk-banner.alto    { background: var(--danger-s); border: 1px solid rgba(239,68,68,0.3); }
+    .risk-banner.critico { background: var(--danger-s); border: 1px solid rgba(239,68,68,0.5); animation: borderPulse 2s infinite; }
+    @keyframes borderPulse { 0%,100%{border-color:rgba(239,68,68,0.5)} 50%{border-color:rgba(239,68,68,1)} }
+    .risk-banner-icon { font-size: 28px; }
+    .risk-banner-text h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; }
+    .risk-banner-text p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-close { display: block; }
+      .menu-btn { display: flex; }
+      .content { padding: 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .topbar-actions .btn-label { display: none; }
+      .chat-bubble { max-width: 95%; }
+    }
+  </style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div class="app-layout">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="/" class="sidebar-logo">
+        <div class="logo-icon">🩺</div>
+        <span class="logo-text">VitalIA</span>
+      </a>
+      <button class="sidebar-close" onclick="closeSidebar()">
+        <i data-lucide="x" style="width:18px;height:18px;"></i>
+      </button>
+    </div>
+
+    <div style="overflow-y:auto;flex:1;">
+      <div class="nav-section">Principal</div>
+      <a class="nav-item active" onclick="showPanel('dashboard')" id="nav-dashboard">
+        <i data-lucide="layout-dashboard"></i> Dashboard
+      </a>
+      <a class="nav-item" onclick="showPanel('upload')" id="nav-upload">
+        <i data-lucide="scan-line"></i> Analizar examen
+      </a>
+      <a class="nav-item" onclick="showPanel('chat')" id="nav-chat">
+        <i data-lucide="message-circle"></i> Dr. VitalIA
+      </a>
+
+      <div class="nav-section">Historial</div>
+      <a class="nav-item" onclick="showPanel('history')" id="nav-history">
+        <i data-lucide="folder-open"></i> Mis exámenes
+      </a>
+
+      <div class="nav-section">Mi perfil</div>
+      <a class="nav-item" onclick="openModal('modal-perfil')" id="nav-perfil">
+        <i data-lucide="user"></i> Perfil del paciente
+      </a>
+      <a class="nav-item" onclick="openModal('modal-config')" id="nav-config">
+        <i data-lucide="settings"></i> Configuración
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="api-status" id="api-status-box">
+        <div class="api-dot {{ 'ok' if api_key_ok else 'fail' }}" id="api-dot"></div>
+        <span id="api-status-text">{{ 'IA conectada' if api_key_ok else 'API key requerida' }}</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main">
+    <div class="topbar">
+      <button class="menu-btn" onclick="openSidebar()">
+        <i data-lucide="menu" style="width:20px;height:20px;"></i>
+      </button>
+      <span class="topbar-title" id="topbar-title">Dashboard de Salud</span>
+      <div class="topbar-actions">
+        <button class="btn-top btn-top-ghost" onclick="showPanel('chat')">
+          <i data-lucide="message-circle" style="width:14px;height:14px;"></i>
+          <span class="btn-label">Dr. Digital</span>
+        </button>
+        <button class="btn-top btn-top-primary" onclick="showPanel('upload')">
+          <i data-lucide="plus" style="width:14px;height:14px;"></i>
+          <span class="btn-label">Nuevo examen</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="content" id="main-content">
+
+      <!-- ─── DASHBOARD ─── -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card stat-blue">
+            <div class="stat-card-icon">🧪</div>
+            <div class="stat-card-val" id="stat-examenes">0</div>
+            <div class="stat-card-lbl">Exámenes analizados</div>
+          </div>
+          <div class="stat-card stat-red">
+            <div class="stat-card-icon">⚠️</div>
+            <div class="stat-card-val" id="stat-alertas">0</div>
+            <div class="stat-card-lbl">Indicadores alterados</div>
+          </div>
+          <div class="stat-card stat-green">
+            <div class="stat-card-icon">✅</div>
+            <div class="stat-card-val" id="stat-normales">0</div>
+            <div class="stat-card-lbl">Indicadores normales</div>
+          </div>
+          <div class="stat-card stat-purple">
+            <div class="stat-card-icon">📅</div>
+            <div class="stat-card-val" id="stat-ultimo" style="font-size:14px;">—</div>
+            <div class="stat-card-lbl">Último análisis</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i data-lucide="clock"></i> Exámenes recientes</span>
+            <button class="btn btn-sm btn-ghost" onclick="showPanel('upload')">+ Nuevo</button>
+          </div>
+          <div class="card-body" style="padding:12px;">
+            <div id="recent-examenes">
+              <div class="empty"><div class="empty-icon">🩺</div><div class="empty-title">Sin exámenes aún</div><div class="empty-sub">Sube tu primer examen para comenzar</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i data-lucide="zap"></i> Acciones rápidas</span>
+          </div>
+          <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+            <button class="btn btn-primary" onclick="showPanel('upload')">
+              <i data-lucide="scan-line" style="width:15px;height:15px;"></i> Analizar examen
+            </button>
+            <button class="btn btn-ghost" onclick="showPanel('chat')">
+              <i data-lucide="message-circle" style="width:15px;height:15px;"></i> Consultar Dr.
+            </button>
+            <button class="btn btn-ghost" onclick="showPanel('history')">
+              <i data-lucide="folder-open" style="width:15px;height:15px;"></i> Ver historial
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── UPLOAD / ANALIZAR ─── -->
+      <div class="panel" id="panel-upload">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i data-lucide="scan-line"></i> Analizar nuevo examen</span>
+          </div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group" style="flex:2;">
+                <label class="form-label">Título del examen</label>
+                <input class="form-control" id="exam-title" placeholder="Ej: Hemograma completo" autocomplete="off"/>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">Tipo</label>
+                <select class="form-control" id="exam-tipo">
+                  <option value="sangre">Sangre / Hemograma</option>
+                  <option value="bioquimico">Perfil bioquímico</option>
+                  <option value="orina">Orina</option>
+                  <option value="hormonal">Hormonal</option>
+                  <option value="lipidos">Perfil lipídico</option>
+                  <option value="hepatico">Perfil hepático</option>
+                  <option value="renal">Función renal</option>
+                  <option value="tiroides">Tiroides</option>
+                  <option value="imagen">Imagen (radiografía, eco)</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Foto del examen</label>
+              <img id="upload-preview" alt="Vista previa"/>
+              <div class="upload-zone" onclick="document.getElementById('upload-input').click()">
+                <div class="upload-zone-icon">🔬</div>
+                <div class="upload-zone-text">Sube la foto de tu examen</div>
+                <div class="upload-zone-sub">JPG · PNG · PDF — Arrastra o toca para seleccionar</div>
+              </div>
+              <input type="file" id="upload-input" accept="image/*,application/pdf" onchange="handleUpload(event)"/>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="analyzeExam()" disabled style="padding:14px;">
+              <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
+              Analizar con Dr. VitalIA
+            </button>
+            <div id="analyze-loading" style="display:none;">
+              <div class="spinner"></div>
+              <p style="text-align:center;color:var(--text2);font-size:13px;margin-top:-12px;">Analizando tu examen con IA… esto puede tomar unos segundos</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── RESULTADO DEL EXAMEN ─── -->
+      <div class="panel" id="panel-resultado">
+        <div id="resultado-content"></div>
+      </div>
+
+      <!-- ─── CHAT ─── -->
+      <div class="panel" id="panel-chat">
+        <div class="chat-layout">
+          <div class="chat-messages" id="chat-messages">
+            <div class="empty" style="margin:auto;">
+              <div class="empty-icon">🩺</div>
+              <div class="empty-title">Dr. VitalIA está listo</div>
+              <div class="empty-sub">Analiza un examen o hazme una pregunta sobre tu salud</div>
+            </div>
+          </div>
+          <div style="padding:0 20px 8px;">
+            <div class="chat-quick-actions" id="quick-actions">
+              <button class="quick-btn" onclick="quickSend('¿Qué significa tener el colesterol alto?')">💊 Colesterol alto</button>
+              <button class="quick-btn" onclick="quickSend('¿Qué alimentos ayudan a bajar el azúcar en sangre?')">🥗 Dieta para diabetes</button>
+              <button class="quick-btn" onclick="quickSend('¿Cuándo debo ir urgente al médico?')">🚨 Señales de alerta</button>
+              <button class="quick-btn" onclick="quickSend('¿Qué vitaminas son importantes tomar?')">💊 Vitaminas</button>
+            </div>
+          </div>
+          <div class="chat-input-bar">
+            <textarea class="chat-textarea" id="chat-input" placeholder="Pregúntale algo al Dr. VitalIA…" rows="1" onkeydown="chatKeydown(event)" oninput="autoResize(this)"></textarea>
+            <button class="chat-send-btn" id="chat-send-btn" onclick="sendMessage()">
+              <i data-lucide="send" style="width:18px;height:18px;"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── HISTORIAL ─── -->
+      <div class="panel" id="panel-history">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i data-lucide="folder-open"></i> Mis exámenes</span>
+            <button class="btn btn-sm btn-primary" onclick="showPanel('upload')">+ Nuevo</button>
+          </div>
+          <div class="card-body" style="padding:12px;">
+            <div id="all-examenes">
+              <div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sin exámenes</div><div class="empty-sub">Sube tu primer examen</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app-layout -->
+
+<!-- ═══ MODAL: Perfil ═══ -->
+<div class="modal-overlay" id="modal-perfil">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title">👤 Mi Perfil</div>
+    <div class="form-group"><label class="form-label">Nombre completo</label><input class="form-control" id="p-nombre" placeholder="Tu nombre"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Fecha de nacimiento</label><input class="form-control" id="p-fecha" type="date"/></div>
+      <div class="form-group"><label class="form-label">Género</label>
+        <select class="form-control" id="p-genero"><option value="">—</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Email</label><input class="form-control" id="p-email" type="email" placeholder="tu@email.com"/></div>
+    <div class="form-group"><label class="form-label">Notas médicas / alergias</label><textarea class="form-control" id="p-notas" rows="3" placeholder="Alergias, condiciones crónicas, medicamentos habituales…"></textarea></div>
+    <button class="btn btn-primary btn-block" onclick="savePerfil()">Guardar perfil</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="closeModal('modal-perfil')">Cancelar</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Config ═══ -->
+<div class="modal-overlay" id="modal-config">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title">⚙️ Configuración</div>
+    <div class="form-group">
+      <label class="form-label">Anthropic API Key</label>
+      <input class="form-control" id="cfg-apikey" type="password" placeholder="sk-ant-..."/>
+      <div style="font-size:12px;color:var(--text2);margin-top:6px;">Obtén tu clave en console.anthropic.com</div>
+    </div>
+    <div id="api-key-status" style="display:none;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;"></div>
+    <button class="btn btn-primary btn-block" onclick="saveConfig()">Guardar</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="closeModal('modal-config')">Cancelar</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+let state = {
+  activePanel: 'dashboard',
+  currentConvId: null,
+  currentExamenId: null,
+  apiKeyOk: {{ 'true' if api_key_ok else 'false' }},
+  chatStreaming: false
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+  loadStats();
+  loadExamenes();
+  loadPerfil();
+});
+
+// ════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════
+const PANEL_TITLES = {
+  dashboard: 'Dashboard de Salud',
+  upload: 'Analizar examen',
+  chat: 'Dr. VitalIA',
+  history: 'Mis exámenes',
+  resultado: 'Resultado del examen'
+};
+
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const panel = document.getElementById(`panel-${id}`);
+  if (panel) panel.classList.add('active');
+  const nav = document.getElementById(`nav-${id}`);
+  if (nav) nav.classList.add('active');
+  document.getElementById('topbar-title').textContent = PANEL_TITLES[id] || id;
+  state.activePanel = id;
+  closeSidebar();
+  lucide.createIcons();
+}
+
+function openSidebar()  { document.getElementById('sidebar').classList.add('open'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); }
+
+// ════════════════════════════════════════════
+// MODALS
+// ════════════════════════════════════════════
+function openModal(id)  { document.getElementById(id).classList.add('open'); lucide.createIcons(); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ════════════════════════════════════════════
+// STATS & DATA
+// ════════════════════════════════════════════
+async function loadStats() {
+  try {
+    const r = await fetch('/api/stats');
+    const d = await r.json();
+    document.getElementById('stat-examenes').textContent = d.total_examenes || 0;
+    document.getElementById('stat-alertas').textContent  = d.total_alertas  || 0;
+    document.getElementById('stat-normales').textContent = d.total_normales  || 0;
+    if (d.ultimo_examen) {
+      const f = new Date(d.ultimo_examen);
+      document.getElementById('stat-ultimo').textContent = f.toLocaleDateString('es-CL',{day:'2-digit',month:'short'});
+    }
+  } catch {}
+}
+
+async function loadExamenes() {
+  try {
+    const r = await fetch('/api/examenes');
+    const d = await r.json();
+    const examenes = d.examenes || [];
+    renderRecentExamenes(examenes.slice(0,5));
+    renderAllExamenes(examenes);
+  } catch {}
+}
+
+function renderRecentExamenes(list) {
+  const el = document.getElementById('recent-examenes');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🩺</div><div class="empty-title">Sin exámenes aún</div><div class="empty-sub">Sube tu primer examen para comenzar</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(e => examCard(e)).join('');
+  lucide.createIcons();
+}
+
+function renderAllExamenes(list) {
+  const el = document.getElementById('all-examenes');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sin exámenes</div><div class="empty-sub">Sube tu primer examen</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(e => examCard(e)).join('');
+  lucide.createIcons();
+}
+
+function examCard(e) {
+  const riesgo = e.riesgo || 'normal';
+  const icons = { sangre:'🩸', bioquimico:'🧬', orina:'🔬', hormonal:'⚗️', lipidos:'💧', hepatico:'🫁', renal:'🫘', tiroides:'🦋', imagen:'📷', otro:'📋' };
+  const icon = icons[e.tipo] || '🧪';
+  const alertas = e.alertas || 0;
+  return `
+    <div class="exam-item" onclick="openExamen(${e.id})">
+      <div class="exam-icon">${icon}</div>
+      <div class="exam-info">
+        <div class="exam-title">${esc(e.titulo)}</div>
+        <div class="exam-meta">${esc(e.tipo)} · ${esc(e.creado_en ? e.creado_en.split(' ')[0] : '')} ${alertas ? `· <span style="color:var(--danger)">${alertas} alerta${alertas>1?'s':''}</span>` : ''}</div>
+      </div>
+      <div class="exam-risk risk-${riesgo}" title="Riesgo: ${riesgo}"></div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════
+// UPLOAD & ANALYZE
+// ════════════════════════════════════════════
+let selectedFile = null;
+
+function handleUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  selectedFile = file;
+  const prev = document.getElementById('upload-preview');
+  if (file.type.startsWith('image/')) { prev.src = URL.createObjectURL(file); prev.style.display = 'block'; }
+  else prev.style.display = 'none';
+  document.getElementById('analyze-btn').disabled = false;
+}
+
+async function analyzeExam() {
+  if (!selectedFile) return;
+  if (!state.apiKeyOk) { openModal('modal-config'); toast('⚠️ Configura tu API Key primero'); return; }
+
+  const title = document.getElementById('exam-title').value.trim() || 'Examen médico';
+  const tipo  = document.getElementById('exam-tipo').value;
+
+  document.getElementById('analyze-btn').style.display = 'none';
+  document.getElementById('analyze-loading').style.display = 'block';
+
+  const fd = new FormData();
+  fd.append('imagen', selectedFile);
+  fd.append('titulo', title);
+  fd.append('tipo', tipo);
+
+  try {
+    const r = await fetch('/api/analizar', { method: 'POST', body: fd });
+    const text = await r.text();
+    let d; try { d = JSON.parse(text); } catch { throw new Error('Respuesta inválida del servidor'); }
+    if (d.error) throw new Error(d.error);
+
+    toast(`✅ Análisis completado — ${d.num_indicadores} indicadores detectados`);
+    await openExamen(d.examen_id);
+
+    // Reset upload
+    selectedFile = null;
+    document.getElementById('upload-input').value = '';
+    document.getElementById('upload-preview').style.display = 'none';
+    document.getElementById('exam-title').value = '';
+
+  } catch (err) {
+    toast('❌ ' + err.message);
+  } finally {
+    document.getElementById('analyze-btn').style.display = 'block';
+    document.getElementById('analyze-loading').style.display = 'none';
+    document.getElementById('analyze-btn').disabled = false;
+    loadStats(); loadExamenes();
+  }
+}
+
+// ════════════════════════════════════════════
+// OPEN EXAMEN
+// ════════════════════════════════════════════
+async function openExamen(eid) {
+  showPanel('resultado');
+  const el = document.getElementById('resultado-content');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const r  = await fetch(`/api/examenes/${eid}`);
+    const d  = await r.json();
+    const ex = d.examen;
+    const inds = d.indicadores || [];
+    const recs = d.recomendaciones || [];
+    const convs= d.conversaciones || [];
+    state.currentExamenId = eid;
+    if (convs.length) state.currentConvId = convs[0].id;
+
+    const riesgoIcons = { normal:'✅', medio:'⚠️', alto:'🔴', critico:'🚨' };
+    const riesgoTexts = {
+      normal: ['Todo en orden','La mayoría de tus indicadores están dentro del rango normal.'],
+      medio:  ['Atención recomendada','Algunos indicadores requieren seguimiento.'],
+      alto:   ['Consulta médica sugerida','Hay indicadores fuera de rango que requieren atención.'],
+      critico:['⚠️ Consulta urgente','Hay valores críticos que requieren atención médica inmediata.']
+    };
+    const riesgo = ex.riesgo || 'normal';
+    const [rText, rDesc] = riesgoTexts[riesgo] || riesgoTexts.normal;
+
+    const indHtml = inds.length ? `
+      <div style="overflow-x:auto;">
+        <table class="indicators-table">
+          <thead><tr>
+            <th>Indicador</th><th>Valor</th><th>Unidad</th><th>Referencia</th><th>Estado</th><th>¿Qué mide?</th>
+          </tr></thead>
+          <tbody>
+            ${inds.map(i => `<tr>
+              <td class="ind-name-cell">${esc(i.nombre)}</td>
+              <td class="ind-val-cell">${esc(i.valor)}</td>
+              <td style="color:var(--text2);font-size:12px;">${esc(i.unidad)}</td>
+              <td style="font-size:12px;color:var(--text2);">${esc(i.rango_ref)}</td>
+              <td><span class="badge ${i.estado==='normal'?'badge-success':i.estado==='alto'?'badge-danger':i.estado==='critico'?'badge-danger':'badge-warning'}">${i.estado}</span></td>
+              <td class="ind-desc-cell">${esc(i.descripcion)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : '<p style="color:var(--text2);font-size:13px;">No se detectaron indicadores.</p>';
+
+    const recIcons = {dieta:'🥗',ejercicio:'🏃',consulta:'👨‍⚕️',medicamento:'💊',estilo_vida:'🌟',general:'📋'};
+    const recHtml = recs.length ? recs.map(rec => `
+      <div class="rec-card">
+        <div class="rec-icon ${rec.tipo}">${recIcons[rec.tipo]||'📋'}</div>
+        <div class="rec-content">
+          <div class="rec-title">${esc(rec.titulo)} <span class="badge ${rec.prioridad==='alta'?'badge-danger':rec.prioridad==='media'?'badge-warning':'badge-success'}" style="font-size:10px;">${rec.prioridad}</span></div>
+          <div class="rec-desc">${esc(rec.descripcion)}</div>
+        </div>
+      </div>`).join('') : '<p style="color:var(--text2);font-size:13px;">Sin recomendaciones específicas.</p>';
+
+    el.innerHTML = `
+      <div class="risk-banner ${riesgo}">
+        <div class="risk-banner-icon">${riesgoIcons[riesgo]||'✅'}</div>
+        <div class="risk-banner-text"><h3>${rText}</h3><p>${rDesc}</p></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i data-lucide="file-text"></i> ${esc(ex.titulo)}</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="badge badge-primary">${esc(ex.tipo)}</span>
+            <button class="btn btn-sm btn-danger" onclick="deleteExamen(${eid})">Eliminar</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;">
+            ${ex.fecha_examen ? `<div><span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;">Fecha examen</span><div style="font-weight:600;margin-top:2px;">${esc(ex.fecha_examen)}</div></div>` : ''}
+            ${ex.laboratorio ? `<div><span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;">Laboratorio</span><div style="font-weight:600;margin-top:2px;">${esc(ex.laboratorio)}</div></div>` : ''}
+            <div><span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;">Indicadores</span><div style="font-weight:600;margin-top:2px;">${inds.length} detectados</div></div>
+          </div>
+          ${ex.resumen ? `<div style="background:var(--primary-s);border:1px solid rgba(14,165,233,0.2);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.7;margin-bottom:16px;">${esc(ex.resumen)}</div>` : ''}
+          ${ex.interpretacion ? `<div style="font-size:13px;line-height:1.8;color:var(--text2);">${marked.parse(ex.interpretacion)}</div>` : ''}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title"><i data-lucide="bar-chart-2"></i> Indicadores detectados</span></div>
+        <div class="card-body" style="padding:12px;">${indHtml}</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title"><i data-lucide="lightbulb"></i> Recomendaciones</span></div>
+        <div class="card-body">${recHtml}</div>
+      </div>
+
+      ${state.currentConvId ? `
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i data-lucide="message-circle"></i> Consultar con el Dr. VitalIA</span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:14px;color:var(--text2);margin-bottom:14px;">¿Tienes dudas sobre estos resultados? El Dr. VitalIA ya conoce tu examen.</p>
+          <button class="btn btn-primary" onclick="openChatForExam(${state.currentConvId})">
+            <i data-lucide="message-circle" style="width:15px;height:15px;"></i>
+            Hablar con el Dr. VitalIA
+          </button>
+        </div>
+      </div>` : ''}
+    `;
+    lucide.createIcons();
+  } catch (err) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">❌</div><div class="empty-title">Error al cargar</div><div class="empty-sub">${err.message}</div></div>`;
+  }
+}
+
+async function deleteExamen(eid) {
+  if (!confirm('¿Eliminar este examen y todos sus datos?')) return;
+  await fetch(`/api/examenes/${eid}`, { method: 'DELETE' });
+  toast('✅ Examen eliminado');
+  showPanel('dashboard');
+  loadStats(); loadExamenes();
+}
+
+// ════════════════════════════════════════════
+// CHAT
+// ════════════════════════════════════════════
+async function openChatForExam(convId) {
+  state.currentConvId = convId;
+  showPanel('chat');
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const r = await fetch(`/api/conversaciones/${convId}/mensajes`);
+    const d = await r.json();
+    msgs.innerHTML = '';
+    (d.mensajes || []).forEach(m => addBubble(m.rol, m.contenido));
+    scrollChat();
+  } catch { msgs.innerHTML = ''; }
+}
+
+async function startNewChat() {
+  try {
+    const r = await fetch('/api/conversaciones/nueva', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ titulo: 'Consulta general' })
+    });
+    const d = await r.json();
+    state.currentConvId = d.id;
+    document.getElementById('chat-messages').innerHTML = '';
+    addBubble('assistant', `🩺 **Hola, soy el Dr. VitalIA**\n\nEstoy aquí para orientarte sobre tu salud. Puedo ayudarte a entender tus exámenes, explicarte síntomas, orientarte sobre medicamentos y mucho más.\n\n¿Sobre qué te puedo ayudar hoy? 💙`);
+  } catch {}
+}
+
+function addBubble(rol, contenido, streaming = false) {
+  const msgs = document.getElementById('chat-messages');
+  const empty = msgs.querySelector('.empty');
+  if (empty) empty.remove();
+
+  const div = document.createElement('div');
+  div.className = `chat-bubble bubble-${rol === 'user' ? 'user' : 'dr'}`;
+
+  if (rol === 'user') {
+    div.textContent = contenido;
+  } else {
+    div.innerHTML = `
+      <div class="dr-header-chat">
+        <div class="dr-avatar-chat">🩺</div>
+        <div class="dr-name-chat">Dr. VitalIA</div>
+      </div>
+      <div class="md-content">${streaming ? '' : marked.parse(contenido)}</div>`;
+  }
+  if (streaming) div.id = 'streaming-bubble';
+  msgs.appendChild(div);
+  scrollChat();
+  return div;
+}
+
+function scrollChat() {
+  const el = document.getElementById('chat-messages');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg || state.chatStreaming) return;
+  if (!state.apiKeyOk) { openModal('modal-config'); toast('⚠️ Configura tu API Key primero'); return; }
+
+  if (!state.currentConvId) await startNewChat();
+  if (!state.currentConvId) { toast('❌ No se pudo crear la conversación'); return; }
+
+  input.value = ''; input.style.height = 'auto';
+  addBubble('user', msg);
+
+  // Typing indicator
+  const typing = document.createElement('div');
+  typing.className = 'chat-typing'; typing.id = 'chat-typing';
+  typing.innerHTML = '<span></span><span></span><span></span>';
+  document.getElementById('chat-messages').appendChild(typing);
+  scrollChat();
+
+  state.chatStreaming = true;
+  document.getElementById('chat-send-btn').disabled = true;
+
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ conversacion_id: state.currentConvId, mensaje: msg })
+    });
+    typing.remove();
+    const bubble = addBubble('assistant', '', true);
+    const mdContent = bubble.querySelector('.md-content');
+    let fullText = '';
+
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value);
+      for (const line of chunk.split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const d = JSON.parse(line.slice(6));
+          if (d.text) { fullText += d.text; mdContent.innerHTML = marked.parse(fullText); scrollChat(); }
+          if (d.done) break;
+          if (d.error) throw new Error(d.error);
+        } catch {}
+      }
+    }
+  } catch (err) {
+    document.getElementById('chat-typing')?.remove();
+    toast('❌ ' + err.message);
+  } finally {
+    state.chatStreaming = false;
+    document.getElementById('chat-send-btn').disabled = false;
+  }
+}
+
+function quickSend(text) {
+  document.getElementById('chat-input').value = text;
+  sendMessage();
+}
+
+function chatKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ════════════════════════════════════════════
+// PERFIL
+// ════════════════════════════════════════════
+async function loadPerfil() {
+  try {
+    const r = await fetch('/api/paciente');
+    const d = await r.json();
+    if (d.nombre) document.getElementById('p-nombre').value = d.nombre;
+    if (d.fecha_nac) document.getElementById('p-fecha').value = d.fecha_nac;
+    if (d.genero) document.getElementById('p-genero').value = d.genero;
+    if (d.email) document.getElementById('p-email').value = d.email;
+    if (d.notas) document.getElementById('p-notas').value = d.notas;
+  } catch {}
+}
+
+async function savePerfil() {
+  const d = {
+    nombre: document.getElementById('p-nombre').value,
+    fecha_nac: document.getElementById('p-fecha').value,
+    genero: document.getElementById('p-genero').value,
+    email: document.getElementById('p-email').value,
+    notas: document.getElementById('p-notas').value
+  };
+  await fetch('/api/paciente', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(d) });
+  closeModal('modal-perfil');
+  toast('✅ Perfil guardado');
+}
+
+// ════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════
+async function saveConfig() {
+  const key = document.getElementById('cfg-apikey').value.trim();
+  if (!key) { toast('Ingresa una API key válida'); return; }
+  const r = await fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ api_key: key }) });
+  const d = await r.json();
+  if (d.ok) {
+    state.apiKeyOk = true;
+    document.getElementById('api-dot').className = 'api-dot ok';
+    document.getElementById('api-status-text').textContent = 'IA conectada';
+    const box = document.getElementById('api-key-status');
+    box.style.display = 'block';
+    box.style.background = 'rgba(16,185,129,0.12)'; box.style.border = '1px solid rgba(16,185,129,0.3)'; box.style.color = '#10b981';
+    box.textContent = '✅ API Key configurada correctamente';
+    document.getElementById('cfg-apikey').value = '';
+    setTimeout(() => closeModal('modal-config'), 1500);
+    toast('✅ API Key guardada');
+  }
+}
+
+// ════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg, dur = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+</script>
+</body>
+</html>
