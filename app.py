@@ -284,18 +284,15 @@ def eliminar_examen(eid):
     return jsonify({"ok": True})
 
 # ── API: OCR + Análisis ───────────────────────────────────────────────────────
+def _sse(data: dict) -> str:
+    return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+
 @app.route("/api/analizar", methods=["GET", "POST"])
 def analizar_examen():
     if request.method == "GET":
         return jsonify({"error": "Usa POST para enviar un examen"}), 405
-    try:
-        return _analizar_examen_impl()
-    except Exception as e:
-        import traceback
-        print("[VitalIA ERROR]", traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
 
-def _analizar_examen_impl():
+    # Capturar datos del request antes del stream
     try:
         cliente = get_client()
     except ValueError as e:
@@ -317,23 +314,21 @@ def _analizar_examen_impl():
     ruta = UPLOAD_DIR / nombre_archivo
     f.save(str(ruta))
 
-    print(f"[VitalIA] Analizando: {titulo} ({ext})")
+    def generate():
+        try:
+            yield _sse({"step": "ocr", "msg": "Leyendo examen con visión IA..."})
 
-    # Leer archivo en base64
-    with open(ruta, "rb") as f:
-        img_b64 = base64.standard_b64encode(f.read()).decode()
+            with open(ruta, "rb") as fh:
+                img_b64 = base64.standard_b64encode(fh.read()).decode()
 
-    # PDFs → document block; imágenes → image block
-    is_pdf = (ext == ".pdf")
-    if is_pdf:
-        file_block = {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": img_b64}}
-    else:
-        media_types = {".jpg":"image/jpeg",".jpeg":"image/jpeg",
-                       ".png":"image/png",".webp":"image/webp"}
-        media_type = media_types.get(ext, "image/jpeg")
-        file_block = {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": img_b64}}
+            is_pdf = (ext == ".pdf")
+            if is_pdf:
+                file_block = {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": img_b64}}
+            else:
+                mt = {".jpg":"image/jpeg",".jpeg":"image/jpeg",".png":"image/png",".webp":"image/webp"}
+                file_block = {"type": "image", "source": {"type": "base64", "media_type": mt.get(ext,"image/jpeg"), "data": img_b64}}
 
-    prompt_ocr = """Analiza este examen médico/laboratorio y extrae todos los indicadores.
+            prompt_ocr = """Analiza este examen médico/laboratorio y extrae todos los indicadores.
 
 Responde ÚNICAMENTE con este JSON compacto (sin markdown, sin texto adicional, sin campos extra):
 {"tipo_examen":"","laboratorio":"","fecha":"","paciente_info":"","observaciones_laboratorio":"","indicadores":[{"nombre":"","valor":"","unidad":"","rango_ref":"","rango_min":null,"rango_max":null,"estado":"normal","descripcion":""}]}
@@ -346,55 +341,42 @@ Reglas:
 - Valores aproximados: agrega "~" al inicio (ej: "~12.5")
 - NO incluyas el campo texto_completo"""
 
-    try:
-        resp = cliente.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=16000,
-            messages=[{
-                "role": "user",
-                "content": [
-                    file_block,
-                    {"type": "text", "text": prompt_ocr}
-                ]
-            }]
-        )
-        raw = re.sub(r"```json\s*|\s*```", "", resp.content[0].text.strip()).strip()
-        # Si el JSON viene truncado, intentar cerrar el array y el objeto
-        try:
-            ocr_data = json.loads(raw)
-        except json.JSONDecodeError:
-            # Truncar al último objeto completo del array de indicadores y cerrar
-            idx = raw.rfind("},")
-            if idx == -1:
-                idx = raw.rfind("}")
-            if idx != -1:
-                raw_fixed = raw[:idx+1] + "]}"
-                try:
-                    ocr_data = json.loads(raw_fixed)
-                except json.JSONDecodeError:
-                    # Fallback mínimo
-                    ocr_data = {"tipo_examen": tipo, "laboratorio": "", "fecha": "",
-                                "paciente_info": "", "indicadores": [],
-                                "observaciones_laboratorio": ""}
-            else:
-                ocr_data = {"tipo_examen": tipo, "laboratorio": "", "fecha": "",
-                            "paciente_info": "", "indicadores": [],
-                            "observaciones_laboratorio": ""}
-    except Exception as e:
-        return jsonify({"error": f"Error de análisis: {str(e)}"}), 500
+            # Stream OCR para mantener conexión viva
+            raw_parts = []
+            with cliente.messages.stream(
+                model="claude-opus-4-6",
+                max_tokens=16000,
+                messages=[{"role":"user","content":[file_block,{"type":"text","text":prompt_ocr}]}]
+            ) as stream:
+                for text in stream.text_stream:
+                    raw_parts.append(text)
+                    # Ping cada ~50 chars para mantener conexión
+                    if len("".join(raw_parts)) % 200 < 5:
+                        yield _sse({"step": "ocr_progress", "msg": "Extrayendo indicadores..."})
 
-    indicadores = ocr_data.get("indicadores", [])
-    alertas = [i for i in indicadores if i.get("estado") in ("alto","bajo","critico")]
-    criticos = [i for i in indicadores if i.get("estado") == "critico"]
+            raw = re.sub(r"```json\s*|\s*```", "", "".join(raw_parts).strip()).strip()
+            try:
+                ocr_data = json.loads(raw)
+            except json.JSONDecodeError:
+                idx = raw.rfind("},")
+                if idx == -1: idx = raw.rfind("}")
+                if idx != -1:
+                    try: ocr_data = json.loads(raw[:idx+1] + "]}")
+                    except: ocr_data = {"tipo_examen":tipo,"laboratorio":"","fecha":"","paciente_info":"","indicadores":[],"observaciones_laboratorio":""}
+                else:
+                    ocr_data = {"tipo_examen":tipo,"laboratorio":"","fecha":"","paciente_info":"","indicadores":[],"observaciones_laboratorio":""}
 
-    # Determinar nivel de riesgo
-    riesgo = "normal"
-    if criticos: riesgo = "critico"
-    elif len(alertas) >= 3: riesgo = "alto"
-    elif alertas: riesgo = "medio"
+            indicadores = ocr_data.get("indicadores", [])
+            alertas  = [i for i in indicadores if i.get("estado") in ("alto","bajo","critico")]
+            criticos = [i for i in indicadores if i.get("estado") == "critico"]
+            riesgo = "normal"
+            if criticos: riesgo = "critico"
+            elif len(alertas) >= 3: riesgo = "alto"
+            elif alertas: riesgo = "medio"
 
-    # Generar interpretación médica
-    prompt_interp = f"""Como médico experto, interpreta estos resultados de examen médico.
+            yield _sse({"step": "interp", "msg": f"Interpretando {len(indicadores)} indicadores..."})
+
+            prompt_interp = f"""Como médico experto, interpreta estos resultados de examen médico.
 
 TIPO DE EXAMEN: {ocr_data.get('tipo_examen', tipo)}
 INDICADORES:
@@ -414,72 +396,64 @@ Genera una interpretación médica completa en JSON:
   "seguimiento": "cuándo y con qué especialista debe consultar"
 }}"""
 
-    try:
-        resp2 = cliente.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=4000,
-            messages=[{"role":"user","content":prompt_interp}]
-        )
-        raw2 = re.sub(r"```json\s*|\s*```", "", resp2.content[0].text.strip()).strip()
-        interp_data = json.loads(raw2)
-    except Exception:
-        interp_data = {
-            "resumen": "Análisis completado. Revise los indicadores detallados.",
-            "interpretacion": "Se han extraído los indicadores del examen. Consulte con su médico para una interpretación personalizada.",
-            "recomendaciones": [],
-            "alertas_principales": [f"{i['nombre']}: {i['valor']}" for i in alertas],
-            "puntos_positivos": [],
-            "seguimiento": "Consulte con su médico tratante."
-        }
+            raw2_parts = []
+            with cliente.messages.stream(
+                model="claude-opus-4-6",
+                max_tokens=4000,
+                messages=[{"role":"user","content":prompt_interp}]
+            ) as stream2:
+                for text in stream2.text_stream:
+                    raw2_parts.append(text)
+                    if len("".join(raw2_parts)) % 200 < 5:
+                        yield _sse({"step": "interp_progress", "msg": "Generando interpretación médica..."})
 
-    # Guardar en DB
-    with get_db() as db:
-        cur = db.execute("""
-            INSERT INTO examenes (titulo, tipo, fecha_examen, laboratorio, imagen_path,
-                                  texto_extraido, interpretacion, resumen, estado, riesgo)
-            VALUES (?,?,?,?,?,?,?,?,?,?)
-        """, (
-            titulo,
-            ocr_data.get("tipo_examen", tipo),
-            ocr_data.get("fecha",""),
-            ocr_data.get("laboratorio",""),
-            nombre_archivo,
-            ocr_data.get("texto_completo",""),
-            interp_data.get("interpretacion",""),
-            interp_data.get("resumen",""),
-            "analizado",
-            riesgo
-        ))
-        eid = cur.lastrowid
+            try:
+                raw2 = re.sub(r"```json\s*|\s*```", "", "".join(raw2_parts).strip()).strip()
+                interp_data = json.loads(raw2)
+            except Exception:
+                interp_data = {
+                    "resumen": "Análisis completado.",
+                    "interpretacion": "Revise los indicadores detallados y consulte con su médico.",
+                    "recomendaciones": [],
+                    "alertas_principales": [f"{i['nombre']}: {i['valor']}" for i in alertas],
+                    "puntos_positivos": [],
+                    "seguimiento": "Consulte con su médico tratante."
+                }
 
-        for ind in indicadores:
-            db.execute("""
-                INSERT INTO indicadores (examen_id, nombre, valor, unidad, rango_ref,
-                                         rango_min, rango_max, estado, descripcion)
-                VALUES (?,?,?,?,?,?,?,?,?)
-            """, (
-                eid, ind.get("nombre",""), str(ind.get("valor","")),
-                ind.get("unidad",""), ind.get("rango_ref",""),
-                ind.get("rango_min"), ind.get("rango_max"),
-                ind.get("estado","normal"), ind.get("descripcion","")
-            ))
+            yield _sse({"step": "saving", "msg": "Guardando resultados..."})
 
-        for rec in interp_data.get("recomendaciones",[]):
-            db.execute("""
-                INSERT INTO recomendaciones (examen_id, tipo, titulo, descripcion, prioridad)
-                VALUES (?,?,?,?,?)
-            """, (eid, rec.get("tipo","general"), rec.get("titulo",""),
-                  rec.get("descripcion",""), rec.get("prioridad","media")))
+            with get_db() as db:
+                cur = db.execute("""
+                    INSERT INTO examenes (titulo, tipo, fecha_examen, laboratorio, imagen_path,
+                                          texto_extraido, interpretacion, resumen, estado, riesgo)
+                    VALUES (?,?,?,?,?,?,?,?,?,?)
+                """, (titulo, ocr_data.get("tipo_examen",tipo), ocr_data.get("fecha",""),
+                      ocr_data.get("laboratorio",""), nombre_archivo, "",
+                      interp_data.get("interpretacion",""), interp_data.get("resumen",""),
+                      "analizado", riesgo))
+                eid = cur.lastrowid
 
-        # Crear conversación inicial
-        conv_cur = db.execute(
-            "INSERT INTO conversaciones (examen_id, titulo) VALUES (?,?)",
-            (eid, f"Dr. VitalIA — {titulo}")
-        )
-        conv_id = conv_cur.lastrowid
+                for ind in indicadores:
+                    db.execute("""INSERT INTO indicadores
+                        (examen_id,nombre,valor,unidad,rango_ref,rango_min,rango_max,estado,descripcion)
+                        VALUES (?,?,?,?,?,?,?,?,?)""",
+                        (eid, ind.get("nombre",""), str(ind.get("valor","")),
+                         ind.get("unidad",""), ind.get("rango_ref",""),
+                         ind.get("rango_min"), ind.get("rango_max"),
+                         ind.get("estado","normal"), ind.get("descripcion","")))
 
-        # Mensaje inicial del Dr. con el resumen
-        saludo = f"""🩺 **Hola, soy el Dr. VitalIA**
+                for rec in interp_data.get("recomendaciones",[]):
+                    db.execute("""INSERT INTO recomendaciones
+                        (examen_id,tipo,titulo,descripcion,prioridad) VALUES (?,?,?,?,?)""",
+                        (eid, rec.get("tipo","general"), rec.get("titulo",""),
+                         rec.get("descripcion",""), rec.get("prioridad","media")))
+
+                conv_cur = db.execute(
+                    "INSERT INTO conversaciones (examen_id,titulo) VALUES (?,?)",
+                    (eid, f"Dr. VitalIA — {titulo}"))
+                conv_id = conv_cur.lastrowid
+
+                saludo = f"""🩺 **Hola, soy el Dr. VitalIA**
 
 He analizado tu **{ocr_data.get('tipo_examen', titulo)}** y tengo los resultados listos.
 
@@ -493,23 +467,24 @@ He analizado tu **{ocr_data.get('tipo_examen', titulo)}** y tengo los resultados
 ⚠️ *Recuerda que este análisis es orientativo. Siempre consulta con tu médico tratante para un diagnóstico definitivo.*
 
 ¿Tienes alguna pregunta sobre tus resultados? Estoy aquí para ayudarte. 💙"""
+                db.execute("INSERT INTO mensajes (conversacion_id,rol,contenido) VALUES (?,?,?)",
+                           (conv_id, "assistant", saludo))
+                db.commit()
 
-        db.execute(
-            "INSERT INTO mensajes (conversacion_id, rol, contenido) VALUES (?,?,?)",
-            (conv_id, "assistant", saludo)
-        )
-        db.commit()
+            yield _sse({"step": "done", "ok": True, "examen_id": eid,
+                        "conversacion_id": conv_id, "resumen": interp_data.get("resumen",""),
+                        "riesgo": riesgo, "num_indicadores": len(indicadores),
+                        "alertas": len(alertas), "criticos": len(criticos)})
 
-    return jsonify({
-        "ok": True,
-        "examen_id": eid,
-        "conversacion_id": conv_id,
-        "resumen": interp_data.get("resumen",""),
-        "riesgo": riesgo,
-        "num_indicadores": len(indicadores),
-        "alertas": len(alertas),
-        "criticos": len(criticos)
-    })
+        except Exception as e:
+            import traceback
+            print("[VitalIA ERROR]", traceback.format_exc())
+            yield _sse({"step": "error", "error": str(e)})
+
+    return Response(stream_with_context(generate()),
+                    mimetype="text/event-stream",
+                    headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
+
 
 # ── API: Chat con Dr. VitalIA ─────────────────────────────────────────────────
 @app.route("/api/chat", methods=["POST"])

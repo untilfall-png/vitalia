@@ -773,27 +773,58 @@ async function analyzeExam() {
 
   const title = document.getElementById('exam-title').value.trim() || 'Examen médico';
   const tipo  = document.getElementById('exam-tipo').value;
+  const loadingEl = document.getElementById('analyze-loading');
+  const btnEl = document.getElementById('analyze-btn');
 
-  document.getElementById('analyze-btn').style.display = 'none';
-  document.getElementById('analyze-loading').style.display = 'block';
+  btnEl.style.display = 'none';
+  loadingEl.style.display = 'block';
 
   const fd = new FormData();
   fd.append('imagen', selectedFile);
   fd.append('titulo', title);
   fd.append('tipo', tipo);
 
+  const setMsg = (msg) => {
+    const span = loadingEl.querySelector('span') || loadingEl;
+    if (span.querySelector) { const s = loadingEl.querySelector('span'); if(s) s.textContent = msg; }
+  };
+
   try {
+    // Usar fetch + ReadableStream para consumir SSE sin corte de timeout
     const r = await fetch('/api/analizar', { method: 'POST', body: fd });
-    const text = await r.text();
-    let d;
-    try { d = JSON.parse(text); }
-    catch { throw new Error(`Error ${r.status}: ${text.replace(/<[^>]+>/g,'').trim().slice(0,200)}`); }
-    if (d.error) throw new Error(d.error);
+    if (!r.ok) {
+      const t = await r.text();
+      throw new Error(`Error ${r.status}: ${t.replace(/<[^>]+>/g,'').trim().slice(0,200)}`);
+    }
 
-    toast(`✅ Análisis completado — ${d.num_indicadores} indicadores detectados`);
-    await openExamen(d.examen_id);
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let resultado = null;
 
-    // Reset upload
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // última línea incompleta
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const ev = JSON.parse(line.slice(6));
+          if (ev.step === 'error') throw new Error(ev.error);
+          if (ev.msg) setMsg(ev.msg);
+          if (ev.step === 'done') resultado = ev;
+        } catch(e) { if (e.message !== 'Unexpected end of JSON input') throw e; }
+      }
+    }
+
+    if (!resultado) throw new Error('El análisis no devolvió resultado');
+
+    toast(`✅ Análisis completado — ${resultado.num_indicadores} indicadores detectados`);
+    await openExamen(resultado.examen_id);
+
     selectedFile = null;
     document.getElementById('upload-input').value = '';
     document.getElementById('upload-preview').style.display = 'none';
@@ -802,9 +833,9 @@ async function analyzeExam() {
   } catch (err) {
     toast('❌ ' + err.message);
   } finally {
-    document.getElementById('analyze-btn').style.display = 'block';
-    document.getElementById('analyze-loading').style.display = 'none';
-    document.getElementById('analyze-btn').disabled = false;
+    btnEl.style.display = 'block';
+    loadingEl.style.display = 'none';
+    btnEl.disabled = false;
     loadStats(); loadExamenes();
   }
 }
