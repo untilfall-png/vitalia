@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://js.stripe.com/v3/"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -357,6 +358,89 @@
     .risk-banner-text h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; }
     .risk-banner-text p { font-size: 13px; color: var(--text2); margin-top: 2px; }
 
+    /* ── ADMIN BADGE ── */
+    .admin-badge {
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 12px; border-radius: 20px; margin: 0 8px 8px;
+      background: linear-gradient(135deg, rgba(139,92,246,0.18), rgba(14,165,233,0.12));
+      border: 1px solid rgba(139,92,246,0.35);
+      font-size: 11px; font-weight: 700; color: var(--accent);
+      letter-spacing: .4px; text-transform: uppercase;
+    }
+    .admin-badge-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0;
+      box-shadow: 0 0 6px var(--accent); animation: pulse 2s infinite;
+    }
+    .admin-no-pay {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px; border-radius: 10px; margin-bottom: 14px;
+      background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3);
+      font-size: 12px; color: var(--accent); line-height: 1.5;
+    }
+
+    /* ── USER FOOTER ── */
+    .user-footer {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      background: var(--glass); margin-bottom: 10px;
+    }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0; font-weight: 700; color: #fff;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .user-name { font-size: 13px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .logout-btn {
+      background: none; border: none; color: var(--text3);
+      cursor: pointer; padding: 4px; border-radius: 6px;
+      transition: color .15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logout-btn:hover { color: var(--danger); }
+
+    /* ── PAYMENT MODAL ── */
+    .payment-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3);
+      color: var(--secondary); padding: 6px 14px; border-radius: 20px;
+      font-size: 12px; font-weight: 700; margin-bottom: 20px;
+    }
+    .stripe-element-wrap {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px; margin-bottom: 20px;
+      transition: border-color .2s;
+    }
+    .stripe-element-wrap:focus-within { border-color: var(--primary); }
+    .pay-btn {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff; border: none; border-radius: 12px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: all .2s;
+      box-shadow: 0 0 20px rgba(16,185,129,0.3);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .pay-btn:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(16,185,129,0.5); }
+    .pay-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .pay-error {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5; padding: 10px 14px; border-radius: 10px;
+      font-size: 13px; margin-bottom: 14px; display: none;
+    }
+    .pay-info {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--text2); margin-top: 12px;
+    }
+    .dev-mode-box {
+      background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 10px; padding: 12px 14px; font-size: 12px;
+      color: var(--warning); margin-bottom: 16px; line-height: 1.6;
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
       .sidebar { position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; transform: translateX(-100%); }
@@ -414,6 +498,19 @@
     </div>
 
     <div class="sidebar-footer">
+      {% if es_admin %}
+      <div class="admin-badge">
+        <div class="admin-badge-dot"></div>
+        Modo Admin · Sin cobros
+      </div>
+      {% endif %}
+      <div class="user-footer">
+        <div class="user-avatar" id="user-avatar-initial">{{ (usuario_nombre or 'U')[0].upper() }}</div>
+        <div class="user-name" title="{{ usuario_nombre }}">{{ usuario_nombre }}</div>
+        <a href="/logout" class="logout-btn" title="Cerrar sesión">
+          <i data-lucide="log-out" style="width:15px;height:15px;"></i>
+        </a>
+      </div>
       <div class="api-status" id="api-status-box">
         <div class="api-dot {{ 'ok' if api_key_ok else 'fail' }}" id="api-dot"></div>
         <span id="api-status-text">{{ 'IA conectada' if api_key_ok else 'API key requerida' }}</span>
@@ -537,10 +634,21 @@
               <input type="file" id="upload-input" accept="image/*,application/pdf" onchange="handleUpload(event)"/>
             </div>
 
-            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="analyzeExam()" disabled style="padding:14px;">
+            {% if es_admin %}
+            <div class="admin-no-pay">
+              <i data-lucide="shield-check" style="width:15px;height:15px;flex-shrink:0;"></i>
+              Cuenta admin — análisis sin costo
+            </div>
+            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="analyzeExamAdmin()" disabled style="padding:14px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
               <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
-              Analizar con Dr. VitalIA
+              Analizar con Dr. VitalIA (Admin · Sin cobro)
             </button>
+            {% else %}
+            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="startPaymentFlow()" disabled style="padding:14px;">
+              <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
+              Analizar con Dr. VitalIA — $3.00 USD
+            </button>
+            {% endif %}
             <div id="analyze-loading" style="display:none;">
               <div class="spinner"></div>
               <p style="text-align:center;color:var(--text2);font-size:13px;margin-top:-12px;">Analizando tu examen con IA… esto puede tomar unos segundos</p>
@@ -600,6 +708,50 @@
   </div><!-- /main -->
 </div><!-- /app-layout -->
 
+<!-- ═══ MODAL: Pago ═══ -->
+<div class="modal-overlay" id="modal-pago">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title">💳 Pago seguro</div>
+
+    <div class="payment-badge">🔒 Pago procesado por Stripe · SSL</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding:14px 16px;background:var(--glass);border-radius:12px;border:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;color:var(--text2);">Análisis de examen médico con IA</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;margin-top:2px;">$3.00 USD</div>
+      </div>
+      <div style="font-size:32px;">🩺</div>
+    </div>
+
+    <!-- Dev mode notice -->
+    <div class="dev-mode-box" id="dev-mode-notice" style="display:none;">
+      ⚠️ <strong>Modo desarrollo:</strong> Stripe no configurado. El pago será simulado automáticamente. Configura <code>STRIPE_SECRET_KEY</code> y <code>STRIPE_PUBLISHABLE_KEY</code> para pagos reales.
+    </div>
+
+    <!-- Stripe card element -->
+    <div id="stripe-card-container" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Número de tarjeta</label>
+        <div class="stripe-element-wrap" id="stripe-card-element"></div>
+      </div>
+      <div class="pay-error" id="pay-error"></div>
+    </div>
+
+    <button class="pay-btn" id="pay-btn" onclick="confirmPayment()">
+      <i data-lucide="lock" style="width:15px;height:15px;"></i>
+      Pagar $3.00 y analizar examen
+    </button>
+
+    <div class="pay-info">
+      <i data-lucide="shield-check" style="width:13px;height:13px;flex-shrink:0;"></i>
+      Tus datos de pago son procesados directamente por Stripe. VitalIA nunca almacena tu tarjeta.
+    </div>
+
+    <button class="btn btn-ghost btn-block" style="margin-top:14px;" onclick="closeModal('modal-pago')">Cancelar</button>
+  </div>
+</div>
+
 <!-- ═══ MODAL: Perfil ═══ -->
 <div class="modal-overlay" id="modal-perfil">
   <div class="modal">
@@ -644,7 +796,15 @@ let state = {
   currentConvId: null,
   currentExamenId: null,
   apiKeyOk: {{ 'true' if api_key_ok else 'false' }},
-  chatStreaming: false
+  chatStreaming: false,
+  stripeConfigured: {{ 'true' if stripe_configured else 'false' }},
+  stripePK: '{{ stripe_pk }}',
+  examPrice: {{ exam_price }},
+  pendingPaymentIntentId: null,
+  stripeInstance: null,
+  stripeElements: null,
+  stripeCardElement: null,
+  esAdmin: {{ 'true' if es_admin else 'false' }}
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -652,6 +812,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStats();
   loadExamenes();
   loadPerfil();
+  initStripe();
 });
 
 // ════════════════════════════════════════════
@@ -754,6 +915,29 @@ function examCard(e) {
 }
 
 // ════════════════════════════════════════════
+// STRIPE INIT
+// ════════════════════════════════════════════
+function initStripe() {
+  if (state.stripeConfigured && state.stripePK) {
+    try {
+      state.stripeInstance = Stripe(state.stripePK);
+    } catch(e) {
+      console.warn('Stripe init failed:', e);
+    }
+  }
+}
+
+// ════════════════════════════════════════════
+// ADMIN: análisis sin pago
+// ════════════════════════════════════════════
+async function analyzeExamAdmin() {
+  if (!selectedFile) return;
+  if (!state.apiKeyOk) { openModal('modal-config'); toast('⚠️ Configura tu API Key primero'); return; }
+  // Admin envía directamente sin payment_intent_id; el servidor lo genera internamente
+  await analyzeExam('__admin__');
+}
+
+// ════════════════════════════════════════════
 // UPLOAD & ANALYZE
 // ════════════════════════════════════════════
 let selectedFile = null;
@@ -767,9 +951,126 @@ function handleUpload(e) {
   document.getElementById('analyze-btn').disabled = false;
 }
 
-async function analyzeExam() {
+// ── Paso 1: iniciar flujo de pago ──────────────────────────────────────────
+async function startPaymentFlow() {
   if (!selectedFile) return;
   if (!state.apiKeyOk) { openModal('modal-config'); toast('⚠️ Configura tu API Key primero'); return; }
+
+  // Crear PaymentIntent en el servidor
+  const payBtn = document.getElementById('pay-btn');
+  payBtn.disabled = true;
+  payBtn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;"></span>Preparando pago...';
+
+  try {
+    const res = await fetch('/api/crear-pago', { method: 'POST', headers: {'Content-Type':'application/json'} });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    state.pendingPaymentIntentId = data.payment_intent_id;
+
+    const devNotice = document.getElementById('dev-mode-notice');
+    const cardContainer = document.getElementById('stripe-card-container');
+
+    if (data.dev_mode) {
+      // Modo desarrollo: sin tarjeta real
+      devNotice.style.display = 'block';
+      cardContainer.style.display = 'none';
+      payBtn.innerHTML = '<i data-lucide="zap" style="width:15px;height:15px;"></i> Simular pago y analizar';
+    } else {
+      // Modo producción: montar Stripe Elements
+      devNotice.style.display = 'none';
+      cardContainer.style.display = 'block';
+
+      if (state.stripeInstance && !state.stripeCardElement) {
+        const appearance = {
+          theme: 'night',
+          variables: {
+            colorPrimary: '#0ea5e9',
+            colorBackground: '#1e293b',
+            colorText: '#f1f5f9',
+            colorDanger: '#ef4444',
+            fontFamily: 'Inter, sans-serif',
+            borderRadius: '8px',
+          }
+        };
+        state.stripeElements = state.stripeInstance.elements({ clientSecret: data.client_secret, appearance });
+        state.stripeCardElement = state.stripeElements.create('payment');
+        state.stripeCardElement.mount('#stripe-card-element');
+        state.stripeCardElement._clientSecret = data.client_secret;
+      }
+      payBtn.innerHTML = '<i data-lucide="lock" style="width:15px;height:15px;"></i> Pagar $3.00 y analizar examen';
+    }
+
+    payBtn.disabled = false;
+    lucide.createIcons();
+    openModal('modal-pago');
+
+  } catch (err) {
+    payBtn.disabled = false;
+    payBtn.innerHTML = '<i data-lucide="lock" style="width:15px;height:15px;"></i> Pagar $3.00 y analizar examen';
+    toast('❌ ' + err.message);
+  }
+}
+
+// ── Paso 2: confirmar pago ─────────────────────────────────────────────────
+async function confirmPayment() {
+  const payBtn = document.getElementById('pay-btn');
+  const payErr = document.getElementById('pay-error');
+  payErr.style.display = 'none';
+  payBtn.disabled = true;
+  payBtn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;"></span>Procesando pago...';
+
+  try {
+    const devNotice = document.getElementById('dev-mode-notice');
+    const isDevMode = devNotice.style.display !== 'none';
+
+    if (!isDevMode && state.stripeInstance && state.stripeCardElement) {
+      // Confirmar pago con Stripe
+      const { error } = await state.stripeInstance.confirmPayment({
+        elements: state.stripeElements,
+        confirmParams: { return_url: window.location.href },
+        redirect: 'if_required'
+      });
+
+      if (error) {
+        payErr.textContent = error.message;
+        payErr.style.display = 'block';
+        payBtn.disabled = false;
+        payBtn.innerHTML = '<i data-lucide="lock" style="width:15px;height:15px;"></i> Reintentar pago';
+        lucide.createIcons();
+        return;
+      }
+    }
+
+    // Verificar pago en servidor
+    const verRes = await fetch(`/api/verificar-pago/${state.pendingPaymentIntentId}`);
+    const verData = await verRes.json();
+    if (!verData.ok) throw new Error('El pago no pudo ser verificado. Intenta de nuevo.');
+
+    // Cerrar modal de pago
+    closeModal('modal-pago');
+    toast('✅ Pago confirmado — iniciando análisis...');
+
+    // Limpiar card element para próximo uso
+    state.stripeCardElement = null;
+    state.stripeElements = null;
+
+    // Ejecutar análisis
+    await analyzeExam(state.pendingPaymentIntentId);
+    state.pendingPaymentIntentId = null;
+
+  } catch (err) {
+    payErr.textContent = err.message;
+    payErr.style.display = 'block';
+    payBtn.disabled = false;
+    payBtn.innerHTML = '<i data-lucide="lock" style="width:15px;height:15px;"></i> Reintentar';
+    lucide.createIcons();
+  }
+}
+
+// ── Paso 3: ejecutar análisis con pago verificado ──────────────────────────
+async function analyzeExam(paymentIntentId) {
+  if (!selectedFile) return;
 
   const title = document.getElementById('exam-title').value.trim() || 'Examen médico';
   const tipo  = document.getElementById('exam-tipo').value;
@@ -780,7 +1081,7 @@ async function analyzeExam() {
   loadingEl.style.display = 'block';
 
   const setMsg = (msg) => {
-    const s = loadingEl.querySelector('span');
+    const s = loadingEl.querySelector('p');
     if (s) s.textContent = msg;
   };
 
@@ -788,6 +1089,10 @@ async function analyzeExam() {
   fd.append('imagen', selectedFile);
   fd.append('titulo', title);
   fd.append('tipo', tipo);
+  // Admin no necesita enviar payment_intent_id; el servidor lo detecta por sesión
+  if (paymentIntentId && paymentIntentId !== '__admin__') {
+    fd.append('payment_intent_id', paymentIntentId);
+  }
 
   try {
     // 1. Iniciar job
@@ -798,7 +1103,7 @@ async function analyzeExam() {
 
     // 2. Polling hasta done/error
     let resultado = null;
-    for (let i = 0; i < 120; i++) {  // máx 4 minutos (120 × 2s)
+    for (let i = 0; i < 120; i++) {  // máx 4 minutos
       await new Promise(res => setTimeout(res, 2000));
       const jr = await fetch(`/api/job/${jobId}`);
       const job = await jr.json();
@@ -822,7 +1127,7 @@ async function analyzeExam() {
   } finally {
     btnEl.style.display = 'block';
     loadingEl.style.display = 'none';
-    btnEl.disabled = false;
+    btnEl.disabled = !selectedFile;
     loadStats(); loadExamenes();
   }
 }
