@@ -772,22 +772,22 @@ def enviar_email_examen(eid):
     except Exception:
         preguntas = []
 
-    # Enviar en background para no bloquear el request
-    def _send():
-        try:
-            _enviar_email_examen(
-                destinatario=email_dest,
-                nombre_paciente=paciente.get("nombre","Paciente"),
-                examen=dict(e),
-                indicadores=[dict(i) for i in indicadores],
-                recomendaciones=[dict(r) for r in recomendaciones],
-                preguntas=preguntas,
-            )
-            print(f"[VitalIA] Email enviado a {email_dest}")
-        except Exception as ex:
-            print(f"[VitalIA] Error email: {ex}")
+    try:
+        _enviar_email_examen(
+            destinatario=email_dest,
+            nombre_paciente=paciente.get("nombre","Paciente"),
+            examen=dict(e),
+            indicadores=[dict(i) for i in indicadores],
+            recomendaciones=[dict(r) for r in recomendaciones],
+            preguntas=preguntas,
+        )
+    except ValueError as ve:
+        return jsonify({"error": str(ve), "smtp_not_configured": True}), 503
+    except Exception as ex:
+        import traceback
+        print(f"[VitalIA] Error email: {traceback.format_exc()}")
+        return jsonify({"error": str(ex)}), 500
 
-    threading.Thread(target=_send, daemon=True).start()
     return jsonify({"ok": True, "enviado_a": email_dest})
 
 
