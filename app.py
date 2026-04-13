@@ -68,7 +68,7 @@ def _detect_gemini_model(api_key: str) -> str:
         return forced
     if not api_key:
         return _GEMINI_CANDIDATES[0]
-    gc = genai.Client(api_key=api_key)
+    gc = genai.Client(api_key=api_key, http_options={"api_version": "v1"})
     for candidate in _GEMINI_CANDIDATES:
         try:
             gc.models.generate_content(model=candidate, contents="hola")
@@ -324,7 +324,7 @@ def get_client():
     return key
 
 def _gemini_client(api_key):
-    return genai.Client(api_key=api_key)
+    return genai.Client(api_key=api_key, http_options={"api_version": "v1"})
 
 def estado_indicador(valor_str, rango_min, rango_max):
     try:
@@ -1188,10 +1188,12 @@ def serve_upload(filename):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    import threading, webbrowser
+    import threading, webbrowser, sys
+    if sys.stdout.encoding and sys.stdout.encoding.lower() not in ("utf-8", "utf8"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sep = "=" * 55
     print(sep)
-    print("  🩺 VitalIA — Dr. Digital")
+    print("  VitalIA -- Dr. Digital")
     print(f"  URL: http://localhost:{PORT}")
     print(sep)
     print("  ACCESO ADMINISTRADOR")
