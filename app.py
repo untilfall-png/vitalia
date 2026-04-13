@@ -76,7 +76,9 @@ def _detect_gemini_model(api_key: str) -> str:
             return candidate
         except Exception as e:
             msg = str(e)
-            if "no longer available" in msg or "NOT_FOUND" in msg or "not found" in msg.lower():
+            if ("no longer available" in msg or "NOT_FOUND" in msg
+                    or "not found" in msg.lower() or "UNAVAILABLE" in msg
+                    or "503" in msg or "high demand" in msg):
                 continue   # probar siguiente
             # Otro error (cuota, auth) — detener búsqueda
             print(f"[VitalIA] Error al probar {candidate}: {msg[:80]}")
@@ -1053,7 +1055,6 @@ INTERPRETACIÓN PREVIA:
         respuesta_completa = ""
         try:
             gc = _gemini_client(cliente)
-            # Construir contents: historial + mensaje actual
             contents = []
             for h in gemini_history:
                 contents.append(genai_types.Content(
@@ -1064,15 +1065,29 @@ INTERPRETACIÓN PREVIA:
                 role="user",
                 parts=[genai_types.Part(text=mensaje)]
             ))
+            cfg = genai_types.GenerateContentConfig(system_instruction=system)
 
-            for chunk in gc.models.generate_content_stream(
-                model=GEMINI_MODEL,
-                contents=contents,
-                config=genai_types.GenerateContentConfig(system_instruction=system)
-            ):
-                if chunk.text:
-                    respuesta_completa += chunk.text
-                    yield f"data: {json.dumps({'text': chunk.text})}\n\n"
+            # Intentar con cada modelo hasta que uno responda (manejo de 503)
+            last_err = None
+            for model_try in _GEMINI_CANDIDATES:
+                try:
+                    for chunk in gc.models.generate_content_stream(
+                        model=model_try, contents=contents, config=cfg
+                    ):
+                        if chunk.text:
+                            respuesta_completa += chunk.text
+                            yield f"data: {json.dumps({'text': chunk.text})}\n\n"
+                    last_err = None
+                    break
+                except Exception as e:
+                    msg = str(e)
+                    if "UNAVAILABLE" in msg or "503" in msg or "high demand" in msg:
+                        last_err = e
+                        continue
+                    raise
+
+            if last_err:
+                raise last_err
 
             with get_db() as db:
                 db.execute("INSERT INTO mensajes (conversacion_id, rol, contenido) VALUES (?,?,?)",
