@@ -487,6 +487,9 @@ def landing():
 @login_required
 def app_main():
     paciente = get_current_paciente()
+    if not paciente:
+        session.clear()
+        return redirect(url_for("login"))
     with get_db() as db:
         examenes = db.execute("""
             SELECT e.*, COUNT(i.id) as num_indicadores,
@@ -531,6 +534,8 @@ def paciente_endpoint():
 @login_required
 def listar_examenes():
     paciente = get_current_paciente()
+    if not paciente:
+        return jsonify({"examenes": []})
     with get_db() as db:
         rows = db.execute("""
             SELECT e.*, COUNT(i.id) as num_indicadores,
@@ -547,6 +552,8 @@ def listar_examenes():
 @login_required
 def get_examen(eid):
     paciente = get_current_paciente()
+    if not paciente:
+        return jsonify({"error": "No encontrado"}), 404
     with get_db() as db:
         e = db.execute("SELECT * FROM examenes WHERE id=? AND paciente_id=?",
                        (eid, paciente["id"])).fetchone()
@@ -566,6 +573,8 @@ def get_examen(eid):
 @login_required
 def eliminar_examen(eid):
     paciente = get_current_paciente()
+    if not paciente:
+        return jsonify({"error": "No encontrado"}), 404
     with get_db() as db:
         e = db.execute("SELECT id FROM examenes WHERE id=? AND paciente_id=?",
                        (eid, paciente["id"])).fetchone()
