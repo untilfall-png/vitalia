@@ -785,7 +785,9 @@ async function analyzeExam() {
   try {
     const r = await fetch('/api/analizar', { method: 'POST', body: fd });
     const text = await r.text();
-    let d; try { d = JSON.parse(text); } catch { throw new Error('Respuesta inválida del servidor'); }
+    let d;
+    try { d = JSON.parse(text); }
+    catch { throw new Error(`Error ${r.status}: ${text.replace(/<[^>]+>/g,'').trim().slice(0,200)}`); }
     if (d.error) throw new Error(d.error);
 
     toast(`✅ Análisis completado — ${d.num_indicadores} indicadores detectados`);
