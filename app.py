@@ -84,7 +84,7 @@ def _detect_gemini_model(api_key: str) -> str:
             print(f"[VitalIA] Error al probar {candidate}: {msg[:80]}")
             break
     print("[VitalIA] Usando candidato por defecto")
-    return _GEMINI_CANDIDATES[0]
+    return "gemini-2.0-flash"
 
 GEMINI_MODEL = _detect_gemini_model(GOOGLE_API_KEY)
 MAX_MB = 20
@@ -1087,7 +1087,8 @@ INTERPRETACIÓN PREVIA:
                     break
                 except Exception as e:
                     msg = str(e)
-                    if "UNAVAILABLE" in msg or "503" in msg or "high demand" in msg:
+                    if ("UNAVAILABLE" in msg or "503" in msg or "high demand" in msg
+                            or "NOT_FOUND" in msg or "not found" in msg.lower()):
                         last_err = e
                         continue
                     raise
