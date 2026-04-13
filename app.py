@@ -1073,9 +1073,11 @@ INTERPRETACIÓN PREVIA:
                 role="user", parts=[genai_types.Part(text=system)]
             ))
 
-            # Intentar con cada modelo hasta que uno responda (manejo de 503)
+            # Usar modelo detectado al inicio; solo hacer fallback en 503 transitorio
+            fallback_models = [m for m in _GEMINI_CANDIDATES if m != GEMINI_MODEL]
+            models_to_try = [GEMINI_MODEL] + fallback_models
             last_err = None
-            for model_try in _GEMINI_CANDIDATES:
+            for model_try in models_to_try:
                 try:
                     for chunk in gc.models.generate_content_stream(
                         model=model_try, contents=contents
@@ -1087,8 +1089,7 @@ INTERPRETACIÓN PREVIA:
                     break
                 except Exception as e:
                     msg = str(e)
-                    if ("UNAVAILABLE" in msg or "503" in msg or "high demand" in msg
-                            or "NOT_FOUND" in msg or "not found" in msg.lower()):
+                    if "UNAVAILABLE" in msg or "503" in msg or "high demand" in msg:
                         last_err = e
                         continue
                     raise
