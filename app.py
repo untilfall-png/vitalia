@@ -2,10 +2,14 @@
 VitalIA — Dr. Digital
 Análisis inteligente de exámenes médicos con IA
 """
-import os, sys, json, sqlite3, base64, re, uuid
+import os, sys, json, sqlite3, base64, re, uuid, threading
 from pathlib import Path
 from datetime import datetime
 from functools import wraps
+
+# ── In-memory job store ───────────────────────────────────────────────────────
+_jobs: dict = {}   # job_id → {"status": "pending|done|error", "result": {...}}
+_jobs_lock = threading.Lock()
 
 from flask import (Flask, render_template, request, jsonify,
                    Response, stream_with_context, redirect, url_for)
@@ -287,50 +291,27 @@ def eliminar_examen(eid):
 def _sse(data: dict) -> str:
     return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
-@app.route("/api/analizar", methods=["GET", "POST"])
-def analizar_examen():
-    if request.method == "GET":
-        return jsonify({"error": "Usa POST para enviar un examen"}), 405
+def _run_analisis(job_id, ruta, ext, titulo, tipo, api_key):
+    """Corre el análisis completo en background y guarda resultado en _jobs."""
+    def update(status, **kw):
+        with _jobs_lock:
+            _jobs[job_id] = {"status": status, **kw}
 
-    # Capturar datos del request antes del stream
     try:
-        cliente = get_client()
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        update("pending", msg="Leyendo archivo...")
+        cliente = anthropic.Anthropic(api_key=api_key)
 
-    if "imagen" not in request.files:
-        return jsonify({"error": "No se recibió imagen"}), 400
+        with open(ruta, "rb") as fh:
+            img_b64 = base64.standard_b64encode(fh.read()).decode()
 
-    f = request.files["imagen"]
-    titulo = request.form.get("titulo", "Examen médico").strip() or "Examen médico"
-    tipo   = request.form.get("tipo", "sangre")
+        if ext == ".pdf":
+            file_block = {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": img_b64}}
+        else:
+            mt = {".jpg":"image/jpeg",".jpeg":"image/jpeg",".png":"image/png",".webp":"image/webp"}
+            file_block = {"type": "image", "source": {"type": "base64", "media_type": mt.get(ext,"image/jpeg"), "data": img_b64}}
 
-    ext = Path(f.filename).suffix.lower() if f.filename else ".jpg"
-    if not ext: ext = ".jpg"
-    if ext not in ALLOWED_EXT:
-        return jsonify({"error": f"Formato no soportado: {ext}"}), 400
-
-    nombre_archivo = f"{uuid.uuid4().hex}{ext}"
-    ruta = UPLOAD_DIR / nombre_archivo
-    f.save(str(ruta))
-
-    def generate():
-        import threading, queue as _queue
-        q = _queue.Queue()  # canal para pasar resultados del hilo al generador
-
-        def run_analysis():
-            try:
-                with open(ruta, "rb") as fh:
-                    img_b64 = base64.standard_b64encode(fh.read()).decode()
-
-                is_pdf = (ext == ".pdf")
-                if is_pdf:
-                    file_block = {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": img_b64}}
-                else:
-                    mt = {".jpg":"image/jpeg",".jpeg":"image/jpeg",".png":"image/png",".webp":"image/webp"}
-                    file_block = {"type": "image", "source": {"type": "base64", "media_type": mt.get(ext,"image/jpeg"), "data": img_b64}}
-
-                prompt_ocr = """Analiza este examen médico/laboratorio y extrae todos los indicadores.
+        update("pending", msg="Extrayendo indicadores con visión IA...")
+        prompt_ocr = """Analiza este examen médico/laboratorio y extrae todos los indicadores.
 
 Responde ÚNICAMENTE con este JSON compacto (sin markdown, sin texto adicional, sin campos extra):
 {"tipo_examen":"","laboratorio":"","fecha":"","paciente_info":"","observaciones_laboratorio":"","indicadores":[{"nombre":"","valor":"","unidad":"","rango_ref":"","rango_min":null,"rango_max":null,"estado":"normal","descripcion":""}]}
@@ -343,65 +324,26 @@ Reglas:
 - Valores aproximados: agrega "~" al inicio (ej: "~12.5")
 - NO incluyas el campo texto_completo"""
 
-                q.put(("progress", "Extrayendo indicadores con visión IA..."))
-                resp_ocr = cliente.messages.create(
-                    model="claude-opus-4-6",
-                    max_tokens=16000,
-                    messages=[{"role":"user","content":[file_block,{"type":"text","text":prompt_ocr}]}]
-                )
-                raw = re.sub(r"```json\s*|\s*```", "", resp_ocr.content[0].text.strip()).strip()
-                q.put(("ocr_raw", raw))
-            except Exception as e:
-                import traceback; print("[VitalIA OCR ERROR]", traceback.format_exc())
-                q.put(("error", str(e)))
-
-        # Lanzar análisis en hilo separado
-        t = threading.Thread(target=run_analysis, daemon=True)
-        t.start()
-
+        resp_ocr = cliente.messages.create(
+            model="claude-opus-4-6", max_tokens=16000,
+            messages=[{"role":"user","content":[file_block,{"type":"text","text":prompt_ocr}]}]
+        )
+        raw = re.sub(r"```json\s*|\s*```", "", resp_ocr.content[0].text.strip()).strip()
         try:
-            yield _sse({"step": "ocr", "msg": "Leyendo examen con visión IA..."})
+            ocr_data = json.loads(raw)
+        except json.JSONDecodeError:
+            idx = raw.rfind("},")
+            if idx == -1: idx = raw.rfind("}")
+            ocr_data = json.loads(raw[:idx+1] + "]}") if idx != -1 else \
+                       {"tipo_examen":tipo,"laboratorio":"","fecha":"","paciente_info":"","indicadores":[],"observaciones_laboratorio":""}
 
-            # Esperar resultado del OCR, enviando heartbeats cada 5s
-            raw = None
-            while t.is_alive() or not q.empty():
-                try:
-                    kind, val = q.get(timeout=5)
-                    if kind == "error":
-                        yield _sse({"step": "error", "error": val})
-                        return
-                    if kind == "progress":
-                        yield _sse({"step": "ocr_progress", "msg": val})
-                    if kind == "ocr_raw":
-                        raw = val
-                        break
-                except _queue.Empty:
-                    yield _sse({"step": "ocr_progress", "msg": "Analizando examen..."})
+        indicadores = ocr_data.get("indicadores", [])
+        alertas  = [i for i in indicadores if i.get("estado") in ("alto","bajo","critico")]
+        criticos = [i for i in indicadores if i.get("estado") == "critico"]
+        riesgo = "critico" if criticos else ("alto" if len(alertas)>=3 else ("medio" if alertas else "normal"))
 
-            if raw is None:
-                yield _sse({"step": "error", "error": "No se recibió respuesta del OCR"}); return
-            try:
-                ocr_data = json.loads(raw)
-            except json.JSONDecodeError:
-                idx = raw.rfind("},")
-                if idx == -1: idx = raw.rfind("}")
-                if idx != -1:
-                    try: ocr_data = json.loads(raw[:idx+1] + "]}")
-                    except: ocr_data = {"tipo_examen":tipo,"laboratorio":"","fecha":"","paciente_info":"","indicadores":[],"observaciones_laboratorio":""}
-                else:
-                    ocr_data = {"tipo_examen":tipo,"laboratorio":"","fecha":"","paciente_info":"","indicadores":[],"observaciones_laboratorio":""}
-
-            indicadores = ocr_data.get("indicadores", [])
-            alertas  = [i for i in indicadores if i.get("estado") in ("alto","bajo","critico")]
-            criticos = [i for i in indicadores if i.get("estado") == "critico"]
-            riesgo = "normal"
-            if criticos: riesgo = "critico"
-            elif len(alertas) >= 3: riesgo = "alto"
-            elif alertas: riesgo = "medio"
-
-            yield _sse({"step": "interp", "msg": f"Interpretando {len(indicadores)} indicadores..."})
-
-            prompt_interp = f"""Como médico experto, interpreta estos resultados de examen médico.
+        update("pending", msg=f"Interpretando {len(indicadores)} indicadores...")
+        prompt_interp = f"""Como médico experto, interpreta estos resultados de examen médico.
 
 TIPO DE EXAMEN: {ocr_data.get('tipo_examen', tipo)}
 INDICADORES:
@@ -421,78 +363,54 @@ Genera una interpretación médica completa en JSON:
   "seguimiento": "cuándo y con qué especialista debe consultar"
 }}"""
 
-            q2 = _queue.Queue()
-            def run_interp():
-                try:
-                    resp2 = cliente.messages.create(
-                        model="claude-opus-4-6",
-                        max_tokens=4000,
-                        messages=[{"role":"user","content":prompt_interp}]
-                    )
-                    raw2 = re.sub(r"```json\s*|\s*```", "", resp2.content[0].text.strip()).strip()
-                    q2.put(("ok", raw2))
-                except Exception as ex:
-                    q2.put(("err", str(ex)))
+        try:
+            resp2 = cliente.messages.create(
+                model="claude-opus-4-6", max_tokens=4000,
+                messages=[{"role":"user","content":prompt_interp}]
+            )
+            raw2 = re.sub(r"```json\s*|\s*```", "", resp2.content[0].text.strip()).strip()
+            interp_data = json.loads(raw2)
+        except Exception:
+            interp_data = {
+                "resumen": "Análisis completado.",
+                "interpretacion": "Revise los indicadores detallados y consulte con su médico.",
+                "recomendaciones": [],
+                "alertas_principales": [f"{i['nombre']}: {i['valor']}" for i in alertas],
+                "puntos_positivos": [],
+                "seguimiento": "Consulte con su médico tratante."
+            }
 
-            t2 = threading.Thread(target=run_interp, daemon=True)
-            t2.start()
-            while t2.is_alive() or not q2.empty():
-                try:
-                    kind2, val2 = q2.get(timeout=5)
-                    if kind2 == "err":
-                        val2 = None
-                    break
-                except _queue.Empty:
-                    yield _sse({"step": "interp_progress", "msg": "Generando interpretación..."})
-                    val2 = None; kind2 = "err"
+        update("pending", msg="Guardando resultados...")
+        with get_db() as db:
+            cur = db.execute("""INSERT INTO examenes
+                (titulo,tipo,fecha_examen,laboratorio,imagen_path,texto_extraido,interpretacion,resumen,estado,riesgo)
+                VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                (titulo, ocr_data.get("tipo_examen",tipo), ocr_data.get("fecha",""),
+                 ocr_data.get("laboratorio",""), ruta.name, "",
+                 interp_data.get("interpretacion",""), interp_data.get("resumen",""), "analizado", riesgo))
+            eid = cur.lastrowid
 
-            try:
-                interp_data = json.loads(val2) if val2 else {}
-                if not interp_data: raise ValueError("empty")
-            except Exception:
-                interp_data = {
-                    "resumen": "Análisis completado.",
-                    "interpretacion": "Revise los indicadores detallados y consulte con su médico.",
-                    "recomendaciones": [],
-                    "alertas_principales": [f"{i['nombre']}: {i['valor']}" for i in alertas],
-                    "puntos_positivos": [],
-                    "seguimiento": "Consulte con su médico tratante."
-                }
+            for ind in indicadores:
+                db.execute("""INSERT INTO indicadores
+                    (examen_id,nombre,valor,unidad,rango_ref,rango_min,rango_max,estado,descripcion)
+                    VALUES (?,?,?,?,?,?,?,?,?)""",
+                    (eid, ind.get("nombre",""), str(ind.get("valor","")),
+                     ind.get("unidad",""), ind.get("rango_ref",""),
+                     ind.get("rango_min"), ind.get("rango_max"),
+                     ind.get("estado","normal"), ind.get("descripcion","")))
 
-            yield _sse({"step": "saving", "msg": "Guardando resultados..."})
+            for rec in interp_data.get("recomendaciones",[]):
+                db.execute("""INSERT INTO recomendaciones
+                    (examen_id,tipo,titulo,descripcion,prioridad) VALUES (?,?,?,?,?)""",
+                    (eid, rec.get("tipo","general"), rec.get("titulo",""),
+                     rec.get("descripcion",""), rec.get("prioridad","media")))
 
-            with get_db() as db:
-                cur = db.execute("""
-                    INSERT INTO examenes (titulo, tipo, fecha_examen, laboratorio, imagen_path,
-                                          texto_extraido, interpretacion, resumen, estado, riesgo)
-                    VALUES (?,?,?,?,?,?,?,?,?,?)
-                """, (titulo, ocr_data.get("tipo_examen",tipo), ocr_data.get("fecha",""),
-                      ocr_data.get("laboratorio",""), nombre_archivo, "",
-                      interp_data.get("interpretacion",""), interp_data.get("resumen",""),
-                      "analizado", riesgo))
-                eid = cur.lastrowid
+            conv_cur = db.execute(
+                "INSERT INTO conversaciones (examen_id,titulo) VALUES (?,?)",
+                (eid, f"Dr. VitalIA — {titulo}"))
+            conv_id = conv_cur.lastrowid
 
-                for ind in indicadores:
-                    db.execute("""INSERT INTO indicadores
-                        (examen_id,nombre,valor,unidad,rango_ref,rango_min,rango_max,estado,descripcion)
-                        VALUES (?,?,?,?,?,?,?,?,?)""",
-                        (eid, ind.get("nombre",""), str(ind.get("valor","")),
-                         ind.get("unidad",""), ind.get("rango_ref",""),
-                         ind.get("rango_min"), ind.get("rango_max"),
-                         ind.get("estado","normal"), ind.get("descripcion","")))
-
-                for rec in interp_data.get("recomendaciones",[]):
-                    db.execute("""INSERT INTO recomendaciones
-                        (examen_id,tipo,titulo,descripcion,prioridad) VALUES (?,?,?,?,?)""",
-                        (eid, rec.get("tipo","general"), rec.get("titulo",""),
-                         rec.get("descripcion",""), rec.get("prioridad","media")))
-
-                conv_cur = db.execute(
-                    "INSERT INTO conversaciones (examen_id,titulo) VALUES (?,?)",
-                    (eid, f"Dr. VitalIA — {titulo}"))
-                conv_id = conv_cur.lastrowid
-
-                saludo = f"""🩺 **Hola, soy el Dr. VitalIA**
+            saludo = f"""🩺 **Hola, soy el Dr. VitalIA**
 
 He analizado tu **{ocr_data.get('tipo_examen', titulo)}** y tengo los resultados listos.
 
@@ -506,23 +424,62 @@ He analizado tu **{ocr_data.get('tipo_examen', titulo)}** y tengo los resultados
 ⚠️ *Recuerda que este análisis es orientativo. Siempre consulta con tu médico tratante para un diagnóstico definitivo.*
 
 ¿Tienes alguna pregunta sobre tus resultados? Estoy aquí para ayudarte. 💙"""
-                db.execute("INSERT INTO mensajes (conversacion_id,rol,contenido) VALUES (?,?,?)",
-                           (conv_id, "assistant", saludo))
-                db.commit()
+            db.execute("INSERT INTO mensajes (conversacion_id,rol,contenido) VALUES (?,?,?)",
+                       (conv_id, "assistant", saludo))
+            db.commit()
 
-            yield _sse({"step": "done", "ok": True, "examen_id": eid,
-                        "conversacion_id": conv_id, "resumen": interp_data.get("resumen",""),
-                        "riesgo": riesgo, "num_indicadores": len(indicadores),
-                        "alertas": len(alertas), "criticos": len(criticos)})
+        update("done", ok=True, examen_id=eid, conversacion_id=conv_id,
+               resumen=interp_data.get("resumen",""), riesgo=riesgo,
+               num_indicadores=len(indicadores), alertas=len(alertas), criticos=len(criticos))
 
-        except Exception as e:
-            import traceback
-            print("[VitalIA ERROR]", traceback.format_exc())
-            yield _sse({"step": "error", "error": str(e)})
+    except Exception as e:
+        import traceback; print("[VitalIA ERROR]", traceback.format_exc())
+        update("error", error=str(e))
 
-    return Response(stream_with_context(generate()),
-                    mimetype="text/event-stream",
-                    headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
+
+@app.route("/api/analizar", methods=["GET", "POST"])
+def analizar_examen():
+    if request.method == "GET":
+        return jsonify({"error": "Usa POST para enviar un examen"}), 405
+
+    try:
+        api_key = os.environ.get("ANTHROPIC_API_KEY","") or request.headers.get("X-API-Key","")
+        if not api_key: raise ValueError("ANTHROPIC_API_KEY no configurada")
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+    if "imagen" not in request.files:
+        return jsonify({"error": "No se recibió imagen"}), 400
+
+    f = request.files["imagen"]
+    titulo = request.form.get("titulo", "Examen médico").strip() or "Examen médico"
+    tipo   = request.form.get("tipo", "sangre")
+    ext = Path(f.filename).suffix.lower() if f.filename else ".jpg"
+    if not ext: ext = ".jpg"
+    if ext not in ALLOWED_EXT:
+        return jsonify({"error": f"Formato no soportado: {ext}"}), 400
+
+    nombre_archivo = f"{uuid.uuid4().hex}{ext}"
+    ruta = UPLOAD_DIR / nombre_archivo
+    f.save(str(ruta))
+
+    job_id = uuid.uuid4().hex
+    with _jobs_lock:
+        _jobs[job_id] = {"status": "pending", "msg": "Iniciando análisis..."}
+
+    t = threading.Thread(target=_run_analisis, args=(job_id, ruta, ext, titulo, tipo, api_key), daemon=True)
+    t.start()
+
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/api/job/<job_id>", methods=["GET"])
+def get_job(job_id):
+    with _jobs_lock:
+        job = _jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Job no encontrado"}), 404
+    return jsonify(job)
 
 
 # ── API: Chat con Dr. VitalIA ─────────────────────────────────────────────────
