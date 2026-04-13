@@ -1320,7 +1320,8 @@ async function enviarEmailExamen(eid) {
     const r = await fetch(`/api/examenes/${eid}/enviar-email`, {
       method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({})
     });
-    const d = await r.json();
+    let d;
+    try { d = await r.json(); } catch { throw new Error('Error del servidor. Intenta de nuevo.'); }
     if (!r.ok) {
       if (d.smtp_not_configured) {
         toast('⚙️ Email no configurado en el servidor. Contacta al administrador.');

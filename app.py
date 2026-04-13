@@ -765,28 +765,31 @@ def enviar_email_examen(eid):
     if not email_dest or not re.match(r"[^@]+@[^@]+\.[^@]+", email_dest):
         return jsonify({"error": "Email no válido o no configurado en tu perfil."}), 400
 
+    # Verificar SMTP configurado antes de lanzar el hilo
+    if not all([os.environ.get("SMTP_HOST"), os.environ.get("SMTP_USER"), os.environ.get("SMTP_PASSWORD")]):
+        return jsonify({"error": "Email no configurado en el servidor.", "smtp_not_configured": True}), 503
+
     try:
         preguntas = json.loads(dict(e).get("preguntas_doctor") or "[]")
     except Exception:
         preguntas = []
 
-    try:
-        _enviar_email_examen(
-            destinatario=email_dest,
-            nombre_paciente=paciente.get("nombre","Paciente"),
-            examen=dict(e),
-            indicadores=[dict(i) for i in indicadores],
-            recomendaciones=[dict(r) for r in recomendaciones],
-            preguntas=preguntas,
-        )
-    except ValueError as ve:
-        return jsonify({"error": str(ve), "smtp_not_configured": True}), 503
-    except smtplib.SMTPAuthenticationError:
-        return jsonify({"error": "Error de autenticación SMTP. Verifica usuario y contraseña."}), 503
-    except Exception as ex:
-        print(f"[VitalIA] Error email: {ex}")
-        return jsonify({"error": f"No se pudo enviar: {str(ex)}"}), 500
+    # Enviar en background para no bloquear el request
+    def _send():
+        try:
+            _enviar_email_examen(
+                destinatario=email_dest,
+                nombre_paciente=paciente.get("nombre","Paciente"),
+                examen=dict(e),
+                indicadores=[dict(i) for i in indicadores],
+                recomendaciones=[dict(r) for r in recomendaciones],
+                preguntas=preguntas,
+            )
+            print(f"[VitalIA] Email enviado a {email_dest}")
+        except Exception as ex:
+            print(f"[VitalIA] Error email: {ex}")
 
+    threading.Thread(target=_send, daemon=True).start()
     return jsonify({"ok": True, "enviado_a": email_dest})
 
 
