@@ -545,9 +545,10 @@ def _enviar_email_examen(destinatario: str, nombre_paciente: str,
 
 </div></body></html>"""
 
-    import urllib.request
+    import urllib.request, urllib.error
+    resend_from = os.environ.get("RESEND_FROM", "onboarding@resend.dev")
     payload = json.dumps({
-        "from": "VitalIA Dr. Digital <onboarding@resend.dev>",
+        "from": f"VitalIA Dr. Digital <{resend_from}>",
         "to": [destinatario],
         "subject": f"VitalIA — Reporte: {examen.get('titulo','Examen médico')}",
         "html": html,
@@ -558,9 +559,13 @@ def _enviar_email_examen(destinatario: str, nombre_paciente: str,
         headers={"Authorization": f"Bearer {resend_key}", "Content-Type": "application/json"},
         method="POST"
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        result = json.loads(resp.read())
-        print(f"[VitalIA] Email enviado via Resend: {result}")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            result = json.loads(resp.read())
+            print(f"[VitalIA] Email enviado via Resend: {result}")
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="ignore")
+        raise Exception(f"Resend {e.code}: {body}")
 
 
 # ── Rutas: Autenticación ──────────────────────────────────────────────────────
