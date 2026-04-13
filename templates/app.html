@@ -313,17 +313,16 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 11px; font-weight: 700; color: #fff; margin-top: 1px;
     }
-    /* ── BOTÓN EMAIL ── */
-    .btn-email {
+    /* ── BOTÓN REPORTE ── */
+    .btn-reporte {
       background: linear-gradient(135deg,#6c63ff,#a78bfa); color: #fff;
       border: none; border-radius: 12px; padding: 12px 22px;
       font-size: 14px; font-weight: 700; cursor: pointer;
       display: inline-flex; align-items: center; gap: 8px;
       transition: all .2s; box-shadow: 0 0 20px rgba(108,99,255,0.3);
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif; text-decoration: none;
     }
-    .btn-email:hover { transform: translateY(-2px); box-shadow: 0 0 32px rgba(108,99,255,0.5); }
-    .btn-email:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .btn-reporte:hover { transform: translateY(-2px); box-shadow: 0 0 32px rgba(108,99,255,0.5); }
     .chat-input-bar {
       padding: 14px 20px; border-top: 1px solid var(--border);
       background: rgba(10,15,30,0.9); backdrop-filter: blur(12px);
@@ -1277,16 +1276,17 @@ async function openExamen(eid) {
 
       <div class="card">
         <div class="card-header">
-          <span class="card-title"><i data-lucide="mail"></i> Enviar reporte a mi correo</span>
+          <span class="card-title"><i data-lucide="file-down"></i> Descargar reporte</span>
         </div>
         <div class="card-body">
           <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">
-            Recibe el reporte completo en tu email: resumen, tabla de indicadores con colores${preguntas.length ? ', recomendaciones y las preguntas para tu médico' : ' y recomendaciones'}.
+            Descarga el reporte completo en PDF: resumen, tabla de indicadores con colores${preguntas.length ? ', recomendaciones y las preguntas para tu médico.' : ' y recomendaciones.'}
+            Usa <strong style="color:var(--text);">Ctrl+P → Guardar como PDF</strong> en la página que se abre.
           </p>
-          <button class="btn-email" id="btn-send-email" onclick="enviarEmailExamen(${eid})">
-            <i data-lucide="send" style="width:15px;height:15px;"></i>
-            Enviar a mi correo
-          </button>
+          <a class="btn-reporte" href="/api/examenes/${eid}/reporte" target="_blank">
+            <i data-lucide="download" style="width:15px;height:15px;"></i>
+            Ver y descargar reporte
+          </a>
         </div>
       </div>
 
@@ -1308,40 +1308,6 @@ async function openExamen(eid) {
   } catch (err) {
     el.innerHTML = `<div class="empty"><div class="empty-icon">❌</div><div class="empty-title">Error al cargar</div><div class="empty-sub">${err.message}</div></div>`;
   }
-}
-
-async function enviarEmailExamen(eid) {
-  const btn = document.getElementById('btn-send-email');
-  if (!btn || btn.disabled) return;
-  btn.disabled = true;
-  btn.innerHTML = '<i data-lucide="loader-2" style="width:15px;height:15px;animation:spin .8s linear infinite;"></i> Enviando...';
-  lucide.createIcons();
-  try {
-    const r = await fetch(`/api/examenes/${eid}/enviar-email`, {
-      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({})
-    });
-    let d;
-    try { d = await r.json(); } catch { throw new Error('Error del servidor. Intenta de nuevo.'); }
-    if (!r.ok) {
-      if (d.smtp_not_configured) {
-        toast('⚙️ Email no configurado en el servidor. Contacta al administrador.');
-      } else {
-        throw new Error(d.error || 'Error al enviar');
-      }
-      btn.disabled = false;
-      btn.innerHTML = '<i data-lucide="send" style="width:15px;height:15px;"></i> Enviar a mi correo';
-    } else {
-      toast(`✅ Reporte enviado a ${d.enviado_a}`);
-      btn.innerHTML = '<i data-lucide="check" style="width:15px;height:15px;"></i> ¡Enviado!';
-      btn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
-      btn.style.boxShadow = '0 0 20px rgba(16,185,129,0.4)';
-    }
-  } catch (err) {
-    toast('❌ ' + err.message);
-    btn.disabled = false;
-    btn.innerHTML = '<i data-lucide="send" style="width:15px;height:15px;"></i> Enviar a mi correo';
-  }
-  lucide.createIcons();
 }
 
 async function deleteExamen(eid) {

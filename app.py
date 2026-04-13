@@ -2,9 +2,7 @@
 VitalIA — Dr. Digital
 Análisis inteligente de exámenes médicos con IA
 """
-import os, sys, json, sqlite3, base64, re, uuid, threading, smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import os, sys, json, sqlite3, base64, re, uuid, threading
 from pathlib import Path
 from datetime import datetime
 from functools import wraps
@@ -417,13 +415,10 @@ def health():
         "resend_configured": bool(os.environ.get("RESEND_API_KEY")),
     })
 
-# ── Email ────────────────────────────────────────────────────────────────────
-def _enviar_email_examen(destinatario: str, nombre_paciente: str,
-                          examen: dict, indicadores: list,
-                          recomendaciones: list, preguntas: list) -> None:
-    resend_key = os.environ.get("RESEND_API_KEY", "")
-    if not resend_key:
-        raise ValueError("RESEND_API_KEY no configurada.")
+# ── Reporte HTML ──────────────────────────────────────────────────────────────
+def _build_reporte_html(nombre_paciente: str, examen: dict,
+                         indicadores: list, recomendaciones: list,
+                         preguntas: list) -> str:
 
     estado_cfg = {
         "normal":  {"color":"#10b981","bg":"rgba(16,185,129,0.15)","icon":"✅","label":"Normal"},
@@ -481,8 +476,28 @@ def _enviar_email_examen(destinatario: str, nombre_paciente: str,
     fecha_reporte = datetime.now().strftime("%d/%m/%Y %H:%M")
 
     html = f"""<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-<title>Reporte VitalIA</title></head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reporte VitalIA — {examen.get('titulo','Examen')}</title>
+<style>
+  @media print {{
+    .no-print {{ display: none !important; }}
+    body {{ background: white !important; }}
+    * {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+  }}
+  .btn-print {{
+    position: fixed; top: 20px; right: 20px; z-index: 999;
+    background: linear-gradient(135deg,#6c63ff,#a78bfa);
+    color: #fff; border: none; border-radius: 12px;
+    padding: 12px 22px; font-size: 14px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(108,99,255,0.5);
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }}
+  .btn-print:hover {{ opacity: .9; }}
+</style>
+</head>
 <body style="margin:0;padding:0;background:#0a0f1e;font-family:'Segoe UI',Arial,sans-serif;">
+<button class="btn-print no-print" onclick="window.print()">🖨️ Guardar como PDF</button>
 <div style="max-width:660px;margin:0 auto;padding:24px 16px;">
 
   <!-- Header -->
@@ -545,27 +560,7 @@ def _enviar_email_examen(destinatario: str, nombre_paciente: str,
 
 </div></body></html>"""
 
-    import urllib.request, urllib.error
-    resend_from = os.environ.get("RESEND_FROM", "onboarding@resend.dev")
-    payload = json.dumps({
-        "from": f"VitalIA Dr. Digital <{resend_from}>",
-        "to": [destinatario],
-        "subject": f"VitalIA — Reporte: {examen.get('titulo','Examen médico')}",
-        "html": html,
-    }).encode("utf-8")
-    req = urllib.request.Request(
-        "https://api.resend.com/emails",
-        data=payload,
-        headers={"Authorization": f"Bearer {resend_key}", "Content-Type": "application/json"},
-        method="POST"
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            result = json.loads(resp.read())
-            print(f"[VitalIA] Email enviado via Resend: {result}")
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="ignore")
-        raise Exception(f"Resend {e.code}: {body}")
+    return html
 
 
 # ── Rutas: Autenticación ──────────────────────────────────────────────────────
@@ -748,52 +743,32 @@ def get_examen(eid):
     })
 
 
-@app.route("/api/examenes/<int:eid>/enviar-email", methods=["POST"])
+@app.route("/api/examenes/<int:eid>/reporte")
 @login_required
-def enviar_email_examen(eid):
+def reporte_examen(eid):
     paciente = get_current_paciente()
     if not paciente:
-        return jsonify({"error": "Perfil no encontrado"}), 404
+        return "No autorizado", 401
     with get_db() as db:
         e = db.execute("SELECT * FROM examenes WHERE id=? AND paciente_id=?",
                        (eid, paciente["id"])).fetchone()
         if not e:
-            return jsonify({"error": "Examen no encontrado"}), 404
+            return "Examen no encontrado", 404
         indicadores     = db.execute("SELECT * FROM indicadores WHERE examen_id=? ORDER BY id", (eid,)).fetchall()
         recomendaciones = db.execute("SELECT * FROM recomendaciones WHERE examen_id=? ORDER BY prioridad DESC", (eid,)).fetchall()
-
-    d = request.json or {}
-    email_dest = (d.get("email","").strip()
-                  or paciente.get("email","").strip()
-                  or session.get("usuario_email","").strip())
-    if not email_dest or not re.match(r"[^@]+@[^@]+\.[^@]+", email_dest):
-        return jsonify({"error": "Email no válido o no configurado en tu perfil."}), 400
-
-    if not os.environ.get("RESEND_API_KEY"):
-        return jsonify({"error": "Email no configurado en el servidor.", "smtp_not_configured": True}), 503
-
     try:
         preguntas = json.loads(dict(e).get("preguntas_doctor") or "[]")
     except Exception:
         preguntas = []
-
-    try:
-        _enviar_email_examen(
-            destinatario=email_dest,
-            nombre_paciente=paciente.get("nombre","Paciente"),
-            examen=dict(e),
-            indicadores=[dict(i) for i in indicadores],
-            recomendaciones=[dict(r) for r in recomendaciones],
-            preguntas=preguntas,
-        )
-    except ValueError as ve:
-        return jsonify({"error": str(ve), "smtp_not_configured": True}), 503
-    except Exception as ex:
-        import traceback
-        print(f"[VitalIA] Error email: {traceback.format_exc()}")
-        return jsonify({"error": str(ex)}), 500
-
-    return jsonify({"ok": True, "enviado_a": email_dest})
+    html = _build_reporte_html(
+        nombre_paciente=paciente.get("nombre","Paciente"),
+        examen=dict(e),
+        indicadores=[dict(i) for i in indicadores],
+        recomendaciones=[dict(r) for r in recomendaciones],
+        preguntas=preguntas,
+    )
+    from flask import Response as FlaskResponse
+    return FlaskResponse(html, mimetype="text/html")
 
 
 @app.route("/api/examenes/<int:eid>", methods=["DELETE"])
