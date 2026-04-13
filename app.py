@@ -752,7 +752,7 @@ Reglas:
             ocr_data = json.loads(raw[:idx+1] + "]}") if idx != -1 else \
                        {"tipo_examen":tipo,"laboratorio":"","fecha":"","paciente_info":"","indicadores":[],"observaciones_laboratorio":""}
 
-        indicadores = ocr_data.get("indicadores", [])
+        indicadores = [i for i in ocr_data.get("indicadores", []) if i and isinstance(i, dict)]
         alertas  = [i for i in indicadores if i.get("estado") in ("alto","bajo","critico")]
         criticos = [i for i in indicadores if i.get("estado") == "critico"]
         riesgo = "critico" if criticos else ("alto" if len(alertas)>=3 else ("medio" if alertas else "normal"))
@@ -907,6 +907,8 @@ def analizar_examen():
 
     # Guardar en carpeta del paciente
     paciente = get_current_paciente()
+    if not paciente:
+        return jsonify({"error": "Perfil de paciente no encontrado. Por favor cierra sesión y vuelve a ingresar."}), 400
     user_upload_dir = UPLOAD_DIR / str(uid)
     user_upload_dir.mkdir(parents=True, exist_ok=True)
 
@@ -988,6 +990,8 @@ def chat():
         return jsonify({"error": str(e)}), 400
 
     paciente = get_current_paciente()
+    if not paciente:
+        return jsonify({"error": "Sesión expirada. Por favor vuelve a iniciar sesión."}), 401
     with get_db() as db:
         # Verificar que la conversación pertenece al usuario
         conv = db.execute("""
