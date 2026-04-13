@@ -347,6 +347,21 @@ def get_client():
 def _gemini_client(api_key):
     return genai.Client(api_key=api_key, http_options={"api_version": "v1"})
 
+def _generate(gc, contents):
+    """generate_content con fallback automático ante 503/NOT_FOUND."""
+    last_err = None
+    for model in _GEMINI_CANDIDATES:
+        try:
+            return gc.models.generate_content(model=model, contents=contents)
+        except Exception as e:
+            msg = str(e)
+            if ("UNAVAILABLE" in msg or "503" in msg or "high demand" in msg
+                    or "NOT_FOUND" in msg or "not found" in msg.lower()):
+                last_err = e
+                continue
+            raise
+    raise last_err
+
 def estado_indicador(valor_str, rango_min, rango_max):
     try:
         v = float(re.sub(r"[^\d.\-]", "", str(valor_str)))
@@ -965,10 +980,7 @@ Reglas:
 - Valores aproximados: agrega "~" al inicio (ej: "~12.5")
 - NO incluyas el campo texto_completo"""
 
-        resp_ocr = gc.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=[prompt_ocr, file_part]
-        )
+        resp_ocr = _generate(gc, [prompt_ocr, file_part])
 
         raw = re.sub(r"```json\s*|\s*```", "", resp_ocr.text.strip()).strip()
         try:
@@ -1006,7 +1018,7 @@ Genera una interpretacion medica completa en JSON:
 }}"""
 
         try:
-            resp2 = gc.models.generate_content(model=GEMINI_MODEL, contents=prompt_interp)
+            resp2 = _generate(gc, prompt_interp)
             raw2 = re.sub(r"```json\s*|\s*```", "", resp2.text.strip()).strip()
             interp_data = json.loads(raw2)
         except Exception:
@@ -1042,7 +1054,7 @@ Genera entre 5 y 8 preguntas concretas que el paciente debería hacerle a su mé
 Responde ÚNICAMENTE con un JSON array de strings, sin markdown ni texto extra:
 ["pregunta 1", "pregunta 2", ...]"""
             try:
-                resp_pq = gc.models.generate_content(model=GEMINI_MODEL, contents=prompt_pq)
+                resp_pq = _generate(gc, prompt_pq)
                 raw_pq = re.sub(r"```json\s*|\s*```", "", resp_pq.text.strip()).strip()
                 preguntas_doctor = json.loads(raw_pq)
                 if not isinstance(preguntas_doctor, list):
