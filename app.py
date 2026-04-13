@@ -68,7 +68,7 @@ def _detect_gemini_model(api_key: str) -> str:
         return forced
     if not api_key:
         return _GEMINI_CANDIDATES[0]
-    gc = genai.Client(api_key=api_key, http_options={"api_version": "v1"})
+    gc = genai.Client(api_key=api_key, http_options={"api_version": "v1beta"})
     for candidate in _GEMINI_CANDIDATES:
         try:
             gc.models.generate_content(model=candidate, contents="hola")
@@ -324,7 +324,7 @@ def get_client():
     return key
 
 def _gemini_client(api_key):
-    return genai.Client(api_key=api_key, http_options={"api_version": "v1"})
+    return genai.Client(api_key=api_key, http_options={"api_version": "v1beta"})
 
 def estado_indicador(valor_str, rango_min, rango_max):
     try:
