@@ -292,6 +292,18 @@ def get_current_paciente():
     if not uid:
         return None
     with get_db() as db:
+        pac = db.execute("SELECT * FROM pacientes WHERE usuario_id=?", (uid,)).fetchone()
+        if pac:
+            return pac
+        # Auto-crear paciente si no existe (p.ej. tras reinicio de DB en Render)
+        usuario = db.execute("SELECT * FROM usuarios WHERE id=?", (uid,)).fetchone()
+        if not usuario:
+            return None
+        db.execute(
+            "INSERT INTO pacientes (usuario_id, nombre, email) VALUES (?,?,?)",
+            (uid, usuario["nombre"], usuario["email"])
+        )
+        db.commit()
         return db.execute("SELECT * FROM pacientes WHERE usuario_id=?", (uid,)).fetchone()
 
 # ── Error handlers ────────────────────────────────────────────────────────────
