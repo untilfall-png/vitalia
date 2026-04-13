@@ -420,11 +420,12 @@ def _build_reporte_html(nombre_paciente: str, examen: dict,
                          indicadores: list, recomendaciones: list,
                          preguntas: list) -> str:
 
+    # Paleta clara, legible en papel y pantalla
     estado_cfg = {
-        "normal":  {"color":"#10b981","bg":"rgba(16,185,129,0.15)","icon":"✅","label":"Normal"},
-        "alto":    {"color":"#ef4444","bg":"rgba(239,68,68,0.15)","icon":"🔴","label":"Alto"},
-        "bajo":    {"color":"#f59e0b","bg":"rgba(245,158,11,0.15)","icon":"🟡","label":"Bajo"},
-        "critico": {"color":"#ef4444","bg":"rgba(239,68,68,0.2)","icon":"🚨","label":"Crítico"},
+        "normal":  {"color":"#166534","bg":"#dcfce7","border":"#86efac","icon":"✓","label":"Normal"},
+        "alto":    {"color":"#991b1b","bg":"#fee2e2","border":"#fca5a5","icon":"↑","label":"Alto"},
+        "bajo":    {"color":"#92400e","bg":"#fef3c7","border":"#fcd34d","icon":"↓","label":"Bajo"},
+        "critico": {"color":"#7f1d1d","bg":"#ffe4e6","border":"#fda4af","icon":"!","label":"Crítico"},
     }
     rows_ind = ""
     for ind in indicadores:
@@ -435,126 +436,149 @@ def _build_reporte_html(nombre_paciente: str, examen: dict,
             mn = ind.get("rango_min"); mx = ind.get("rango_max")
             if mn is not None and mx is not None and float(mx) > float(mn):
                 pct = max(0, min(100, (v - float(mn)) / (float(mx) - float(mn)) * 100))
-                barra = f'<div style="margin-top:5px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;"><div style="height:5px;width:{pct:.0f}%;background:{cfg["color"]};border-radius:3px;"></div></div>'
+                barra = f'<div style="margin-top:5px;height:4px;background:#e2e8f0;border-radius:2px;"><div style="height:4px;width:{pct:.0f}%;background:{cfg["color"]};border-radius:2px;"></div></div>'
         except Exception:
             pass
         rows_ind += f"""<tr>
-          <td style="padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.06);color:#f1f5f9;font-weight:600;font-size:13px;">{ind.get('nombre','')} {barra}</td>
-          <td style="padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.06);font-family:monospace;color:#38bdf8;font-weight:700;">{ind.get('valor','')} <span style="color:#64748b;font-size:11px;">{ind.get('unidad','')}</span></td>
-          <td style="padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.06);color:#64748b;font-size:12px;">{ind.get('rango_ref','—')}</td>
-          <td style="padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="background:{cfg['bg']};color:{cfg['color']};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">{cfg['icon']} {cfg['label']}</span></td>
-          <td style="padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.06);color:#64748b;font-size:12px;">{ind.get('descripcion','')}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#1e293b;font-weight:600;font-size:13px;">{ind.get('nombre','')} {barra}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;font-family:monospace;color:#1d4ed8;font-weight:700;font-size:13px;">{ind.get('valor','')} <span style="color:#64748b;font-size:11px;font-family:'Segoe UI',Arial,sans-serif;">{ind.get('unidad','')}</span></td>
+          <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:12px;">{ind.get('rango_ref','—')}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;"><span style="background:{cfg['bg']};color:{cfg['color']};border:1px solid {cfg['border']};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">{cfg['icon']} {cfg['label']}</span></td>
+          <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:12px;">{ind.get('descripcion','')}</td>
         </tr>"""
 
     rec_icons = {"dieta":"🥗","ejercicio":"🏃","consulta":"👨‍⚕️","medicamento":"💊","estilo_vida":"🌟","general":"📋"}
-    prio_cfg  = {"alta":("#ef4444","rgba(239,68,68,0.12)"),"media":("#f59e0b","rgba(245,158,11,0.12)"),"baja":("#10b981","rgba(16,185,129,0.12)")}
+    prio_cfg  = {
+        "alta":  {"tc":"#991b1b","bg":"#fee2e2","border":"#fca5a5","label":"Alta prioridad"},
+        "media": {"tc":"#92400e","bg":"#fef3c7","border":"#fcd34d","label":"Prioridad media"},
+        "baja":  {"tc":"#166534","bg":"#dcfce7","border":"#86efac","label":"Informativa"},
+    }
     recs_html = ""
     for rec in recomendaciones:
         icon = rec_icons.get(rec.get("tipo","general"),"📋")
-        pc, pb = prio_cfg.get(rec.get("prioridad","media"), prio_cfg["media"])
-        recs_html += f"""<div style="display:flex;gap:12px;padding:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:10px;">
-          <div style="width:40px;height:40px;border-radius:10px;background:{pb};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">{icon}</div>
-          <div><div style="font-weight:700;font-size:13px;color:#f1f5f9;margin-bottom:4px;">{rec.get('titulo','')} <span style="background:{pb};color:{pc};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;margin-left:4px;">{rec.get('prioridad','').upper()}</span></div>
-          <div style="font-size:13px;color:#94a3b8;line-height:1.6;">{rec.get('descripcion','')}</div></div></div>"""
+        pc = prio_cfg.get(rec.get("prioridad","media"), prio_cfg["media"])
+        recs_html += f"""<div style="display:flex;gap:14px;padding:14px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid {pc['tc']};border-radius:8px;margin-bottom:10px;">
+          <div style="font-size:22px;flex-shrink:0;line-height:1;">{icon}</div>
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:13px;color:#1e293b;margin-bottom:4px;">{rec.get('titulo','')}
+              <span style="background:{pc['bg']};color:{pc['tc']};border:1px solid {pc['border']};padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;margin-left:6px;">{pc['label']}</span>
+            </div>
+            <div style="font-size:13px;color:#475569;line-height:1.65;">{rec.get('descripcion','')}</div>
+          </div>
+        </div>"""
 
     preguntas_html = ""
     if preguntas:
-        items = "".join([f'<li style="padding:11px 14px;background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:10px;margin-bottom:8px;font-size:13px;color:#e2e8f0;line-height:1.6;">🔹 {p}</li>' for p in preguntas])
-        preguntas_html = f"""<div style="margin-bottom:32px;">
-          <h2 style="font-size:15px;font-weight:700;color:#a78bfa;margin:0 0 8px;">🩺 Preguntas para tu médico tratante</h2>
-          <p style="font-size:13px;color:#64748b;margin:0 0 14px;">Lleva esta lista a tu próxima consulta:</p>
-          <ol style="list-style:none;padding:0;margin:0;">{items}</ol></div>"""
+        items = "".join([f'<li style="padding:10px 14px;background:#f0f4ff;border:1px solid #c7d2fe;border-radius:8px;margin-bottom:8px;font-size:13px;color:#1e293b;line-height:1.6;list-style:none;"><span style="color:#4338ca;font-weight:700;margin-right:8px;">{i+1}.</span>{p}</li>' for i, p in enumerate(preguntas)])
+        preguntas_html = f"""<div style="margin-bottom:32px;padding:20px 22px;background:#f0f4ff;border:1px solid #c7d2fe;border-radius:12px;">
+          <h2 style="font-size:15px;font-weight:700;color:#3730a3;margin:0 0 4px;">Preguntas para tu médico tratante</h2>
+          <p style="font-size:13px;color:#6366f1;margin:0 0 16px;">Lleva esta lista a tu próxima consulta:</p>
+          <ul style="padding:0;margin:0;">{items}</ul></div>"""
 
     riesgo = examen.get("riesgo","normal")
     riesgo_cfg = {
-        "normal":  ("#10b981","rgba(16,185,129,0.1)","rgba(16,185,129,0.3)","✅ Todo en orden"),
-        "medio":   ("#f59e0b","rgba(245,158,11,0.1)", "rgba(245,158,11,0.3)", "⚠️ Atención recomendada"),
-        "alto":    ("#ef4444","rgba(239,68,68,0.1)",  "rgba(239,68,68,0.3)",  "🔴 Consulta médica sugerida"),
-        "critico": ("#ef4444","rgba(239,68,68,0.15)", "rgba(239,68,68,0.5)",  "🚨 Consulta urgente"),
+        "normal":  {"tc":"#166534","bg":"#dcfce7","border":"#86efac","txt":"Todo en orden — valores dentro de rangos normales"},
+        "medio":   {"tc":"#92400e","bg":"#fef3c7","border":"#fcd34d","txt":"Atención recomendada — algunos valores requieren seguimiento"},
+        "alto":    {"tc":"#991b1b","bg":"#fee2e2","border":"#fca5a5","txt":"Se recomienda consultar a su médico próximamente"},
+        "critico": {"tc":"#7f1d1d","bg":"#ffe4e6","border":"#fda4af","txt":"Consulte a un médico a la brevedad posible"},
     }
-    rc, rb, rborder, rtxt = riesgo_cfg.get(riesgo, riesgo_cfg["normal"])
+    rc = riesgo_cfg.get(riesgo, riesgo_cfg["normal"])
     fecha_reporte = datetime.now().strftime("%d/%m/%Y %H:%M")
 
     html = f"""<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Reporte VitalIA — {examen.get('titulo','Examen')}</title>
 <style>
+  * {{ box-sizing: border-box; }}
+  body {{ margin:0; padding:0; background:#f8fafc; font-family:'Segoe UI',Arial,sans-serif; color:#1e293b; }}
   @media print {{
     .no-print {{ display: none !important; }}
-    body {{ background: white !important; }}
+    body {{ background: #fff !important; }}
     * {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+    .page-wrap {{ padding: 0 !important; }}
   }}
   .btn-print {{
     position: fixed; top: 20px; right: 20px; z-index: 999;
-    background: linear-gradient(135deg,#6c63ff,#a78bfa);
-    color: #fff; border: none; border-radius: 12px;
-    padding: 12px 22px; font-size: 14px; font-weight: 700;
-    cursor: pointer; display: flex; align-items: center; gap: 8px;
-    box-shadow: 0 4px 20px rgba(108,99,255,0.5);
-    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #4f46e5; color: #fff; border: none; border-radius: 10px;
+    padding: 11px 22px; font-size: 14px; font-weight: 600;
+    cursor: pointer; box-shadow: 0 4px 14px rgba(79,70,229,0.4);
+    font-family: 'Segoe UI', Arial, sans-serif; letter-spacing: .2px;
   }}
-  .btn-print:hover {{ opacity: .9; }}
+  .btn-print:hover {{ background: #4338ca; }}
+  table {{ border-collapse: collapse; width: 100%; }}
+  th {{ text-align: left; }}
 </style>
 </head>
-<body style="margin:0;padding:0;background:#0a0f1e;font-family:'Segoe UI',Arial,sans-serif;">
-<button class="btn-print no-print" onclick="window.print()">🖨️ Guardar como PDF</button>
-<div style="max-width:660px;margin:0 auto;padding:24px 16px;">
+<body>
+<button class="btn-print no-print" onclick="window.print()">⬇ Descargar PDF</button>
+
+<div class="page-wrap" style="max-width:720px;margin:0 auto;padding:32px 24px 48px;">
 
   <!-- Header -->
-  <div style="background:linear-gradient(135deg,#1e293b,#0f172a);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:28px;text-align:center;margin-bottom:18px;">
-    <div style="width:60px;height:60px;background:linear-gradient(135deg,#6c63ff,#a78bfa);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:14px;box-shadow:0 0 30px rgba(108,99,255,0.4);">🩺</div>
-    <h1 style="font-size:26px;font-weight:800;color:#a78bfa;margin:0 0 6px;">VitalIA</h1>
-    <p style="color:#94a3b8;font-size:14px;margin:0;">Reporte de análisis médico con IA</p>
-    <p style="color:#475569;font-size:12px;margin-top:6px;">{fecha_reporte}</p>
+  <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #4f46e5;padding-bottom:20px;margin-bottom:28px;">
+    <div>
+      <div style="font-size:24px;font-weight:800;color:#4f46e5;letter-spacing:-.5px;">VitalIA</div>
+      <div style="font-size:13px;color:#64748b;margin-top:2px;">Análisis de exámenes médicos con inteligencia artificial</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;">Reporte generado</div>
+      <div style="font-size:13px;color:#475569;font-weight:600;margin-top:2px;">{fecha_reporte}</div>
+    </div>
   </div>
 
-  <!-- Saludo -->
-  <div style="background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:14px;padding:18px 22px;margin-bottom:18px;">
-    <p style="color:#e2e8f0;font-size:15px;margin:0;line-height:1.7;">Hola <strong style="color:#a78bfa;">{nombre_paciente}</strong>, aquí está el análisis completo de tu examen <strong style="color:#f1f5f9;">{examen.get('titulo','')}</strong>.</p>
+  <!-- Paciente + Examen -->
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+    <div style="flex:1;min-width:200px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;">
+      <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Paciente</div>
+      <div style="font-size:17px;font-weight:700;color:#1e293b;">{nombre_paciente}</div>
+    </div>
+    <div style="flex:2;min-width:260px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;display:flex;gap:24px;flex-wrap:wrap;">
+      {"<div><div style='font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;'>Examen</div><div style='font-size:14px;font-weight:600;color:#1e293b;'>" + examen.get('titulo','') + "</div></div>" if examen.get('titulo') else ''}
+      {"<div><div style='font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;'>Tipo</div><div style='font-size:14px;font-weight:600;color:#1e293b;'>" + examen.get('tipo','') + "</div></div>" if examen.get('tipo') else ''}
+      {"<div><div style='font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;'>Fecha examen</div><div style='font-size:14px;font-weight:600;color:#1e293b;'>" + examen.get('fecha_examen','') + "</div></div>" if examen.get('fecha_examen') else ''}
+      {"<div><div style='font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;'>Laboratorio</div><div style='font-size:14px;font-weight:600;color:#1e293b;'>" + examen.get('laboratorio','') + "</div></div>" if examen.get('laboratorio') else ''}
+    </div>
   </div>
 
   <!-- Banner riesgo -->
-  <div style="background:{rb};border:1px solid {rborder};border-radius:14px;padding:16px 20px;margin-bottom:18px;">
-    <div style="font-weight:700;font-size:15px;color:{rc};">{rtxt}</div>
-    <div style="font-size:13px;color:#94a3b8;margin-top:3px;">Nivel de riesgo general: <strong style="color:{rc};">{riesgo.upper()}</strong></div>
+  <div style="background:{rc['bg']};border:1px solid {rc['border']};border-left:5px solid {rc['tc']};border-radius:10px;padding:15px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
+    <div style="flex:1;">
+      <div style="font-weight:700;font-size:15px;color:{rc['tc']};">Nivel de riesgo: {riesgo.capitalize()}</div>
+      <div style="font-size:13px;color:{rc['tc']};opacity:.85;margin-top:3px;">{rc['txt']}</div>
+    </div>
   </div>
 
-  <!-- Info examen -->
-  <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:flex;gap:24px;flex-wrap:wrap;">
-    {"<div><div style='font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;'>Tipo</div><div style='font-weight:600;color:#f1f5f9;font-size:14px;'>" + examen.get('tipo','') + "</div></div>" if examen.get('tipo') else ''}
-    {"<div><div style='font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;'>Fecha examen</div><div style='font-weight:600;color:#f1f5f9;font-size:14px;'>" + examen.get('fecha_examen','') + "</div></div>" if examen.get('fecha_examen') else ''}
-    {"<div><div style='font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;'>Laboratorio</div><div style='font-weight:600;color:#f1f5f9;font-size:14px;'>" + examen.get('laboratorio','') + "</div></div>" if examen.get('laboratorio') else ''}
-  </div>
-
-  {"<div style='background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.2);border-radius:14px;padding:18px 22px;margin-bottom:18px;'><h2 style='font-size:14px;font-weight:700;color:#38bdf8;margin:0 0 10px;'>📋 Resumen del Dr. VitalIA</h2><p style='font-size:14px;color:#e2e8f0;line-height:1.7;margin:0;'>" + examen.get('resumen','') + "</p></div>" if examen.get('resumen') else ''}
+  {"<div style='background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:18px 22px;margin-bottom:24px;'><div style='font-size:12px;font-weight:700;color:#4f46e5;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;'>Resumen del análisis</div><p style='font-size:14px;color:#334155;line-height:1.75;margin:0;'>" + examen.get('resumen','') + "</p></div>" if examen.get('resumen') else ''}
 
   <!-- Tabla indicadores -->
-  <div style="margin-bottom:28px;">
-    <h2 style="font-size:15px;font-weight:700;color:#f1f5f9;margin:0 0 14px;">📊 Indicadores detectados ({len(indicadores)})</h2>
-    <div style="overflow-x:auto;border-radius:14px;border:1px solid rgba(255,255,255,0.07);">
-      <table style="width:100%;border-collapse:collapse;background:#0f172a;">
-        <thead><tr style="background:rgba(255,255,255,0.04);">
-          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid rgba(255,255,255,0.07);">Indicador</th>
-          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid rgba(255,255,255,0.07);">Valor</th>
-          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid rgba(255,255,255,0.07);">Referencia</th>
-          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid rgba(255,255,255,0.07);">Estado</th>
-          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid rgba(255,255,255,0.07);">¿Qué mide?</th>
-        </tr></thead>
-        <tbody>{rows_ind}</tbody>
+  <div style="margin-bottom:30px;">
+    <div style="font-size:13px;font-weight:700;color:#4f46e5;text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;">Indicadores detectados ({len(indicadores)})</div>
+    <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+      <table>
+        <thead>
+          <tr style="background:#f1f5f9;">
+            <th style="padding:10px 14px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #e2e8f0;font-weight:600;">Indicador</th>
+            <th style="padding:10px 14px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #e2e8f0;font-weight:600;">Valor</th>
+            <th style="padding:10px 14px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #e2e8f0;font-weight:600;">Referencia</th>
+            <th style="padding:10px 14px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #e2e8f0;font-weight:600;">Estado</th>
+            <th style="padding:10px 14px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #e2e8f0;font-weight:600;">¿Qué mide?</th>
+          </tr>
+        </thead>
+        <tbody style="background:#fff;">{rows_ind}</tbody>
       </table>
     </div>
   </div>
 
-  {"<div style='margin-bottom:28px;'><h2 style='font-size:15px;font-weight:700;color:#f1f5f9;margin:0 0 14px;'>💡 Recomendaciones</h2>" + recs_html + "</div>" if recs_html else ''}
+  {"<div style='margin-bottom:30px;'><div style='font-size:13px;font-weight:700;color:#4f46e5;text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;'>Recomendaciones</div>" + recs_html + "</div>" if recs_html else ''}
 
   {preguntas_html}
 
   <!-- Footer -->
-  <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:18px 22px;text-align:center;">
-    <p style="font-size:12px;color:#475569;line-height:1.8;margin:0;">
-      ⚠️ Este reporte es <strong style="color:#64748b;">orientativo</strong> y no reemplaza la consulta médica presencial.<br>
-      Ante cualquier síntoma grave, consulta a un profesional de salud.<br><br>
-      <span style="color:#334155;">Generado por <strong style="color:#6c63ff;">VitalIA — Dr. Digital</strong> · {fecha_reporte}</span>
+  <div style="border-top:1px solid #e2e8f0;padding-top:20px;text-align:center;">
+    <p style="font-size:12px;color:#94a3b8;line-height:1.9;margin:0;">
+      Este reporte es <strong style="color:#64748b;">orientativo</strong> y no reemplaza la consulta médica presencial.<br>
+      Ante cualquier síntoma o duda, consulte a un profesional de salud calificado.<br>
+      <span style="color:#cbd5e1;">Generado por <strong style="color:#4f46e5;">VitalIA — Dr. Digital</strong> · {fecha_reporte}</span>
     </p>
   </div>
 
