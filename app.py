@@ -404,6 +404,26 @@ IDIOMA: Responde siempre en español."""
 @app.route("/health")
 def health():
     key = os.environ.get("GOOGLE_API_KEY","") or os.environ.get("GEMINI_API_KEY","")
+    smtp_host = os.environ.get("SMTP_HOST","")
+    smtp_port = os.environ.get("SMTP_PORT","587")
+    smtp_user = os.environ.get("SMTP_USER","")
+    smtp_pass = os.environ.get("SMTP_PASSWORD","")
+    smtp_status = "not_configured"
+    smtp_error  = ""
+    if smtp_host and smtp_user and smtp_pass:
+        try:
+            port = int(smtp_port)
+            if port == 465:
+                with smtplib.SMTP_SSL(smtp_host, port, timeout=10) as s:
+                    s.login(smtp_user, smtp_pass)
+            else:
+                with smtplib.SMTP(smtp_host, port, timeout=10) as s:
+                    s.ehlo(); s.starttls(); s.ehlo()
+                    s.login(smtp_user, smtp_pass)
+            smtp_status = "ok"
+        except Exception as ex:
+            smtp_status = "error"
+            smtp_error  = str(ex)
     return jsonify({
         "status": "ok",
         "python": sys.version,
@@ -414,6 +434,10 @@ def health():
         "api_key_set": bool(key),
         "gemini_model": GEMINI_MODEL,
         "stripe_configured": bool(STRIPE_SECRET_KEY),
+        "smtp_host": smtp_host,
+        "smtp_user": smtp_user,
+        "smtp_status": smtp_status,
+        "smtp_error": smtp_error,
     })
 
 # ── Email ────────────────────────────────────────────────────────────────────
