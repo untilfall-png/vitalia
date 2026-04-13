@@ -1357,7 +1357,7 @@ async function sendMessage() {
           if (d.text) { fullText += d.text; mdContent.innerHTML = marked.parse(fullText); scrollChat(); }
           if (d.done) break;
           if (d.error) throw new Error(d.error);
-        } catch {}
+        } catch (e) { if (e.message) throw e; }
       }
     }
   } catch (err) {

@@ -68,7 +68,7 @@ def _detect_gemini_model(api_key: str) -> str:
         return forced
     if not api_key:
         return _GEMINI_CANDIDATES[0]
-    gc = genai.Client(api_key=api_key, http_options={"api_version": "v1beta"})
+    gc = genai.Client(api_key=api_key, http_options={"api_version": "v1"})
     for candidate in _GEMINI_CANDIDATES:
         try:
             gc.models.generate_content(model=candidate, contents="hola")
