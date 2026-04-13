@@ -128,14 +128,19 @@ def init_db():
 
         -- ── Pacientes (uno por usuario) ───────────────────────────────────────
         CREATE TABLE IF NOT EXISTS pacientes (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario_id  INTEGER NOT NULL,
-            nombre      TEXT NOT NULL DEFAULT 'Paciente',
-            fecha_nac   TEXT DEFAULT '',
-            genero      TEXT DEFAULT '',
-            email       TEXT DEFAULT '',
-            notas       TEXT DEFAULT '',
-            creado_en   TEXT DEFAULT (datetime('now','localtime')),
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id   INTEGER NOT NULL,
+            nombre       TEXT NOT NULL DEFAULT 'Paciente',
+            fecha_nac    TEXT DEFAULT '',
+            genero       TEXT DEFAULT '',
+            email        TEXT DEFAULT '',
+            notas        TEXT DEFAULT '',
+            edad         INTEGER DEFAULT NULL,
+            peso         REAL DEFAULT NULL,
+            medicamentos TEXT DEFAULT '',
+            condiciones  TEXT DEFAULT '',
+            sintomas     TEXT DEFAULT '',
+            creado_en    TEXT DEFAULT (datetime('now','localtime')),
             FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
         );
 
@@ -236,6 +241,18 @@ def init_db():
         if "preguntas_doctor" not in ecols:
             db.execute("ALTER TABLE examenes ADD COLUMN preguntas_doctor TEXT DEFAULT '[]'")
             db.commit()
+        # pacientes — campos clínicos extendidos
+        pcols = [r[1] for r in db.execute("PRAGMA table_info(pacientes)").fetchall()]
+        for col, ddl in [
+            ("edad",         "ALTER TABLE pacientes ADD COLUMN edad INTEGER DEFAULT NULL"),
+            ("peso",         "ALTER TABLE pacientes ADD COLUMN peso REAL DEFAULT NULL"),
+            ("medicamentos", "ALTER TABLE pacientes ADD COLUMN medicamentos TEXT DEFAULT ''"),
+            ("condiciones",  "ALTER TABLE pacientes ADD COLUMN condiciones TEXT DEFAULT ''"),
+            ("sintomas",     "ALTER TABLE pacientes ADD COLUMN sintomas TEXT DEFAULT ''"),
+        ]:
+            if col not in pcols:
+                db.execute(ddl)
+        db.commit()
 
     # ── Superusuario admin ────────────────────────────────────────────────────
     _ensure_admin()
@@ -414,6 +431,29 @@ def health():
         "stripe_configured": bool(STRIPE_SECRET_KEY),
         "resend_configured": bool(os.environ.get("RESEND_API_KEY")),
     })
+
+# ── Contexto clínico del paciente para prompts IA ────────────────────────────
+def _build_patient_ctx(paciente: dict) -> str:
+    """Genera un bloque de texto con el perfil clínico del paciente para inyectar en prompts."""
+    parts = []
+    if paciente.get("nombre"):
+        parts.append(f"- Nombre: {paciente['nombre']}")
+    if paciente.get("edad"):
+        parts.append(f"- Edad: {paciente['edad']} años")
+    if paciente.get("genero"):
+        parts.append(f"- Género: {paciente['genero']}")
+    if paciente.get("peso"):
+        parts.append(f"- Peso: {paciente['peso']} kg")
+    if paciente.get("condiciones","").strip():
+        parts.append(f"- Condiciones médicas conocidas: {paciente['condiciones']}")
+    if paciente.get("medicamentos","").strip():
+        parts.append(f"- Medicamentos actuales: {paciente['medicamentos']}")
+    if paciente.get("sintomas","").strip():
+        parts.append(f"- Síntomas reportados por el paciente: {paciente['sintomas']}")
+    if paciente.get("notas","").strip():
+        parts.append(f"- Notas adicionales: {paciente['notas']}")
+    return "\n".join(parts) if parts else "Sin información de perfil clínico adicional."
+
 
 # ── Reporte HTML ──────────────────────────────────────────────────────────────
 def _build_reporte_html(nombre_paciente: str, examen: dict,
@@ -610,6 +650,22 @@ def register():
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             return jsonify({"error": "Email inválido"}), 400
 
+        # Campos clínicos opcionales
+        edad        = d.get("edad", "") or None
+        peso        = d.get("peso", "") or None
+        genero      = (d.get("genero","") or "").strip()
+        condiciones = (d.get("condiciones","") or "").strip()
+        medicamentos= (d.get("medicamentos","") or "").strip()
+        sintomas    = (d.get("sintomas","") or "").strip()
+        try:
+            edad = int(edad) if edad else None
+        except (ValueError, TypeError):
+            edad = None
+        try:
+            peso = float(str(peso).replace(",",".")) if peso else None
+        except (ValueError, TypeError):
+            peso = None
+
         try:
             with get_db() as db:
                 # Crear usuario
@@ -618,10 +674,12 @@ def register():
                     (email, generate_password_hash(pwd), nombre)
                 )
                 uid = cur.lastrowid
-                # Crear perfil de paciente asociado
+                # Crear perfil de paciente con datos clínicos
                 db.execute(
-                    "INSERT INTO pacientes (usuario_id, nombre, email) VALUES (?,?,?)",
-                    (uid, nombre, email)
+                    """INSERT INTO pacientes
+                       (usuario_id, nombre, email, genero, edad, peso, condiciones, medicamentos, sintomas)
+                       VALUES (?,?,?,?,?,?,?,?,?)""",
+                    (uid, nombre, email, genero, edad, peso, condiciones, medicamentos, sintomas)
                 )
                 db.commit()
 
@@ -711,10 +769,23 @@ def paciente_endpoint():
     with get_db() as db:
         if request.method == "POST":
             d = request.json or {}
-            db.execute("""UPDATE pacientes SET nombre=?,fecha_nac=?,genero=?,notas=?
+            try:
+                edad = int(d["edad"]) if d.get("edad") not in (None, "", "null") else None
+            except (ValueError, TypeError):
+                edad = None
+            try:
+                peso = float(str(d["peso"]).replace(",",".")) if d.get("peso") not in (None, "", "null") else None
+            except (ValueError, TypeError):
+                peso = None
+            db.execute("""UPDATE pacientes
+                          SET nombre=?,fecha_nac=?,genero=?,notas=?,
+                              edad=?,peso=?,condiciones=?,medicamentos=?,sintomas=?
                           WHERE usuario_id=?""",
                        (d.get("nombre",""), d.get("fecha_nac",""),
-                        d.get("genero",""), d.get("notas",""), uid))
+                        d.get("genero",""), d.get("notas",""),
+                        edad, peso,
+                        d.get("condiciones",""), d.get("medicamentos",""), d.get("sintomas",""),
+                        uid))
             db.commit()
             session["usuario_nombre"] = d.get("nombre", session.get("usuario_nombre",""))
             return jsonify({"ok": True})
@@ -957,6 +1028,12 @@ def _run_analisis(job_id, ruta, ext, titulo, tipo, api_key, paciente_id):
         update("pending", msg="Leyendo archivo...")
         gc = _gemini_client(api_key)
 
+        # ── Cargar perfil clínico del paciente ───────────────────────────────
+        with get_db() as db:
+            pac_row = db.execute("SELECT * FROM pacientes WHERE id=?", (paciente_id,)).fetchone()
+        paciente_dict = dict(pac_row) if pac_row else {}
+        patient_ctx = _build_patient_ctx(paciente_dict)
+
         # ── Preparar contenido según tipo de archivo ──────────────────────────
         if ext == ".pdf":
             update("pending", msg="Leyendo PDF...")
@@ -1002,7 +1079,10 @@ Reglas:
         riesgo = "critico" if criticos else ("alto" if len(alertas)>=3 else ("medio" if alertas else "normal"))
 
         update("pending", msg=f"Interpretando {len(indicadores)} indicadores...")
-        prompt_interp = f"""Como medico experto, interpreta estos resultados de examen medico.
+        prompt_interp = f"""Como medico experto, interpreta estos resultados de examen medico considerando el perfil clinico especifico del paciente.
+
+PERFIL DEL PACIENTE:
+{patient_ctx}
 
 TIPO DE EXAMEN: {ocr_data.get('tipo_examen', tipo)}
 INDICADORES:
@@ -1010,16 +1090,23 @@ INDICADORES:
 
 OBSERVACIONES DEL LABORATORIO: {ocr_data.get('observaciones_laboratorio','')}
 
-Genera una interpretacion medica completa en JSON:
+INSTRUCCIONES IMPORTANTES:
+- Personaliza la interpretacion segun la edad, genero, peso y condiciones medicas del paciente
+- Si el paciente tiene condiciones cronicas (diabetes, hipertension, etc.), relaciona los indicadores con esas condiciones
+- Si toma medicamentos, considera su efecto en los valores del laboratorio
+- Adapta las recomendaciones al perfil especifico (no recomendaciones genericas)
+- Si hay sintomas reportados, correlaionalos con los hallazgos del examen
+
+Genera una interpretacion medica PERSONALIZADA en JSON:
 {{
-  "resumen": "Resumen ejecutivo del estado de salud en 2-3 oraciones",
-  "interpretacion": "Interpretacion detallada de los hallazgos mas relevantes (markdown)",
+  "resumen": "Resumen ejecutivo personalizado del estado de salud en 2-3 oraciones",
+  "interpretacion": "Interpretacion detallada considerando el perfil del paciente (markdown)",
   "recomendaciones": [
     {{"tipo": "dieta|ejercicio|medicamento|consulta|estilo_vida", "titulo": "...", "descripcion": "...", "prioridad": "alta|media|baja"}}
   ],
-  "alertas_principales": ["lista de los indicadores mas preocupantes con explicacion"],
+  "alertas_principales": ["lista de los indicadores mas preocupantes con explicacion personalizada"],
   "puntos_positivos": ["aspectos de salud que estan bien"],
-  "seguimiento": "cuando y con que especialista debe consultar"
+  "seguimiento": "cuando y con que especialista debe consultar segun el perfil del paciente"
 }}"""
 
         try:
@@ -1044,17 +1131,28 @@ Genera una interpretacion medica completa en JSON:
                 f"- {i['nombre']}: {i['valor']} {i.get('unidad','')} [{i.get('estado','').upper()}] (ref: {i.get('rango_ref','')})"
                 for i in alertas
             ])
-            prompt_pq = f"""Eres un asistente médico experto. Un paciente tiene los siguientes indicadores alterados en su examen de {ocr_data.get('tipo_examen', tipo)}:
+            prompt_pq = f"""Eres un asistente médico experto. Genera preguntas inteligentes y personalizadas para que el paciente lleve a su consulta médica.
 
+PERFIL DEL PACIENTE:
+{patient_ctx}
+
+INDICADORES ALTERADOS en examen de {ocr_data.get('tipo_examen', tipo)}:
 {lineas_alertas}
 
-Interpretación: {interp_data.get('resumen', '')}
+INTERPRETACIÓN MÉDICA: {interp_data.get('resumen', '')}
 
-Genera entre 5 y 8 preguntas concretas que el paciente debería hacerle a su médico tratante. Las preguntas deben:
-- Ser específicas a los indicadores alterados
-- Estar en primera persona ("¿Debo...", "¿Qué significa...", "¿Es necesario...")
-- Cubrir tratamiento, seguimiento y cambios de estilo de vida
-- NO incluir diagnósticos ni nombres de medicamentos específicos
+Genera entre 6 y 9 preguntas PERSONALIZADAS considerando:
+- Los indicadores alterados y su relación con las condiciones previas del paciente
+- Si tiene condiciones crónicas: ¿cómo afectan estos resultados a su tratamiento actual?
+- Si toma medicamentos: ¿podrían estar influyendo en los valores?
+- Los síntomas reportados: ¿se relacionan con los hallazgos?
+- Posibles inconsistencias o riesgos específicos según su perfil de edad/género/peso
+- Ajustes de estilo de vida específicos para su situación
+
+Reglas:
+- En primera persona ("¿Debo...", "¿Significa esto que...", "¿Necesito...")
+- Específicas, no genéricas ("¿Debo ajustar mi dosis de metformina?" en vez de "¿Debo cambiar medicamentos?")
+- Cubrir tratamiento, seguimiento, estilo de vida y riesgos futuros
 
 Responde ÚNICAMENTE con un JSON array de strings, sin markdown ni texto extra:
 ["pregunta 1", "pregunta 2", ...]"""

@@ -195,6 +195,18 @@
     select.form-control option { background: #1e293b; }
     .form-row { display: flex; gap: 12px; }
     .form-row .form-group { flex: 1; }
+    /* Condiciones checkboxes en perfil */
+    .p-cond-item {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 10px; cursor: pointer;
+      transition: border-color .2s, background .2s; user-select: none;
+    }
+    .p-cond-item:hover { border-color: rgba(255,255,255,0.16); }
+    .p-cond-item input[type="checkbox"] { width:14px; height:14px; padding:0; margin:0; accent-color: var(--primary); flex-shrink:0; }
+    .p-cond-item span { font-size: 12px; color: var(--text2); line-height: 1.3; }
+    .p-cond-item:has(input:checked) { border-color: var(--primary); background: rgba(14,165,233,0.08); }
+    .p-cond-item:has(input:checked) span { color: var(--text); }
 
     /* ── UPLOAD ZONE ── */
     .upload-zone {
@@ -782,18 +794,61 @@
 
 <!-- ═══ MODAL: Perfil ═══ -->
 <div class="modal-overlay" id="modal-perfil">
-  <div class="modal">
+  <div class="modal" style="max-width:520px;">
     <div class="modal-drag"></div>
-    <div class="modal-title">👤 Mi Perfil</div>
-    <div class="form-group"><label class="form-label">Nombre completo</label><input class="form-control" id="p-nombre" placeholder="Tu nombre"/></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Fecha de nacimiento</label><input class="form-control" id="p-fecha" type="date"/></div>
-      <div class="form-group"><label class="form-label">Género</label>
-        <select class="form-control" id="p-genero"><option value="">—</option><option>Masculino</option><option>Femenino</option><option>Otro</option></select>
-      </div>
+    <div class="modal-title">👤 Mi Perfil Médico</div>
+
+    <div style="font-size:12px;color:var(--text2);background:rgba(14,165,233,0.07);border:1px solid rgba(14,165,233,0.15);border-radius:10px;padding:10px 14px;margin-bottom:18px;line-height:1.6;">
+      Esta información personaliza el análisis de cada examen. Cuanto más completo, más precisas serán las interpretaciones y las preguntas para tu médico.
     </div>
-    <div class="form-group"><label class="form-label">Email</label><input class="form-control" id="p-email" type="email" placeholder="tu@email.com"/></div>
-    <div class="form-group"><label class="form-label">Notas médicas / alergias</label><textarea class="form-control" id="p-notas" rows="3" placeholder="Alergias, condiciones crónicas, medicamentos habituales…"></textarea></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label class="form-label">Nombre completo</label><input class="form-control" id="p-nombre" placeholder="Tu nombre"/></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-control" id="p-email" type="email" placeholder="tu@email.com"/></div>
+      <div class="form-group"><label class="form-label">Fecha de nacimiento</label><input class="form-control" id="p-fecha" type="date"/></div>
+      <div class="form-group"><label class="form-label">Edad</label><input class="form-control" id="p-edad" type="number" min="1" max="120" placeholder="Ej: 42"/></div>
+      <div class="form-group"><label class="form-label">Género</label>
+        <select class="form-control" id="p-genero">
+          <option value="">—</option>
+          <option>Masculino</option><option>Femenino</option>
+          <option>Otro</option><option>Prefiero no indicar</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Peso (kg)</label><input class="form-control" id="p-peso" type="number" min="20" max="300" step="0.1" placeholder="Ej: 72"/></div>
+    </div>
+
+    <div class="form-group" style="margin-top:4px;">
+      <label class="form-label">Condiciones médicas conocidas</label>
+      <div id="p-cond-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+        <label class="p-cond-item" data-val="Hipertensión arterial"><input type="checkbox" value="Hipertensión arterial"> <span>Hipertensión arterial</span></label>
+        <label class="p-cond-item" data-val="Diabetes tipo 1"><input type="checkbox" value="Diabetes tipo 1"> <span>Diabetes tipo 1</span></label>
+        <label class="p-cond-item" data-val="Diabetes tipo 2"><input type="checkbox" value="Diabetes tipo 2"> <span>Diabetes tipo 2</span></label>
+        <label class="p-cond-item" data-val="Colesterol alto"><input type="checkbox" value="Colesterol alto"> <span>Colesterol alto</span></label>
+        <label class="p-cond-item" data-val="Triglicéridos altos"><input type="checkbox" value="Triglicéridos altos"> <span>Triglicéridos altos</span></label>
+        <label class="p-cond-item" data-val="Enfermedad cardiovascular"><input type="checkbox" value="Enfermedad cardiovascular"> <span>Enfermedad cardiovascular</span></label>
+        <label class="p-cond-item" data-val="Hipotiroidismo"><input type="checkbox" value="Hipotiroidismo"> <span>Hipotiroidismo</span></label>
+        <label class="p-cond-item" data-val="Hipertiroidismo"><input type="checkbox" value="Hipertiroidismo"> <span>Hipertiroidismo</span></label>
+        <label class="p-cond-item" data-val="Anemia"><input type="checkbox" value="Anemia"> <span>Anemia</span></label>
+        <label class="p-cond-item" data-val="Enfermedad renal"><input type="checkbox" value="Enfermedad renal"> <span>Enfermedad renal</span></label>
+        <label class="p-cond-item" data-val="Enfermedad hepática"><input type="checkbox" value="Enfermedad hepática"> <span>Enfermedad hepática</span></label>
+        <label class="p-cond-item" data-val="Asma / EPOC"><input type="checkbox" value="Asma / EPOC"> <span>Asma / EPOC</span></label>
+      </div>
+      <input class="form-control" id="p-otra-cond" placeholder="Otra condición (escribir aquí)" style="font-size:13px;"/>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Medicamentos actuales</label>
+      <textarea class="form-control" id="p-medicamentos" rows="2" placeholder="Ej: Metformina 500mg, Losartán 50mg, Omeprazol 20mg…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Síntomas actuales</label>
+      <textarea class="form-control" id="p-sintomas" rows="2" placeholder="Ej: Fatiga frecuente, mareos ocasionales, dolor de cabeza…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas adicionales / alergias</label>
+      <textarea class="form-control" id="p-notas" rows="2" placeholder="Alergias, observaciones, información extra…"></textarea>
+    </div>
+
     <button class="btn btn-primary btn-block" onclick="savePerfil()">Guardar perfil</button>
     <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="closeModal('modal-perfil')">Cancelar</button>
   </div>
@@ -1453,25 +1508,59 @@ function autoResize(el) {
 // ════════════════════════════════════════════
 // PERFIL
 // ════════════════════════════════════════════
+// Condiciones conocidas (lista fija)
+const COND_CONOCIDAS = [
+  "Hipertensión arterial","Diabetes tipo 1","Diabetes tipo 2","Colesterol alto",
+  "Triglicéridos altos","Enfermedad cardiovascular","Hipotiroidismo","Hipertiroidismo",
+  "Anemia","Enfermedad renal","Enfermedad hepática","Asma / EPOC"
+];
+
 async function loadPerfil() {
   try {
     const r = await fetch('/api/paciente');
     const d = await r.json();
-    if (d.nombre) document.getElementById('p-nombre').value = d.nombre;
+    if (d.nombre)   document.getElementById('p-nombre').value = d.nombre;
     if (d.fecha_nac) document.getElementById('p-fecha').value = d.fecha_nac;
-    if (d.genero) document.getElementById('p-genero').value = d.genero;
-    if (d.email) document.getElementById('p-email').value = d.email;
-    if (d.notas) document.getElementById('p-notas').value = d.notas;
+    if (d.genero)   document.getElementById('p-genero').value = d.genero;
+    if (d.email)    document.getElementById('p-email').value = d.email;
+    if (d.edad)     document.getElementById('p-edad').value = d.edad;
+    if (d.peso)     document.getElementById('p-peso').value = d.peso;
+    if (d.medicamentos) document.getElementById('p-medicamentos').value = d.medicamentos;
+    if (d.sintomas)     document.getElementById('p-sintomas').value = d.sintomas;
+    if (d.notas)        document.getElementById('p-notas').value = d.notas;
+    // Restaurar checkboxes de condiciones
+    if (d.condiciones) {
+      const vals = d.condiciones.split(',').map(s => s.trim());
+      const extras = [];
+      vals.forEach(v => {
+        if (!v) return;
+        const cb = document.querySelector(`#p-cond-grid input[value="${v}"]`);
+        if (cb) cb.checked = true;
+        else if (!COND_CONOCIDAS.includes(v)) extras.push(v);
+      });
+      if (extras.length) document.getElementById('p-otra-cond').value = extras.join(', ');
+    }
   } catch {}
 }
 
 async function savePerfil() {
+  // Recoger condiciones: checkboxes + campo libre
+  const checked = [...document.querySelectorAll('#p-cond-grid input:checked')].map(c => c.value);
+  const otra = (document.getElementById('p-otra-cond').value || '').trim();
+  if (otra) checked.push(otra);
+  const condiciones = checked.join(', ');
+
   const d = {
-    nombre: document.getElementById('p-nombre').value,
-    fecha_nac: document.getElementById('p-fecha').value,
-    genero: document.getElementById('p-genero').value,
-    email: document.getElementById('p-email').value,
-    notas: document.getElementById('p-notas').value
+    nombre:      document.getElementById('p-nombre').value,
+    fecha_nac:   document.getElementById('p-fecha').value,
+    genero:      document.getElementById('p-genero').value,
+    email:       document.getElementById('p-email').value,
+    edad:        document.getElementById('p-edad').value || null,
+    peso:        document.getElementById('p-peso').value || null,
+    condiciones,
+    medicamentos: document.getElementById('p-medicamentos').value,
+    sintomas:    document.getElementById('p-sintomas').value,
+    notas:       document.getElementById('p-notas').value,
   };
   await fetch('/api/paciente', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(d) });
   closeModal('modal-perfil');

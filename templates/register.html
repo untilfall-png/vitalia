@@ -45,19 +45,18 @@
       border-radius: 20px;
       padding: 40px;
       width: 100%;
-      max-width: 440px;
+      max-width: 500px;
       box-shadow: 0 24px 64px rgba(0,0,0,0.4);
     }
     .logo {
       display: flex; align-items: center; gap: 10px;
-      margin-bottom: 32px; text-decoration: none;
+      margin-bottom: 28px; text-decoration: none;
     }
     .logo-icon {
       width: 40px; height: 40px; border-radius: 12px;
       background: linear-gradient(135deg, var(--primary), var(--accent));
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-      box-shadow: 0 0 20px rgba(14,165,233,0.3);
+      font-size: 22px; box-shadow: 0 0 20px rgba(14,165,233,0.3);
     }
     .logo-text {
       font-family: 'Plus Jakarta Sans', sans-serif;
@@ -66,31 +65,77 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
+
+    /* Steps indicator */
+    .steps {
+      display: flex; align-items: center; gap: 0;
+      margin-bottom: 28px;
+    }
+    .step-item {
+      display: flex; align-items: center; gap: 8px; flex: 1;
+    }
+    .step-circle {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+      border: 2px solid var(--border);
+      color: var(--text2); transition: all .3s;
+    }
+    .step-circle.active { border-color: var(--primary); color: var(--primary); background: rgba(14,165,233,0.1); }
+    .step-circle.done { border-color: var(--secondary); background: var(--secondary); color: #fff; }
+    .step-label { font-size: 12px; color: var(--text2); transition: color .3s; }
+    .step-label.active { color: var(--text); font-weight: 600; }
+    .step-connector { flex: 1; height: 1px; background: var(--border); margin: 0 8px; }
+
     h1 {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 24px; font-weight: 700;
-      margin-bottom: 6px;
+      font-size: 20px; font-weight: 700; margin-bottom: 4px;
     }
-    .subtitle {
-      color: var(--text2); font-size: 14px; margin-bottom: 28px;
-    }
-    .field { margin-bottom: 16px; }
+    .subtitle { color: var(--text2); font-size: 13px; margin-bottom: 20px; }
+
+    .field { margin-bottom: 14px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     label {
-      display: block; font-size: 13px; font-weight: 500;
-      color: var(--text2); margin-bottom: 6px;
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--text2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px;
     }
-    input {
-      width: 100%; padding: 11px 14px;
+    input, select, textarea {
+      width: 100%; padding: 10px 14px;
       background: var(--bg3); border: 1px solid var(--border);
       border-radius: 10px; color: var(--text);
-      font-family: 'Inter', sans-serif; font-size: 15px;
+      font-family: 'Inter', sans-serif; font-size: 14px;
       outline: none; transition: border-color .2s, box-shadow .2s;
     }
-    input:focus {
+    input:focus, select:focus, textarea:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
+      box-shadow: 0 0 0 3px rgba(14,165,233,0.12);
     }
-    input::placeholder { color: var(--text2); }
+    input::placeholder, textarea::placeholder { color: var(--text2); }
+    select option { background: var(--bg2); }
+    textarea { resize: vertical; min-height: 72px; }
+
+    /* Condiciones checkboxes */
+    .cond-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-top: 4px;
+    }
+    .cond-item {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 10px; cursor: pointer;
+      transition: border-color .2s, background .2s;
+      user-select: none;
+    }
+    .cond-item:hover { border-color: rgba(255,255,255,0.18); }
+    .cond-item input[type="checkbox"] {
+      width: 15px; height: 15px; padding: 0; margin: 0;
+      accent-color: var(--primary); cursor: pointer;
+      flex-shrink: 0;
+    }
+    .cond-item span { font-size: 12px; color: var(--text2); line-height: 1.3; }
+    .cond-item.checked { border-color: var(--primary); background: rgba(14,165,233,0.08); }
+    .cond-item.checked span { color: var(--text); }
+
     .btn-primary {
       width: 100%; padding: 12px;
       background: linear-gradient(135deg, var(--primary), var(--primary-d));
@@ -99,18 +144,39 @@
       font-size: 15px; font-weight: 700;
       cursor: pointer; transition: all .2s;
       box-shadow: 0 0 20px rgba(14,165,233,0.3);
-      margin-top: 8px;
+      margin-top: 6px;
     }
     .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(14,165,233,0.5); }
     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-ghost {
+      width: 100%; padding: 10px;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text2); border-radius: 12px;
+      font-size: 14px; cursor: pointer; transition: all .2s;
+      margin-top: 10px;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
     .error-msg {
       background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
       color: #fca5a5; padding: 10px 14px; border-radius: 10px;
-      font-size: 13px; margin-bottom: 16px; display: none;
+      font-size: 13px; margin-bottom: 14px; display: none;
     }
-    .divider { text-align: center; margin: 20px 0; color: var(--text2); font-size: 13px; position: relative; }
+    .optional-badge {
+      display: inline-block; font-size: 10px; font-weight: 600;
+      color: var(--text2); background: rgba(255,255,255,0.06);
+      border-radius: 4px; padding: 1px 6px; margin-left: 6px;
+      vertical-align: middle; letter-spacing: .3px;
+    }
+    .section-note {
+      font-size: 12px; color: var(--text2); margin-bottom: 16px;
+      background: rgba(14,165,233,0.07); border: 1px solid rgba(14,165,233,0.15);
+      border-radius: 10px; padding: 10px 14px; line-height: 1.6;
+    }
+    .section-note strong { color: var(--primary); }
+    .divider { text-align: center; margin: 18px 0; color: var(--text2); font-size: 13px; position: relative; }
     .divider::before, .divider::after {
-      content: ''; position: absolute; top: 50%; width: 40%; height: 1px;
+      content: ''; position: absolute; top: 50%; width: 42%; height: 1px;
       background: var(--border);
     }
     .divider::before { left: 0; }
@@ -125,12 +191,9 @@
       animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .benefits {
-      background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.2);
-      border-radius: 12px; padding: 14px 16px; margin-bottom: 24px;
-    }
-    .benefits p { font-size: 12px; color: var(--text2); line-height: 1.7; }
-    .benefits strong { color: var(--secondary); }
+
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
   </style>
 </head>
 <body>
@@ -140,21 +203,26 @@
       <span class="logo-text">VitalIA</span>
     </a>
 
-    <h1>Crear tu cuenta</h1>
-    <p class="subtitle">Tu historial médico personal, privado y seguro.</p>
-
-    <div class="benefits">
-      <p>
-        <strong>✓</strong> Carpeta de exámenes exclusiva para ti<br>
-        <strong>✓</strong> Análisis con IA por solo $3 USD por examen<br>
-        <strong>✓</strong> Chat con Dr. VitalIA sobre tus resultados<br>
-        <strong>✓</strong> Historial médico accesible siempre
-      </p>
+    <!-- Indicador de pasos -->
+    <div class="steps">
+      <div class="step-item">
+        <div class="step-circle active" id="sc1">1</div>
+        <span class="step-label active" id="sl1">Tu cuenta</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item">
+        <div class="step-circle" id="sc2">2</div>
+        <span class="step-label" id="sl2">Perfil médico</span>
+      </div>
     </div>
 
     <div class="error-msg" id="errorMsg"></div>
 
-    <form id="regForm">
+    <!-- ═══ PASO 1: Credenciales ═══ -->
+    <div class="step-panel active" id="step1">
+      <h1>Crear tu cuenta</h1>
+      <p class="subtitle">Tu historial médico personal, privado y seguro.</p>
+
       <div class="field">
         <label>Nombre completo</label>
         <input type="text" id="nombre" placeholder="Ej: María González" required autocomplete="name"/>
@@ -171,58 +239,212 @@
         <label>Confirmar contraseña</label>
         <input type="password" id="password2" placeholder="Repite tu contraseña" required autocomplete="new-password"/>
       </div>
-      <button type="submit" class="btn-primary" id="btnSubmit">Crear cuenta</button>
-    </form>
+      <button type="button" class="btn-primary" id="btnStep1" onclick="goStep2()">
+        Siguiente &rarr;
+      </button>
 
-    <div class="divider">o</div>
-    <p class="link-row">
-      ¿Ya tienes cuenta? <a href="/login">Iniciar sesión</a>
-    </p>
+      <div class="divider">o</div>
+      <p class="link-row">¿Ya tienes cuenta? <a href="/login">Iniciar sesión</a></p>
+    </div>
+
+    <!-- ═══ PASO 2: Perfil médico ═══ -->
+    <div class="step-panel" id="step2">
+      <h1>Tu perfil médico</h1>
+      <p class="subtitle">Esta información permite que el Dr. VitalIA personalice cada análisis para ti.</p>
+
+      <div class="section-note">
+        <strong>¿Para qué sirve esto?</strong> Con tu perfil, la IA adapta la interpretación de cada examen a tu edad, condiciones y medicamentos. Las preguntas para tu médico también serán más específicas y útiles.
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Edad <span class="optional-badge">Opcional</span></label>
+          <input type="number" id="edad" placeholder="Ej: 42" min="1" max="120"/>
+        </div>
+        <div class="field">
+          <label>Peso (kg) <span class="optional-badge">Opcional</span></label>
+          <input type="number" id="peso" placeholder="Ej: 72" min="20" max="300" step="0.1"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Género <span class="optional-badge">Opcional</span></label>
+        <select id="genero">
+          <option value="">— Seleccionar —</option>
+          <option value="Masculino">Masculino</option>
+          <option value="Femenino">Femenino</option>
+          <option value="Otro">Otro</option>
+          <option value="Prefiero no indicar">Prefiero no indicar</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Condiciones médicas conocidas <span class="optional-badge">Opcional</span></label>
+        <div class="cond-grid" id="condGrid">
+          <label class="cond-item" onclick="toggleCond(this)">
+            <input type="checkbox" value="Hipertensión arterial"/>
+            <span>Hipertensión arterial</span>
+          </label>
+          <label class="cond-item" onclick="toggleCond(this)">
+            <input type="checkbox" value="Diabetes tipo 1"/>
+            <span>Diabetes tipo 1</span>
+          </label>
+          <label class="cond-item" onclick="toggleCond(this)">
+            <input type="checkbox" value="Diabetes tipo 2"/>
+            <span>Diabetes tipo 2</span>
+          </label>
+          <label class="cond-item" onclick="toggleCond(this)">
+            <input type="checkbox" value="Colesterol alto"/>
+            <span>Colesterol alto</span>
+          </label>
+          <label class="cond-item" onclick="toggleCond(this)">
+            <input type="checkbox" value="Triglicéridos altos"/>
+            <span>Triglicéridos altos</span>
+          </label>
+          <label class="cond-item" onclick="toggleCond(this)">
+            <input type="checkbox" value="Enfermedad cardiovascular"/>
+            <span>Enfermedad cardiovascular</span>
+          </label>
+          <label class="cond-item" onclick="toggleCond(this)">
+            <input type="checkbox" value="Hipotiroidismo"/>
+            <span>Hipotiroidismo</span>
+          </label>
+          <label class="cond-item" onclick="toggleCond(this)">
+            <input type="checkbox" value="Hipertiroidismo"/>
+            <span>Hipertiroidismo</span>
+          </label>
+          <label class="cond-item" onclick="toggleCond(this)">
+            <input type="checkbox" value="Anemia"/>
+            <span>Anemia</span>
+          </label>
+          <label class="cond-item" onclick="toggleCond(this)">
+            <input type="checkbox" value="Enfermedad renal"/>
+            <span>Enfermedad renal</span>
+          </label>
+          <label class="cond-item" onclick="toggleCond(this)">
+            <input type="checkbox" value="Enfermedad hepática"/>
+            <span>Enfermedad hepática</span>
+          </label>
+          <label class="cond-item" onclick="toggleCond(this)">
+            <input type="checkbox" value="Asma / EPOC"/>
+            <span>Asma / EPOC</span>
+          </label>
+        </div>
+        <input type="text" id="otraCond" placeholder="Otra condición (escribir aquí)" style="margin-top:8px;"/>
+      </div>
+
+      <div class="field">
+        <label>Medicamentos actuales <span class="optional-badge">Opcional</span></label>
+        <textarea id="medicamentos" placeholder="Ej: Metformina 500mg, Losartán 50mg, Omeprazol 20mg…"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Síntomas actuales <span class="optional-badge">Opcional</span></label>
+        <textarea id="sintomas" placeholder="Ej: Fatiga frecuente, mareos ocasionales, dolor de cabeza…"></textarea>
+      </div>
+
+      <button type="button" class="btn-primary" id="btnSubmit" onclick="submitForm()">
+        Crear mi cuenta
+      </button>
+      <button type="button" class="btn-ghost" onclick="submitForm(true)">
+        Omitir este paso y crear cuenta
+      </button>
+    </div>
+
   </div>
 
   <script>
-    document.getElementById('regForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const btn = document.getElementById('btnSubmit');
-      const errDiv = document.getElementById('errorMsg');
-      errDiv.style.display = 'none';
+    function goStep2() {
+      const err = document.getElementById('errorMsg');
+      err.style.display = 'none';
 
       const nombre   = document.getElementById('nombre').value.trim();
       const email    = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const password2 = document.getElementById('password2').value;
 
+      if (!nombre || !email || !password) {
+        err.textContent = 'Completa todos los campos obligatorios';
+        err.style.display = 'block'; return;
+      }
+      if (password.length < 8) {
+        err.textContent = 'La contraseña debe tener al menos 8 caracteres';
+        err.style.display = 'block'; return;
+      }
       if (password !== password2) {
-        errDiv.textContent = 'Las contraseñas no coinciden';
-        errDiv.style.display = 'block';
-        return;
+        err.textContent = 'Las contraseñas no coinciden';
+        err.style.display = 'block'; return;
       }
 
+      // Avanzar al paso 2
+      document.getElementById('step1').classList.remove('active');
+      document.getElementById('step2').classList.add('active');
+      document.getElementById('sc1').className = 'step-circle done';
+      document.getElementById('sc1').textContent = '✓';
+      document.getElementById('sc2').className = 'step-circle active';
+      document.getElementById('sl2').className = 'step-label active';
+    }
+
+    function toggleCond(el) {
+      const cb = el.querySelector('input[type="checkbox"]');
+      // El click ya toggleó el checkbox antes de llegar aquí, solo sincronizamos la clase
+      setTimeout(() => {
+        el.classList.toggle('checked', cb.checked);
+      }, 0);
+    }
+
+    function getCondiciones() {
+      const checked = [...document.querySelectorAll('#condGrid input:checked')].map(c => c.value);
+      const otra = document.getElementById('otraCond').value.trim();
+      if (otra) checked.push(otra);
+      return checked.join(', ');
+    }
+
+    async function submitForm(skip = false) {
+      const btn = document.getElementById('btnSubmit');
+      const err = document.getElementById('errorMsg');
+      err.style.display = 'none';
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Creando cuenta...';
+
+      const payload = {
+        nombre:   document.getElementById('nombre').value.trim(),
+        email:    document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+        password2: document.getElementById('password2').value,
+      };
+
+      if (!skip) {
+        payload.edad        = document.getElementById('edad').value || null;
+        payload.peso        = document.getElementById('peso').value || null;
+        payload.genero      = document.getElementById('genero').value;
+        payload.condiciones = getCondiciones();
+        payload.medicamentos = document.getElementById('medicamentos').value.trim();
+        payload.sintomas    = document.getElementById('sintomas').value.trim();
+      }
 
       try {
         const res = await fetch('/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, email, password, password2 })
+          body: JSON.stringify(payload)
         });
         const data = await res.json();
         if (data.ok) {
           window.location.href = data.redirect || '/app';
         } else {
-          errDiv.textContent = data.error || 'Error al crear la cuenta';
-          errDiv.style.display = 'block';
+          err.textContent = data.error || 'Error al crear la cuenta';
+          err.style.display = 'block';
           btn.disabled = false;
-          btn.textContent = 'Crear cuenta';
+          btn.textContent = 'Crear mi cuenta';
         }
       } catch {
-        errDiv.textContent = 'Error de conexión. Intenta de nuevo.';
-        errDiv.style.display = 'block';
+        err.textContent = 'Error de conexión. Intenta de nuevo.';
+        err.style.display = 'block';
         btn.disabled = false;
-        btn.textContent = 'Crear cuenta';
+        btn.textContent = 'Crear mi cuenta';
       }
-    });
+    }
   </script>
 </body>
 </html>
