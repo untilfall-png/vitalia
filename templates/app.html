@@ -295,6 +295,35 @@
     .chat-typing span:nth-child(2) { animation-delay: .15s; }
     .chat-typing span:nth-child(3) { animation-delay: .3s; }
     @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── PREGUNTAS DOCTOR ── */
+    .preguntas-list { list-style: none; padding: 0; margin: 0; }
+    .pregunta-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 16px; background: rgba(167,139,250,0.07);
+      border: 1px solid rgba(167,139,250,0.18); border-radius: 12px;
+      margin-bottom: 8px; font-size: 13px; line-height: 1.65; color: var(--text);
+      transition: background .2s, border-color .2s;
+    }
+    .pregunta-item:hover { background: rgba(167,139,250,0.13); border-color: rgba(167,139,250,0.38); }
+    .pregunta-num {
+      min-width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg,#6c63ff,#a78bfa);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff; margin-top: 1px;
+    }
+    /* ── BOTÓN EMAIL ── */
+    .btn-email {
+      background: linear-gradient(135deg,#6c63ff,#a78bfa); color: #fff;
+      border: none; border-radius: 12px; padding: 12px 22px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: all .2s; box-shadow: 0 0 20px rgba(108,99,255,0.3);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .btn-email:hover { transform: translateY(-2px); box-shadow: 0 0 32px rgba(108,99,255,0.5); }
+    .btn-email:disabled { opacity: .5; cursor: not-allowed; transform: none; }
     .chat-input-bar {
       padding: 14px 20px; border-top: 1px solid var(--border);
       background: rgba(10,15,30,0.9); backdrop-filter: blur(12px);
@@ -1146,6 +1175,7 @@ async function openExamen(eid) {
     const inds = d.indicadores || [];
     const recs = d.recomendaciones || [];
     const convs= d.conversaciones || [];
+    const preguntas = ex.preguntas_doctor || [];
     state.currentExamenId = eid;
     if (convs.length) state.currentConvId = convs[0].id;
 
@@ -1223,6 +1253,43 @@ async function openExamen(eid) {
         <div class="card-body">${recHtml}</div>
       </div>
 
+      ${preguntas.length ? `
+      <div class="card" style="border-color:rgba(167,139,250,0.25);">
+        <div class="card-header" style="border-bottom-color:rgba(167,139,250,0.15);">
+          <span class="card-title" style="color:var(--accent);">
+            <i data-lucide="help-circle"></i> Preguntas para tu médico tratante
+          </span>
+          <span class="badge badge-purple">${preguntas.length} preguntas</span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:13px;color:var(--text2);margin-bottom:14px;">
+            🩺 Lleva esta lista a tu próxima consulta. El Dr. VitalIA las generó en base a tus resultados alterados:
+          </p>
+          <ol class="preguntas-list">
+            ${preguntas.map((p, i) => `
+              <li class="pregunta-item">
+                <span class="pregunta-num">${i+1}</span>
+                <span>${esc(p)}</span>
+              </li>`).join('')}
+          </ol>
+        </div>
+      </div>` : ''}
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i data-lucide="mail"></i> Enviar reporte a mi correo</span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">
+            Recibe el reporte completo en tu email: resumen, tabla de indicadores con colores${preguntas.length ? ', recomendaciones y las preguntas para tu médico' : ' y recomendaciones'}.
+          </p>
+          <button class="btn-email" id="btn-send-email" onclick="enviarEmailExamen(${eid})">
+            <i data-lucide="send" style="width:15px;height:15px;"></i>
+            Enviar a mi correo
+          </button>
+        </div>
+      </div>
+
       ${state.currentConvId ? `
       <div class="card">
         <div class="card-header">
@@ -1241,6 +1308,39 @@ async function openExamen(eid) {
   } catch (err) {
     el.innerHTML = `<div class="empty"><div class="empty-icon">❌</div><div class="empty-title">Error al cargar</div><div class="empty-sub">${err.message}</div></div>`;
   }
+}
+
+async function enviarEmailExamen(eid) {
+  const btn = document.getElementById('btn-send-email');
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  btn.innerHTML = '<i data-lucide="loader-2" style="width:15px;height:15px;animation:spin .8s linear infinite;"></i> Enviando...';
+  lucide.createIcons();
+  try {
+    const r = await fetch(`/api/examenes/${eid}/enviar-email`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({})
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      if (d.smtp_not_configured) {
+        toast('⚙️ Email no configurado en el servidor. Contacta al administrador.');
+      } else {
+        throw new Error(d.error || 'Error al enviar');
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="send" style="width:15px;height:15px;"></i> Enviar a mi correo';
+    } else {
+      toast(`✅ Reporte enviado a ${d.enviado_a}`);
+      btn.innerHTML = '<i data-lucide="check" style="width:15px;height:15px;"></i> ¡Enviado!';
+      btn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+      btn.style.boxShadow = '0 0 20px rgba(16,185,129,0.4)';
+    }
+  } catch (err) {
+    toast('❌ ' + err.message);
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="send" style="width:15px;height:15px;"></i> Enviar a mi correo';
+  }
+  lucide.createIcons();
 }
 
 async function deleteExamen(eid) {
