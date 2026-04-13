@@ -324,7 +324,7 @@ def get_client():
     return key
 
 def _gemini_client(api_key):
-    return genai.Client(api_key=api_key, http_options={"api_version": "v1beta"})
+    return genai.Client(api_key=api_key, http_options={"api_version": "v1"})
 
 def estado_indicador(valor_str, rango_min, rango_max):
     try:
@@ -709,11 +709,16 @@ def _run_analisis(job_id, ruta, ext, titulo, tipo, api_key, paciente_id):
         gc = _gemini_client(api_key)
 
         # ── Preparar contenido según tipo de archivo ──────────────────────────
-        uploaded_file = None
         if ext == ".pdf":
-            update("pending", msg="Subiendo PDF a Gemini...")
-            uploaded_file = gc.files.upload(file=str(ruta))
-            file_part = uploaded_file
+            update("pending", msg="Leyendo PDF...")
+            with open(str(ruta), "rb") as pdf_f:
+                pdf_bytes = pdf_f.read()
+            file_part = genai_types.Part(
+                inline_data=genai_types.Blob(
+                    mime_type="application/pdf",
+                    data=pdf_bytes
+                )
+            )
         else:
             file_part = PIL.Image.open(str(ruta))
 
@@ -735,9 +740,6 @@ Reglas:
             model=GEMINI_MODEL,
             contents=[prompt_ocr, file_part]
         )
-        if uploaded_file:
-            try: gc.files.delete(name=uploaded_file.name)
-            except: pass
 
         raw = re.sub(r"```json\s*|\s*```", "", resp_ocr.text.strip()).strip()
         try:
