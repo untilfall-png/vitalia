@@ -1025,7 +1025,7 @@ def _run_analisis(job_id, ruta, ext, titulo, tipo, api_key, paciente_id):
             _jobs[job_id] = {"status": status, **kw}
 
     try:
-        update("pending", msg="Leyendo archivo...")
+        update("pending", msg="Leyendo archivo...", progress=5)
         gc = _gemini_client(api_key)
 
         # ── Cargar perfil clínico del paciente ───────────────────────────────
@@ -1036,7 +1036,7 @@ def _run_analisis(job_id, ruta, ext, titulo, tipo, api_key, paciente_id):
 
         # ── Preparar contenido según tipo de archivo ──────────────────────────
         if ext == ".pdf":
-            update("pending", msg="Leyendo PDF...")
+            update("pending", msg="Leyendo PDF...", progress=10)
             with open(str(ruta), "rb") as pdf_f:
                 pdf_bytes = pdf_f.read()
             file_part = genai_types.Part(
@@ -1046,9 +1046,10 @@ def _run_analisis(job_id, ruta, ext, titulo, tipo, api_key, paciente_id):
                 )
             )
         else:
+            update("pending", msg="Preparando imagen...", progress=10)
             file_part = PIL.Image.open(str(ruta))
 
-        update("pending", msg="Extrayendo indicadores con vision IA...")
+        update("pending", msg="Extrayendo indicadores con visión IA...", progress=20)
         prompt_ocr = """Analiza este examen medico/laboratorio y extrae todos los indicadores.
 
 Responde UNICAMENTE con este JSON compacto (sin markdown, sin texto adicional, sin campos extra):
@@ -1078,8 +1079,15 @@ Reglas:
         criticos = [i for i in indicadores if i.get("estado") == "critico"]
         riesgo = "critico" if criticos else ("alto" if len(alertas)>=3 else ("medio" if alertas else "normal"))
 
-        update("pending", msg=f"Interpretando {len(indicadores)} indicadores...")
-        prompt_interp = f"""Como medico experto, interpreta estos resultados de examen medico considerando el perfil clinico especifico del paciente.
+        # ── Interpretación + preguntas en una sola llamada ────────────────────
+        update("pending", msg=f"Analizando {len(indicadores)} indicadores...", progress=60)
+        tiene_alertas = len(alertas) > 0
+        lineas_alertas = "\n".join([
+            f"- {i['nombre']}: {i['valor']} {i.get('unidad','')} [{i.get('estado','').upper()}] (ref: {i.get('rango_ref','')})"
+            for i in alertas
+        ]) if tiene_alertas else "Ninguno"
+
+        prompt_combined = f"""Como medico experto, interpreta estos resultados y genera preguntas personalizadas para el paciente.
 
 PERFIL DEL PACIENTE:
 {patient_ctx}
@@ -1089,30 +1097,38 @@ INDICADORES:
 {json.dumps(indicadores, ensure_ascii=False, indent=2)}
 
 OBSERVACIONES DEL LABORATORIO: {ocr_data.get('observaciones_laboratorio','')}
+INDICADORES ALTERADOS: {lineas_alertas}
 
-INSTRUCCIONES IMPORTANTES:
+INSTRUCCIONES:
 - Personaliza la interpretacion segun la edad, genero, peso y condiciones medicas del paciente
-- Si el paciente tiene condiciones cronicas (diabetes, hipertension, etc.), relaciona los indicadores con esas condiciones
-- Si toma medicamentos, considera su efecto en los valores del laboratorio
+- Si tiene condiciones cronicas, relaciona los indicadores con esas condiciones
+- Si toma medicamentos, considera su efecto en los valores
 - Adapta las recomendaciones al perfil especifico (no recomendaciones genericas)
-- Si hay sintomas reportados, correlaionalos con los hallazgos del examen
+- preguntas_doctor: genera 6-9 preguntas en primera persona si hay indicadores alterados, array vacio si todos son normales
+- Las preguntas deben ser especificas ("¿Debo ajustar mi dosis de metformina?" no "¿Debo cambiar medicamentos?")
 
-Genera una interpretacion medica PERSONALIZADA en JSON:
+Genera UNICAMENTE este JSON (sin markdown):
 {{
-  "resumen": "Resumen ejecutivo personalizado del estado de salud en 2-3 oraciones",
+  "resumen": "Resumen ejecutivo personalizado en 2-3 oraciones",
   "interpretacion": "Interpretacion detallada considerando el perfil del paciente (markdown)",
   "recomendaciones": [
     {{"tipo": "dieta|ejercicio|medicamento|consulta|estilo_vida", "titulo": "...", "descripcion": "...", "prioridad": "alta|media|baja"}}
   ],
-  "alertas_principales": ["lista de los indicadores mas preocupantes con explicacion personalizada"],
+  "alertas_principales": ["indicadores preocupantes con explicacion personalizada"],
   "puntos_positivos": ["aspectos de salud que estan bien"],
-  "seguimiento": "cuando y con que especialista debe consultar segun el perfil del paciente"
+  "seguimiento": "cuando y con que especialista consultar segun el perfil",
+  "preguntas_doctor": ["¿pregunta 1?", "¿pregunta 2?"]
 }}"""
 
         try:
-            resp2 = _generate(gc, prompt_interp)
-            raw2 = re.sub(r"```json\s*|\s*```", "", resp2.text.strip()).strip()
-            interp_data = json.loads(raw2)
+            resp_combined = _generate(gc, prompt_combined)
+            raw_combined = re.sub(r"```json\s*|\s*```", "", resp_combined.text.strip()).strip()
+            combined_data = json.loads(raw_combined)
+            interp_data = {k: combined_data[k] for k in ("resumen","interpretacion","recomendaciones","alertas_principales","puntos_positivos","seguimiento") if k in combined_data}
+            preguntas_doctor = combined_data.get("preguntas_doctor", [])
+            if not isinstance(preguntas_doctor, list):
+                preguntas_doctor = []
+            preguntas_doctor = [str(p) for p in preguntas_doctor if p][:8]
         except Exception:
             interp_data = {
                 "resumen": "Analisis completado.",
@@ -1122,51 +1138,9 @@ Genera una interpretacion medica PERSONALIZADA en JSON:
                 "puntos_positivos": [],
                 "seguimiento": "Consulte con su medico tratante."
             }
+            preguntas_doctor = []
 
-        # ── Generar preguntas para el médico tratante ────────────────────────
-        preguntas_doctor = []
-        if alertas:
-            update("pending", msg="Generando preguntas para tu médico...")
-            lineas_alertas = "\n".join([
-                f"- {i['nombre']}: {i['valor']} {i.get('unidad','')} [{i.get('estado','').upper()}] (ref: {i.get('rango_ref','')})"
-                for i in alertas
-            ])
-            prompt_pq = f"""Eres un asistente médico experto. Genera preguntas inteligentes y personalizadas para que el paciente lleve a su consulta médica.
-
-PERFIL DEL PACIENTE:
-{patient_ctx}
-
-INDICADORES ALTERADOS en examen de {ocr_data.get('tipo_examen', tipo)}:
-{lineas_alertas}
-
-INTERPRETACIÓN MÉDICA: {interp_data.get('resumen', '')}
-
-Genera entre 6 y 9 preguntas PERSONALIZADAS considerando:
-- Los indicadores alterados y su relación con las condiciones previas del paciente
-- Si tiene condiciones crónicas: ¿cómo afectan estos resultados a su tratamiento actual?
-- Si toma medicamentos: ¿podrían estar influyendo en los valores?
-- Los síntomas reportados: ¿se relacionan con los hallazgos?
-- Posibles inconsistencias o riesgos específicos según su perfil de edad/género/peso
-- Ajustes de estilo de vida específicos para su situación
-
-Reglas:
-- En primera persona ("¿Debo...", "¿Significa esto que...", "¿Necesito...")
-- Específicas, no genéricas ("¿Debo ajustar mi dosis de metformina?" en vez de "¿Debo cambiar medicamentos?")
-- Cubrir tratamiento, seguimiento, estilo de vida y riesgos futuros
-
-Responde ÚNICAMENTE con un JSON array de strings, sin markdown ni texto extra:
-["pregunta 1", "pregunta 2", ...]"""
-            try:
-                resp_pq = _generate(gc, prompt_pq)
-                raw_pq = re.sub(r"```json\s*|\s*```", "", resp_pq.text.strip()).strip()
-                preguntas_doctor = json.loads(raw_pq)
-                if not isinstance(preguntas_doctor, list):
-                    preguntas_doctor = []
-                preguntas_doctor = [str(p) for p in preguntas_doctor if p][:8]
-            except Exception:
-                preguntas_doctor = []
-
-        update("pending", msg="Guardando resultados...")
+        update("pending", msg="Guardando resultados...", progress=90)
         with get_db() as db:
             cur = db.execute("""INSERT INTO examenes
                 (paciente_id,titulo,tipo,fecha_examen,laboratorio,imagen_path,
@@ -1218,7 +1192,8 @@ He analizado tu **{ocr_data.get('tipo_examen', titulo)}** y tengo los resultados
 
         update("done", ok=True, examen_id=eid, conversacion_id=conv_id,
                resumen=interp_data.get("resumen",""), riesgo=riesgo,
-               num_indicadores=len(indicadores), alertas=len(alertas), criticos=len(criticos))
+               num_indicadores=len(indicadores), alertas=len(alertas), criticos=len(criticos),
+               progress=100)
 
     except Exception as e:
         import traceback; print("[VitalIA ERROR]", traceback.format_exc())
