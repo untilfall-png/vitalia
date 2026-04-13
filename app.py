@@ -315,20 +315,22 @@ def analizar_examen():
     f.save(str(ruta))
 
     def generate():
-        try:
-            yield _sse({"step": "ocr", "msg": "Leyendo examen con visión IA..."})
+        import threading, queue as _queue
+        q = _queue.Queue()  # canal para pasar resultados del hilo al generador
 
-            with open(ruta, "rb") as fh:
-                img_b64 = base64.standard_b64encode(fh.read()).decode()
+        def run_analysis():
+            try:
+                with open(ruta, "rb") as fh:
+                    img_b64 = base64.standard_b64encode(fh.read()).decode()
 
-            is_pdf = (ext == ".pdf")
-            if is_pdf:
-                file_block = {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": img_b64}}
-            else:
-                mt = {".jpg":"image/jpeg",".jpeg":"image/jpeg",".png":"image/png",".webp":"image/webp"}
-                file_block = {"type": "image", "source": {"type": "base64", "media_type": mt.get(ext,"image/jpeg"), "data": img_b64}}
+                is_pdf = (ext == ".pdf")
+                if is_pdf:
+                    file_block = {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": img_b64}}
+                else:
+                    mt = {".jpg":"image/jpeg",".jpeg":"image/jpeg",".png":"image/png",".webp":"image/webp"}
+                    file_block = {"type": "image", "source": {"type": "base64", "media_type": mt.get(ext,"image/jpeg"), "data": img_b64}}
 
-            prompt_ocr = """Analiza este examen médico/laboratorio y extrae todos los indicadores.
+                prompt_ocr = """Analiza este examen médico/laboratorio y extrae todos los indicadores.
 
 Responde ÚNICAMENTE con este JSON compacto (sin markdown, sin texto adicional, sin campos extra):
 {"tipo_examen":"","laboratorio":"","fecha":"","paciente_info":"","observaciones_laboratorio":"","indicadores":[{"nombre":"","valor":"","unidad":"","rango_ref":"","rango_min":null,"rango_max":null,"estado":"normal","descripcion":""}]}
@@ -341,20 +343,43 @@ Reglas:
 - Valores aproximados: agrega "~" al inicio (ej: "~12.5")
 - NO incluyas el campo texto_completo"""
 
-            # Stream OCR para mantener conexión viva
-            raw_parts = []
-            with cliente.messages.stream(
-                model="claude-opus-4-6",
-                max_tokens=16000,
-                messages=[{"role":"user","content":[file_block,{"type":"text","text":prompt_ocr}]}]
-            ) as stream:
-                for text in stream.text_stream:
-                    raw_parts.append(text)
-                    # Ping cada ~50 chars para mantener conexión
-                    if len("".join(raw_parts)) % 200 < 5:
-                        yield _sse({"step": "ocr_progress", "msg": "Extrayendo indicadores..."})
+                q.put(("progress", "Extrayendo indicadores con visión IA..."))
+                resp_ocr = cliente.messages.create(
+                    model="claude-opus-4-6",
+                    max_tokens=16000,
+                    messages=[{"role":"user","content":[file_block,{"type":"text","text":prompt_ocr}]}]
+                )
+                raw = re.sub(r"```json\s*|\s*```", "", resp_ocr.content[0].text.strip()).strip()
+                q.put(("ocr_raw", raw))
+            except Exception as e:
+                import traceback; print("[VitalIA OCR ERROR]", traceback.format_exc())
+                q.put(("error", str(e)))
 
-            raw = re.sub(r"```json\s*|\s*```", "", "".join(raw_parts).strip()).strip()
+        # Lanzar análisis en hilo separado
+        t = threading.Thread(target=run_analysis, daemon=True)
+        t.start()
+
+        try:
+            yield _sse({"step": "ocr", "msg": "Leyendo examen con visión IA..."})
+
+            # Esperar resultado del OCR, enviando heartbeats cada 5s
+            raw = None
+            while t.is_alive() or not q.empty():
+                try:
+                    kind, val = q.get(timeout=5)
+                    if kind == "error":
+                        yield _sse({"step": "error", "error": val})
+                        return
+                    if kind == "progress":
+                        yield _sse({"step": "ocr_progress", "msg": val})
+                    if kind == "ocr_raw":
+                        raw = val
+                        break
+                except _queue.Empty:
+                    yield _sse({"step": "ocr_progress", "msg": "Analizando examen..."})
+
+            if raw is None:
+                yield _sse({"step": "error", "error": "No se recibió respuesta del OCR"}); return
             try:
                 ocr_data = json.loads(raw)
             except json.JSONDecodeError:
@@ -396,20 +421,34 @@ Genera una interpretación médica completa en JSON:
   "seguimiento": "cuándo y con qué especialista debe consultar"
 }}"""
 
-            raw2_parts = []
-            with cliente.messages.stream(
-                model="claude-opus-4-6",
-                max_tokens=4000,
-                messages=[{"role":"user","content":prompt_interp}]
-            ) as stream2:
-                for text in stream2.text_stream:
-                    raw2_parts.append(text)
-                    if len("".join(raw2_parts)) % 200 < 5:
-                        yield _sse({"step": "interp_progress", "msg": "Generando interpretación médica..."})
+            q2 = _queue.Queue()
+            def run_interp():
+                try:
+                    resp2 = cliente.messages.create(
+                        model="claude-opus-4-6",
+                        max_tokens=4000,
+                        messages=[{"role":"user","content":prompt_interp}]
+                    )
+                    raw2 = re.sub(r"```json\s*|\s*```", "", resp2.content[0].text.strip()).strip()
+                    q2.put(("ok", raw2))
+                except Exception as ex:
+                    q2.put(("err", str(ex)))
+
+            t2 = threading.Thread(target=run_interp, daemon=True)
+            t2.start()
+            while t2.is_alive() or not q2.empty():
+                try:
+                    kind2, val2 = q2.get(timeout=5)
+                    if kind2 == "err":
+                        val2 = None
+                    break
+                except _queue.Empty:
+                    yield _sse({"step": "interp_progress", "msg": "Generando interpretación..."})
+                    val2 = None; kind2 = "err"
 
             try:
-                raw2 = re.sub(r"```json\s*|\s*```", "", "".join(raw2_parts).strip()).strip()
-                interp_data = json.loads(raw2)
+                interp_data = json.loads(val2) if val2 else {}
+                if not interp_data: raise ValueError("empty")
             except Exception:
                 interp_data = {
                     "resumen": "Análisis completado.",

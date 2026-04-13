@@ -802,25 +802,32 @@ async function analyzeExam() {
     let buffer = '';
     let resultado = null;
 
+    const processLine = (line) => {
+      if (!line.startsWith('data: ')) return;
+      try {
+        const ev = JSON.parse(line.slice(6));
+        if (ev.step === 'error') throw new Error(ev.error);
+        if (ev.msg) setMsg(ev.msg);
+        if (ev.step === 'done') resultado = ev;
+      } catch(e) {
+        if (e.message && !e.message.includes('JSON')) throw e;
+      }
+    };
+
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+      if (value) buffer += decoder.decode(value, { stream: !done });
       const lines = buffer.split('\n');
-      buffer = lines.pop(); // última línea incompleta
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        try {
-          const ev = JSON.parse(line.slice(6));
-          if (ev.step === 'error') throw new Error(ev.error);
-          if (ev.msg) setMsg(ev.msg);
-          if (ev.step === 'done') resultado = ev;
-        } catch(e) { if (e.message !== 'Unexpected end of JSON input') throw e; }
-      }
+      // Si no terminamos, guardar la última línea incompleta en buffer
+      // Si terminamos, procesar todo
+      buffer = done ? '' : (lines.pop() || '');
+      for (const line of lines) processLine(line);
+      if (done) break;
     }
+    // Procesar cualquier resto en buffer
+    if (buffer) buffer.split('\n').forEach(processLine);
 
-    if (!resultado) throw new Error('El análisis no devolvió resultado');
+    if (!resultado) throw new Error('El análisis no devolvió resultado — revisa los logs de Render');
 
     toast(`✅ Análisis completado — ${resultado.num_indicadores} indicadores detectados`);
     await openExamen(resultado.examen_id);
