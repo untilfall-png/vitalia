@@ -14,11 +14,29 @@ import anthropic
 
 # ── Config ────────────────────────────────────────────────────────────────────
 BASE_DIR   = Path(__file__).parent
-# En Render usamos disco persistente en /data; localmente usamos el directorio del proyecto
-DATA_DIR   = Path(os.environ.get("RENDER_DATA_DIR", str(BASE_DIR)))
+
+def _resolve_data_dir() -> Path:
+    """Elige el directorio de datos: /data (Render disk), /tmp (Render free), o local."""
+    for candidate in [os.environ.get("RENDER_DATA_DIR"), "/data", str(BASE_DIR)]:
+        if not candidate:
+            continue
+        p = Path(candidate)
+        try:
+            p.mkdir(parents=True, exist_ok=True)
+            # Verificar que es escribible
+            test = p / ".write_test"
+            test.write_text("ok")
+            test.unlink()
+            return p
+        except Exception:
+            continue
+    return Path("/tmp")
+
+DATA_DIR   = _resolve_data_dir()
 DB_PATH    = DATA_DIR / "vitalia.db"
 UPLOAD_DIR = DATA_DIR / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+print(f"[VitalIA] DATA_DIR={DATA_DIR}")
 PORT       = int(os.environ.get("PORT", 5002))
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".webp", ".pdf"}
@@ -134,9 +152,10 @@ def no_cache(r):
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def get_client():
-    key = ANTHROPIC_API_KEY or request.headers.get("X-API-Key","")
+    # Siempre re-leer desde el entorno para capturar cambios sin reiniciar
+    key = os.environ.get("ANTHROPIC_API_KEY", "") or request.headers.get("X-API-Key","")
     if not key:
-        raise ValueError("ANTHROPIC_API_KEY no configurada")
+        raise ValueError("ANTHROPIC_API_KEY no configurada. Configúrala en Environment Variables de Render.")
     return anthropic.Anthropic(api_key=key)
 
 def estado_indicador(valor_str, rango_min, rango_max):
@@ -196,7 +215,7 @@ def app_main():
     return render_template("app.html",
                            examenes=[dict(e) for e in examenes],
                            paciente=dict(paciente) if paciente else {},
-                           api_key_ok=bool(ANTHROPIC_API_KEY))
+                           api_key_ok=bool(os.environ.get("ANTHROPIC_API_KEY","")))
 
 # ── API: Paciente ─────────────────────────────────────────────────────────────
 @app.route("/api/paciente", methods=["GET","POST"])
