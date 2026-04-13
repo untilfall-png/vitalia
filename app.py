@@ -196,6 +196,22 @@ FORMATO DE RESPUESTAS:
 
 IDIOMA: Responde siempre en español."""
 
+# ── Health check ─────────────────────────────────────────────────────────────
+@app.route("/health")
+def health():
+    import sys
+    key = os.environ.get("ANTHROPIC_API_KEY","")
+    return jsonify({
+        "status": "ok",
+        "python": sys.version,
+        "data_dir": str(DATA_DIR),
+        "db_exists": DB_PATH.exists(),
+        "upload_dir": str(UPLOAD_DIR),
+        "upload_writable": os.access(str(UPLOAD_DIR), os.W_OK),
+        "api_key_set": bool(key),
+        "api_key_prefix": key[:10] + "..." if key else None
+    })
+
 # ── Rutas principales ─────────────────────────────────────────────────────────
 @app.route("/")
 def landing():
