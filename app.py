@@ -289,6 +289,14 @@ def analizar_examen():
     if request.method == "GET":
         return jsonify({"error": "Usa POST para enviar un examen"}), 405
     try:
+        return _analizar_examen_impl()
+    except Exception as e:
+        import traceback
+        print("[VitalIA ERROR]", traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+def _analizar_examen_impl():
+    try:
         cliente = get_client()
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
