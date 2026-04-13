@@ -1065,14 +1065,20 @@ INTERPRETACIÓN PREVIA:
                 role="user",
                 parts=[genai_types.Part(text=mensaje)]
             ))
-            cfg = genai_types.GenerateContentConfig(system_instruction=system)
+            # Inyectar system prompt como primer par user/model (v1 no soporta systemInstruction)
+            contents.insert(0, genai_types.Content(
+                role="model", parts=[genai_types.Part(text="Entendido. Actuaré como el Dr. VitalIA.")]
+            ))
+            contents.insert(0, genai_types.Content(
+                role="user", parts=[genai_types.Part(text=system)]
+            ))
 
             # Intentar con cada modelo hasta que uno responda (manejo de 503)
             last_err = None
             for model_try in _GEMINI_CANDIDATES:
                 try:
                     for chunk in gc.models.generate_content_stream(
-                        model=model_try, contents=contents, config=cfg
+                        model=model_try, contents=contents
                     ):
                         if chunk.text:
                             respuesta_completa += chunk.text
