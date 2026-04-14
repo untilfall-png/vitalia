@@ -623,6 +623,71 @@ def _build_reporte_html(nombre_paciente: str, examen: dict,
           <td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:12px;">{ind.get('descripcion','')}</td>
         </tr>"""
 
+    # ── Detectar si todos los indicadores son normales ──────────────────────────
+    todo_normal = bool(indicadores) and all(
+        i.get("estado", "normal") == "normal" for i in indicadores
+    )
+
+    # ── Sección positiva: mejores indicadores ────────────────────────────────────
+    positive_section_html = ""
+    if todo_normal:
+        def _center_score(ind):
+            try:
+                v = float(re.sub(r"[^\d.\-]", "", str(ind.get("valor", ""))))
+                m = re.search(r"([\d.,]+)\s*[-–]\s*([\d.,]+)", ind.get("rango_ref", ""))
+                if not m:
+                    return 0.0
+                lo = float(m.group(1).replace(",", "."))
+                hi = float(m.group(2).replace(",", "."))
+                if hi <= lo:
+                    return 0.0
+                return 1.0 - abs(2 * (v - lo) / (hi - lo) - 1)
+            except Exception:
+                return 0.0
+
+        scored = sorted(indicadores, key=_center_score, reverse=True)
+        top_inds = scored[:6]
+        stars = ["🥇", "🥈", "🥉", "⭐", "⭐", "⭐"]
+
+        top_cards = ""
+        for idx, ind in enumerate(top_inds):
+            score = _center_score(ind)
+            zona_label = '<div style="font-size:10px;color:#166534;font-weight:700;margin-top:3px;">Zona óptima</div>' if score > 0.7 else ""
+            top_cards += (
+                '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:14px 12px;text-align:center;">'
+                + '<div style="font-size:20px;margin-bottom:5px;">' + stars[idx] + '</div>'
+                + '<div style="font-size:11px;color:#374151;margin-bottom:4px;line-height:1.3;">' + str(ind.get("nombre", "")) + '</div>'
+                + '<div style="font-size:20px;font-weight:700;color:#15803d;font-family:monospace;line-height:1.1;">' + str(ind.get("valor", "")) + '</div>'
+                + '<div style="font-size:10px;color:#6b7280;margin-top:2px;">' + str(ind.get("unidad", "")) + '</div>'
+                + '<div style="font-size:10px;color:#9ca3af;margin-top:3px;">Ref: ' + str(ind.get("rango_ref", "")) + '</div>'
+                + zona_label
+                + '</div>'
+            )
+
+        interp_text = examen.get("interpretacion", "")
+        bienhacer_block = ""
+        if interp_text:
+            bienhacer_block = (
+                '<div style="margin-top:20px;padding:16px 20px;background:#fff;border:1px solid #86efac;border-left:4px solid #16a34a;border-radius:10px;">'
+                + '<div style="font-size:12px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">✨ Lo que estás haciendo bien</div>'
+                + '<div style="font-size:13px;color:#374151;line-height:1.8;">' + interp_text.replace("\n", "<br>") + '</div>'
+                + '</div>'
+            )
+
+        positive_section_html = (
+            '<div style="margin-bottom:28px;">'
+            + '<div style="background:#f0fdf4;border:1px solid #86efac;border-left:5px solid #16a34a;border-radius:10px;padding:18px 22px;margin-bottom:18px;display:flex;align-items:flex-start;gap:14px;">'
+            + '<div style="font-size:36px;line-height:1;flex-shrink:0;">🎉</div>'
+            + '<div><div style="font-size:16px;font-weight:800;color:#166534;margin-bottom:5px;">¡Resultados excelentes!</div>'
+            + '<div style="font-size:13px;color:#166534;line-height:1.65;">Todos tus indicadores están dentro del rango normal. El Dr. VitalIA confirma que tu salud en este examen es óptima.</div></div>'
+            + '</div>'
+            + '<div style="font-size:12px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;">Tus mejores indicadores</div>'
+            + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">' + top_cards + '</div>'
+            + bienhacer_block
+            + '</div>'
+        )
+
+    # ── Recomendaciones (solo si hay alertas) ────────────────────────────────────
     rec_icons = {"dieta":"🥗","ejercicio":"🏃","consulta":"👨‍⚕️","medicamento":"💊","estilo_vida":"🌟","general":"📋"}
     prio_cfg  = {
         "alta":  {"tc":"#991b1b","bg":"#fee2e2","border":"#fca5a5","label":"Alta prioridad"},
@@ -630,10 +695,11 @@ def _build_reporte_html(nombre_paciente: str, examen: dict,
         "baja":  {"tc":"#166534","bg":"#dcfce7","border":"#86efac","label":"Informativa"},
     }
     recs_html = ""
-    for rec in recomendaciones:
-        icon = rec_icons.get(rec.get("tipo","general"),"📋")
-        pc = prio_cfg.get(rec.get("prioridad","media"), prio_cfg["media"])
-        recs_html += f"""<div style="display:flex;gap:14px;padding:14px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid {pc['tc']};border-radius:8px;margin-bottom:10px;">
+    if not todo_normal:
+        for rec in recomendaciones:
+            icon = rec_icons.get(rec.get("tipo","general"),"📋")
+            pc = prio_cfg.get(rec.get("prioridad","media"), prio_cfg["media"])
+            recs_html += f"""<div style="display:flex;gap:14px;padding:14px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid {pc['tc']};border-radius:8px;margin-bottom:10px;">
           <div style="font-size:22px;flex-shrink:0;line-height:1;">{icon}</div>
           <div style="flex:1;">
             <div style="font-weight:700;font-size:13px;color:#1e293b;margin-bottom:4px;">{rec.get('titulo','')}
@@ -644,7 +710,7 @@ def _build_reporte_html(nombre_paciente: str, examen: dict,
         </div>"""
 
     preguntas_html = ""
-    if preguntas:
+    if preguntas and not todo_normal:
         items = "".join([f'<li style="padding:10px 14px;background:#f0f4ff;border:1px solid #c7d2fe;border-radius:8px;margin-bottom:8px;font-size:13px;color:#1e293b;line-height:1.6;list-style:none;"><span style="color:#4338ca;font-weight:700;margin-right:8px;">{i+1}.</span>{p}</li>' for i, p in enumerate(preguntas)])
         preguntas_html = f"""<div style="margin-bottom:32px;padding:20px 22px;background:#f0f4ff;border:1px solid #c7d2fe;border-radius:12px;">
           <h2 style="font-size:15px;font-weight:700;color:#3730a3;margin:0 0 4px;">Preguntas para tu médico tratante</h2>
@@ -744,6 +810,8 @@ def _build_reporte_html(nombre_paciente: str, examen: dict,
       </table>
     </div>
   </div>
+
+  {positive_section_html}
 
   {"<div style='margin-bottom:30px;'><div style='font-size:13px;font-weight:700;color:#4f46e5;text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;'>Recomendaciones</div>" + recs_html + "</div>" if recs_html else ''}
 
