@@ -1224,16 +1224,15 @@ def logout():
 # ── Ruta principal ────────────────────────────────────────────────────────────
 @app.route("/")
 def landing():
-    return redirect("/brochure")
+    return render_template("brochure.html")
+
+@app.route("/brochure")
+def brochure():
+    return redirect("/")
 
 @app.route("/terminos")
 def terminos():
     return render_template("terminos.html")
-
-
-@app.route("/brochure")
-def brochure():
-    return render_template("brochure.html")
 
 
 @app.route("/app")

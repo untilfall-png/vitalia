@@ -6,18 +6,16 @@
   <title>VitalIA — Inteligencia Médica en tu Bolsillo</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ═══════════════════════════════════════════════════
-       DESIGN TOKENS — Dark (default)
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ TOKENS ═══════════════ */
     :root {
-      --bg:        #0b1120;
-      --bg2:       #101828;
-      --bg3:       #1a2538;
-      --bg4:       #243044;
+      --bg:        #080d1a;
+      --bg2:       #0d1526;
+      --bg3:       #172034;
+      --bg4:       #1e2a40;
 
       --primary:   #0ea5e9;
       --primary-d: #0284c7;
@@ -30,13 +28,13 @@
 
       --text:      #f1f5f9;
       --text2:     #94a3b8;
-      --text3:     #4b5d73;
+      --text3:     #3d5068;
       --border:    rgba(255,255,255,0.07);
-      --border2:   rgba(255,255,255,0.12);
+      --border2:   rgba(255,255,255,0.13);
       --glass:     rgba(255,255,255,0.03);
       --glass2:    rgba(255,255,255,0.06);
 
-      /* Alpha variants */
+      --p-06: rgba(14,165,233,0.06);
       --p-08: rgba(14,165,233,0.08);
       --p-10: rgba(14,165,233,0.10);
       --p-12: rgba(14,165,233,0.12);
@@ -44,6 +42,7 @@
       --p-20: rgba(14,165,233,0.20);
       --p-25: rgba(14,165,233,0.25);
       --p-30: rgba(14,165,233,0.30);
+      --p-40: rgba(14,165,233,0.40);
 
       --a-08: rgba(99,102,241,0.08);
       --a-10: rgba(99,102,241,0.10);
@@ -57,7 +56,6 @@
       --s-12: rgba(16,185,129,0.12);
       --s-15: rgba(16,185,129,0.15);
       --s-30: rgba(16,185,129,0.30);
-      --s-35: rgba(16,185,129,0.35);
 
       --w-08: rgba(245,158,11,0.08);
       --w-12: rgba(245,158,11,0.12);
@@ -69,29 +67,22 @@
       --d-15: rgba(239,68,68,0.15);
       --d-20: rgba(239,68,68,0.20);
 
-      /* Shadows */
-      --shadow-sm:  0 1px 3px rgba(0,0,0,0.3);
-      --shadow-md:  0 4px 16px rgba(0,0,0,0.35);
-      --shadow-lg:  0 12px 40px rgba(0,0,0,0.45);
-      --glow-p:     0 0 24px rgba(14,165,233,0.25);
-      --glow-p-lg:  0 0 48px rgba(14,165,233,0.35);
+      --shadow-sm:  0 1px 4px rgba(0,0,0,0.4);
+      --shadow-md:  0 4px 20px rgba(0,0,0,0.45);
+      --shadow-lg:  0 16px 48px rgba(0,0,0,0.55);
+      --glow-p:     0 0 28px rgba(14,165,233,0.30);
+      --glow-p-lg:  0 0 56px rgba(14,165,233,0.45);
+      --glow-a:     0 0 28px rgba(99,102,241,0.30);
 
-      /* Nav */
-      --nav-bg:   rgba(11,17,32,0.88);
-      --nav-blur: blur(20px);
-
-      /* Transitions */
-      --trans: background .25s, color .25s, border-color .25s, box-shadow .25s;
+      --nav-bg:     rgba(8,13,26,0.85);
+      --trans: background .3s ease, color .3s ease, border-color .3s ease, box-shadow .3s ease;
     }
 
-    /* ═══════════════════════════════════════════════════
-       DESIGN TOKENS — Light
-    ═══════════════════════════════════════════════════ */
     [data-theme="light"] {
-      --bg:        #f5f7fa;
-      --bg2:       #edf0f5;
-      --bg3:       #e2e7ef;
-      --bg4:       #d6dce8;
+      --bg:        #f4f6fb;
+      --bg2:       #eaecf4;
+      --bg3:       #dde1ee;
+      --bg4:       #cfd4e5;
 
       --primary:   #0284c7;
       --primary-d: #0369a1;
@@ -105,11 +96,12 @@
       --text:      #0f172a;
       --text2:     #475569;
       --text3:     #94a3b8;
-      --border:    rgba(15,23,42,0.09);
-      --border2:   rgba(15,23,42,0.16);
-      --glass:     rgba(255,255,255,0.70);
-      --glass2:    rgba(255,255,255,0.90);
+      --border:    rgba(15,23,42,0.08);
+      --border2:   rgba(15,23,42,0.15);
+      --glass:     rgba(255,255,255,0.60);
+      --glass2:    rgba(255,255,255,0.85);
 
+      --p-06: rgba(2,132,199,0.06);
       --p-08: rgba(2,132,199,0.08);
       --p-10: rgba(2,132,199,0.10);
       --p-12: rgba(2,132,199,0.12);
@@ -117,6 +109,7 @@
       --p-20: rgba(2,132,199,0.20);
       --p-25: rgba(2,132,199,0.25);
       --p-30: rgba(2,132,199,0.30);
+      --p-40: rgba(2,132,199,0.40);
 
       --a-08: rgba(79,70,229,0.08);
       --a-10: rgba(79,70,229,0.10);
@@ -130,7 +123,6 @@
       --s-12: rgba(5,150,105,0.12);
       --s-15: rgba(5,150,105,0.15);
       --s-30: rgba(5,150,105,0.30);
-      --s-35: rgba(5,150,105,0.35);
 
       --w-08: rgba(217,119,6,0.08);
       --w-12: rgba(217,119,6,0.12);
@@ -142,189 +134,337 @@
       --d-15: rgba(220,38,38,0.15);
       --d-20: rgba(220,38,38,0.20);
 
-      --shadow-sm:  0 1px 3px rgba(15,23,42,0.08);
-      --shadow-md:  0 4px 16px rgba(15,23,42,0.10);
-      --shadow-lg:  0 12px 40px rgba(15,23,42,0.12);
-      --glow-p:     0 0 20px rgba(2,132,199,0.18);
-      --glow-p-lg:  0 0 40px rgba(2,132,199,0.25);
+      --shadow-sm:  0 1px 4px rgba(15,23,42,0.07);
+      --shadow-md:  0 4px 20px rgba(15,23,42,0.10);
+      --shadow-lg:  0 16px 48px rgba(15,23,42,0.13);
+      --glow-p:     0 0 24px rgba(2,132,199,0.20);
+      --glow-p-lg:  0 0 48px rgba(2,132,199,0.30);
+      --glow-a:     0 0 24px rgba(79,70,229,0.20);
 
-      --nav-bg:   rgba(245,247,250,0.90);
-      --nav-blur: blur(20px);
+      --nav-bg:     rgba(244,246,251,0.88);
     }
 
-    /* ═══════════════════════════════════════════════════
-       BASE
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ BASE ═══════════════ */
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      background: var(--bg); color: var(--text);
       overflow-x: hidden;
       transition: var(--trans);
     }
 
-    /* ═══════════════════════════════════════════════════
-       NAV
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ NAV ═══════════════ */
     .nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 200;
       background: var(--nav-bg);
-      backdrop-filter: var(--nav-blur);
-      -webkit-backdrop-filter: var(--nav-blur);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
       border-bottom: 1px solid var(--border);
-      padding: 0 32px;
-      height: 60px;
+      height: 62px; padding: 0 32px;
       display: flex; align-items: center; justify-content: space-between;
       transition: var(--trans);
     }
-    .nav-logo {
-      display: flex; align-items: center; gap: 10px; text-decoration: none;
-    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .nav-logo-icon {
-      width: 34px; height: 34px; border-radius: 9px;
+      width: 36px; height: 36px; border-radius: 10px;
       background: linear-gradient(135deg, var(--primary), var(--accent));
       display: flex; align-items: center; justify-content: center;
-      font-size: 17px;
-      box-shadow: var(--glow-p);
-      flex-shrink: 0;
+      font-size: 19px; box-shadow: var(--glow-p); flex-shrink: 0;
     }
     .nav-logo-text {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 19px; font-weight: 800;
+      font-size: 20px; font-weight: 800;
       background: linear-gradient(135deg, var(--primary), var(--accent));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
     .nav-right { display: flex; align-items: center; gap: 6px; }
     .nav-link {
       padding: 6px 14px; border-radius: 8px;
       font-size: 13px; font-weight: 500;
-      text-decoration: none; color: var(--text2);
-      transition: var(--trans);
+      text-decoration: none; color: var(--text2); transition: var(--trans);
     }
     .nav-link:hover { color: var(--text); background: var(--glass2); }
-    .nav-login {
-      padding: 8px 16px; border-radius: 8px;
-      font-size: 13px; font-weight: 600;
-      text-decoration: none; color: var(--text2);
-      border: 1px solid var(--border2); background: transparent;
-      transition: var(--trans);
-    }
-    .nav-login:hover { color: var(--primary); border-color: var(--primary); background: var(--p-08); }
-    .nav-cta {
-      padding: 8px 18px; border-radius: 8px;
-      font-size: 13px; font-weight: 700;
-      text-decoration: none; color: #fff;
-      background: linear-gradient(135deg, var(--primary), var(--primary-d));
-      box-shadow: var(--glow-p);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      transition: all .2s;
-    }
-    .nav-cta:hover { transform: translateY(-1px); box-shadow: var(--glow-p-lg); }
-
-    /* Theme Toggle */
     .theme-toggle {
       width: 36px; height: 36px; border-radius: 9px;
       background: var(--glass2); border: 1px solid var(--border2);
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: var(--trans);
-      font-size: 16px; flex-shrink: 0;
+      cursor: pointer; transition: var(--trans); font-size: 16px; flex-shrink: 0;
     }
-    .theme-toggle:hover { background: var(--bg3); border-color: var(--primary); }
+    .theme-toggle:hover { border-color: var(--primary); background: var(--p-08); }
     .icon-sun  { display: none; }
     .icon-moon { display: block; }
     [data-theme="light"] .icon-sun  { display: block; }
     [data-theme="light"] .icon-moon { display: none; }
-
-    /* ═══════════════════════════════════════════════════
-       HERO
-    ═══════════════════════════════════════════════════ */
-    .hero {
-      min-height: 100vh;
-      display: flex; align-items: center; justify-content: center;
-      text-align: center;
-      padding: 120px 24px 80px;
-      position: relative;
-      overflow: hidden;
+    .nav-login {
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      text-decoration: none; color: var(--text2);
+      border: 1px solid var(--border2); transition: var(--trans);
     }
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0; z-index: 0; pointer-events: none;
-      background:
-        radial-gradient(ellipse 70% 55% at 50% 0%, var(--p-15) 0%, transparent 65%),
-        radial-gradient(ellipse 40% 35% at 85% 85%, var(--a-10) 0%, transparent 50%);
-    }
-    [data-theme="light"] .hero::before {
-      background:
-        radial-gradient(ellipse 70% 55% at 50% 0%, var(--p-08) 0%, transparent 65%),
-        radial-gradient(ellipse 40% 35% at 85% 85%, var(--a-08) 0%, transparent 50%);
-    }
-    .hero-inner { position: relative; z-index: 1; max-width: 740px; }
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 5px 16px; border-radius: 20px; margin-bottom: 28px;
-      background: var(--p-10); border: 1px solid var(--p-25);
-      font-size: 11px; font-weight: 700; color: var(--primary);
-      letter-spacing: .8px; text-transform: uppercase;
-    }
-    .hero-badge-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--primary); animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
-    .hero-title {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: clamp(44px, 7.5vw, 84px);
-      font-weight: 900; line-height: 1.06;
-      letter-spacing: -2px; margin-bottom: 22px;
-    }
-    .hero-title .grad {
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .hero-sub {
-      font-size: clamp(15px, 2.2vw, 19px); color: var(--text2);
-      max-width: 560px; margin: 0 auto 36px; line-height: 1.75;
-    }
-    .hero-pills {
-      display: flex; align-items: center; justify-content: center;
-      gap: 10px; flex-wrap: wrap; margin-bottom: 40px;
-    }
-    .hero-pill {
-      display: flex; align-items: center; gap: 7px;
-      padding: 5px 14px; border-radius: 20px;
-      background: var(--glass2); border: 1px solid var(--border2);
-      font-size: 13px; color: var(--text2); font-weight: 500;
-    }
-    .hero-pill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); }
-    .hero-cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .btn-primary {
-      padding: 13px 30px; border-radius: 10px;
-      font-size: 15px; font-weight: 700;
+    .nav-login:hover { color: var(--primary); border-color: var(--primary); background: var(--p-08); }
+    .nav-cta {
+      padding: 9px 20px; border-radius: 9px;
+      font-size: 13px; font-weight: 700;
       text-decoration: none; color: #fff;
       background: linear-gradient(135deg, var(--primary), var(--primary-d));
       box-shadow: var(--glow-p);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      transition: all .2s;
+      font-family: 'Plus Jakarta Sans', sans-serif; transition: all .2s;
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--glow-p-lg); }
-    .btn-ghost {
-      padding: 13px 30px; border-radius: 10px;
-      font-size: 15px; font-weight: 600;
+    .nav-cta:hover { transform: translateY(-1px); box-shadow: var(--glow-p-lg); }
+
+    /* ═══════════════ HERO ═══════════════ */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 100px 24px 60px;
+      position: relative; overflow: hidden;
+      text-align: center;
+    }
+
+    /* Background animated orbs */
+    .hero-orbs { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(80px);
+      animation: orbFloat 12s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(14,165,233,0.18) 0%, transparent 70%);
+      top: -150px; left: -100px;
+      animation-duration: 14s;
+    }
+    .orb-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+      bottom: -100px; right: -80px;
+      animation-duration: 18s; animation-delay: -6s;
+    }
+    .orb-3 {
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(16,185,129,0.10) 0%, transparent 70%);
+      top: 40%; left: 60%;
+      animation-duration: 22s; animation-delay: -10s;
+    }
+    [data-theme="light"] .orb-1 {
+      background: radial-gradient(circle, rgba(2,132,199,0.10) 0%, transparent 70%);
+    }
+    [data-theme="light"] .orb-2 {
+      background: radial-gradient(circle, rgba(79,70,229,0.08) 0%, transparent 70%);
+    }
+    [data-theme="light"] .orb-3 {
+      background: radial-gradient(circle, rgba(5,150,105,0.07) 0%, transparent 70%);
+    }
+    @keyframes orbFloat {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(40px,-50px) scale(1.06); }
+      66%      { transform: translate(-30px,30px) scale(0.96); }
+    }
+
+    /* EKG SVG */
+    .hero-ekg {
+      position: absolute; bottom: 80px; left: 0; right: 0; z-index: 0;
+      width: 100%; height: 80px; pointer-events: none; opacity: 0.15;
+    }
+    [data-theme="light"] .hero-ekg { opacity: 0.08; }
+    .ekg-path {
+      fill: none; stroke: var(--primary); stroke-width: 2;
+      stroke-dasharray: 1200; stroke-dashoffset: 1200;
+      animation: ekgDraw 3s ease forwards 0.5s, ekgPulse 4s ease-in-out infinite 3.5s;
+    }
+    @keyframes ekgDraw {
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes ekgPulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.4; }
+    }
+
+    /* Hero inner */
+    .hero-inner { position: relative; z-index: 1; max-width: 780px; }
+
+    /* Live badge */
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 18px; border-radius: 30px; margin-bottom: 36px;
+      background: var(--p-10); border: 1px solid var(--p-25);
+      font-size: 11px; font-weight: 700; color: var(--primary);
+      letter-spacing: 1px; text-transform: uppercase;
+      animation: fadeInUp .6s ease both;
+    }
+    .badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--primary); animation: blink 1.4s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* Logo icon */
+    .hero-logo-wrap {
+      position: relative; display: inline-block;
+      margin-bottom: 32px;
+      animation: fadeInUp .6s ease .1s both;
+    }
+    .hero-logo-icon {
+      width: 96px; height: 96px; border-radius: 26px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 50px; margin: 0 auto;
+      box-shadow: var(--glow-p), var(--glow-a), 0 0 80px rgba(14,165,233,0.2);
+      animation: logoFloat 4s ease-in-out infinite;
+      position: relative; z-index: 2;
+    }
+    [data-theme="light"] .hero-logo-icon {
+      box-shadow: var(--glow-p), 0 8px 32px rgba(2,132,199,0.25);
+    }
+    @keyframes logoFloat {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-10px); }
+    }
+    .pulse-ring {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 96px; height: 96px; border-radius: 26px;
+      border: 2px solid var(--primary);
+      animation: pulseRing 2.5s ease-out infinite;
+    }
+    .pulse-ring-2 {
+      animation-delay: .8s;
+      border-color: var(--accent);
+    }
+    @keyframes pulseRing {
+      0%   { transform: translate(-50%,-50%) scale(1); opacity: .7; }
+      100% { transform: translate(-50%,-50%) scale(2.0); opacity: 0; }
+    }
+
+    /* Hero title */
+    .hero-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      margin-bottom: 20px;
+      animation: fadeInUp .65s ease .2s both;
+    }
+    .hero-title-vitalia {
+      display: block;
+      font-size: clamp(72px, 14vw, 130px);
+      font-weight: 900; line-height: .95;
+      letter-spacing: -4px;
+      background: linear-gradient(135deg, var(--primary-l) 0%, var(--primary) 35%, var(--accent) 65%, var(--primary-l) 100%);
+      background-size: 300% 100%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fadeInUp .65s ease .2s both, shimmer 4s linear 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    .hero-title-sub {
+      display: block;
+      font-size: clamp(20px, 3.5vw, 32px);
+      font-weight: 700;
+      color: var(--text2); letter-spacing: -.3px;
+      line-height: 1.3; margin-top: 8px;
+      font-style: normal;
+    }
+
+    /* Description */
+    .hero-desc {
+      font-size: clamp(15px, 2vw, 18px);
+      color: var(--text2); line-height: 1.8;
+      max-width: 580px; margin: 0 auto 36px;
+      animation: fadeInUp .65s ease .35s both;
+    }
+    .hero-desc strong { color: var(--text); font-weight: 600; }
+
+    /* Stats */
+    .hero-stats {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; margin-bottom: 40px;
+      background: var(--glass2); border: 1px solid var(--border2);
+      border-radius: 16px; padding: 18px 28px;
+      box-shadow: var(--shadow-md);
+      flex-wrap: wrap;
+      animation: fadeInUp .65s ease .45s both;
+    }
+    .hero-stat { text-align: center; padding: 0 24px; }
+    .hero-stat-val {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 28px; font-weight: 900; color: var(--primary);
+      display: block; line-height: 1;
+    }
+    .hero-stat-lbl {
+      font-size: 11px; color: var(--text3); font-weight: 500;
+      text-transform: uppercase; letter-spacing: .6px; margin-top: 4px; display: block;
+    }
+    .hero-stat-div {
+      width: 1px; height: 36px; background: var(--border2); flex-shrink: 0;
+    }
+
+    /* CTAs */
+    .hero-cta-row {
+      display: flex; gap: 12px; justify-content: center;
+      flex-wrap: wrap; margin-bottom: 28px;
+      animation: fadeInUp .65s ease .55s both;
+    }
+    .btn-hero-primary {
+      padding: 15px 36px; border-radius: 12px;
+      font-size: 16px; font-weight: 800;
+      text-decoration: none; color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      box-shadow: var(--glow-p), 0 8px 32px rgba(14,165,233,0.25);
+      font-family: 'Plus Jakarta Sans', sans-serif; transition: all .25s;
+      letter-spacing: -.2px;
+    }
+    .btn-hero-primary:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: var(--glow-p-lg), 0 16px 48px rgba(14,165,233,0.35);
+    }
+    .btn-hero-ghost {
+      padding: 15px 36px; border-radius: 12px;
+      font-size: 16px; font-weight: 700;
       text-decoration: none; color: var(--text);
       border: 1px solid var(--border2); background: var(--glass2);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      transition: var(--trans);
+      font-family: 'Plus Jakarta Sans', sans-serif; transition: var(--trans);
     }
-    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); background: var(--p-08); }
-    .hero-url { margin-top: 18px; font-size: 12px; color: var(--text3); }
-    .hero-url a { color: var(--primary); text-decoration: none; font-weight: 600; }
+    .btn-hero-ghost:hover {
+      border-color: var(--primary); color: var(--primary); background: var(--p-08);
+      transform: translateY(-2px);
+    }
 
-    /* ═══════════════════════════════════════════════════
-       SHARED SECTION LAYOUT
-    ═══════════════════════════════════════════════════ */
+    /* Trust row */
+    .hero-trust {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; flex-wrap: wrap;
+      font-size: 12px; color: var(--text3); font-weight: 500;
+      animation: fadeInUp .65s ease .65s both;
+    }
+    .hero-trust-item {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 12px; border-radius: 20px;
+      background: var(--glass2); border: 1px solid var(--border);
+    }
+
+    /* Scroll indicator */
+    .hero-scroll {
+      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      z-index: 1; animation: fadeInUp .65s ease .9s both;
+    }
+    .scroll-text { font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+    .scroll-line {
+      width: 1px; height: 28px;
+      background: linear-gradient(to bottom, var(--primary), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%,100% { opacity: 1; transform: scaleY(1); }
+      50%      { opacity: .3; transform: scaleY(.7); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ═══════════════ SHARED SECTIONS ═══════════════ */
     section { position: relative; }
     .section-wrap { max-width: 900px; margin: 0 auto; padding: 88px 24px; }
     .section-alt { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
@@ -353,9 +493,7 @@
     .divider.amber  { background: var(--warning); }
     .divider.red    { background: var(--danger); }
 
-    /* ═══════════════════════════════════════════════════
-       EL PROBLEMA
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ EL PROBLEMA ═══════════════ */
     .problema-grid { display: grid; gap: 12px; }
     .problema-card {
       display: flex; align-items: flex-start; gap: 16px;
@@ -378,9 +516,7 @@
       font-size: 13px; font-weight: 600; color: var(--danger);
     }
 
-    /* ═══════════════════════════════════════════════════
-       LA SOLUCIÓN
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ SOLUCIÓN ═══════════════ */
     .flow-row {
       display: flex; align-items: center; justify-content: center;
       gap: 0; flex-wrap: wrap; margin: 44px 0;
@@ -402,13 +538,10 @@
       text-align: center; padding: 12px 24px;
       background: linear-gradient(135deg, var(--p-08), var(--a-08));
       border: 1px solid var(--p-20); border-radius: 40px;
-      font-size: 13px; font-weight: 600; color: var(--primary);
-      display: inline-block;
+      font-size: 13px; font-weight: 600; color: var(--primary); display: inline-block;
     }
 
-    /* ═══════════════════════════════════════════════════
-       TECNOLOGÍA
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ TECNOLOGÍA ═══════════════ */
     .tech-grid { display: grid; gap: 12px; }
     .tech-card {
       display: flex; align-items: flex-start; gap: 16px;
@@ -416,11 +549,7 @@
       border-radius: 12px; padding: 20px 22px;
       transition: border-color .2s, transform .2s, box-shadow .2s;
     }
-    .tech-card:hover {
-      border-color: var(--primary);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-    }
+    .tech-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
     .tech-num {
       width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
@@ -433,9 +562,7 @@
     .tech-desc { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 3px; }
     .tech-sub { font-size: 11px; color: var(--text3); }
 
-    /* ═══════════════════════════════════════════════════
-       FUNCIONALIDADES
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ FUNCIONALIDADES ═══════════════ */
     .features-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px;
     }
@@ -444,11 +571,7 @@
       border-radius: 12px; padding: 20px 18px;
       transition: border-color .2s, transform .2s, box-shadow .2s;
     }
-    .feature-card:hover {
-      border-color: var(--primary);
-      transform: translateY(-3px);
-      box-shadow: var(--shadow-md);
-    }
+    .feature-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--shadow-md); }
     .feature-icon { font-size: 26px; margin-bottom: 10px; }
     .feature-title { font-size: 14px; font-weight: 700; margin-bottom: 5px; }
     .feature-desc { font-size: 13px; color: var(--text2); line-height: 1.65; }
@@ -459,22 +582,16 @@
     .feature-tag.new { background: var(--s-12); color: var(--secondary); border: 1px solid var(--s-30); }
     .feature-tag.ai  { background: var(--a-12); color: var(--accent); border: 1px solid var(--a-30); }
 
-    /* ═══════════════════════════════════════════════════
-       CÓMO FUNCIONA
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ CÓMO FUNCIONA ═══════════════ */
     .steps-list { display: grid; gap: 0; }
-    .step-row {
-      display: flex; align-items: flex-start; gap: 18px;
-      position: relative; padding-bottom: 28px;
-    }
+    .step-row { display: flex; align-items: flex-start; gap: 18px; position: relative; padding-bottom: 28px; }
     .step-row:last-child { padding-bottom: 0; }
     .step-row:last-child .step-line { display: none; }
     .step-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
     .step-circle-num {
       width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 15px; font-weight: 800;
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif;
     }
     .step-circle-num.s1 { background: var(--p-15); border: 2px solid var(--p-30); color: var(--primary); }
     .step-circle-num.s2 { background: var(--a-15); border: 2px solid var(--a-30); color: var(--accent); }
@@ -487,40 +604,31 @@
     .steps-footer { margin-top: 32px; display: flex; gap: 10px; flex-wrap: wrap; }
     .steps-pill {
       padding: 9px 18px; border-radius: 40px; font-size: 12px; font-weight: 600;
-      border: 1px solid var(--border2); background: var(--glass2);
-      color: var(--text2); display: flex; align-items: center; gap: 7px;
+      border: 1px solid var(--border2); background: var(--glass2); color: var(--text2);
+      display: flex; align-items: center; gap: 7px;
     }
 
-    /* ═══════════════════════════════════════════════════
-       COMPATIBILIDAD
-    ═══════════════════════════════════════════════════ */
-    .compat-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px;
-    }
+    /* ═══════════════ COMPATIBILIDAD ═══════════════ */
+    .compat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
     .compat-item {
       display: flex; align-items: center; gap: 10px;
-      background: var(--glass2); border: 1px solid var(--border);
-      border-radius: 10px; padding: 12px 14px;
-      font-size: 13px; font-weight: 600;
+      background: var(--glass2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; font-size: 13px; font-weight: 600;
       transition: border-color .2s, transform .2s;
     }
     .compat-item:hover { border-color: var(--secondary); transform: translateY(-2px); }
     .compat-check { color: var(--secondary); font-size: 15px; }
     .compat-footer {
       margin-top: 20px; text-align: center; font-size: 13px; color: var(--text2);
-      padding: 11px 16px; background: var(--glass2);
-      border-radius: 10px; border: 1px solid var(--border);
+      padding: 11px 16px; background: var(--glass2); border-radius: 10px; border: 1px solid var(--border);
     }
 
-    /* ═══════════════════════════════════════════════════
-       BENEFICIOS
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ BENEFICIOS ═══════════════ */
     .benef-grid { display: grid; gap: 12px; }
     .benef-card {
       display: flex; align-items: stretch;
-      background: var(--glass2); border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden;
-      transition: transform .2s, box-shadow .2s;
+      background: var(--glass2); border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; transition: transform .2s, box-shadow .2s;
     }
     .benef-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
     .benef-side { width: 4px; flex-shrink: 0; }
@@ -528,25 +636,16 @@
     .benef-side.indigo { background: var(--accent); }
     .benef-side.green  { background: var(--secondary); }
     .benef-side.amber  { background: var(--warning); }
-    .benef-body {
-      padding: 16px 18px; flex: 1;
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    }
+    .benef-body { padding: 16px 18px; flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .benef-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
     .benef-desc { font-size: 12px; color: var(--text2); }
-    .benef-tag {
-      padding: 3px 10px; border-radius: 20px;
-      font-size: 10px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
-      letter-spacing: .3px;
-    }
+    .benef-tag { padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; white-space: nowrap; flex-shrink: 0; letter-spacing: .3px; }
     .benef-tag.blue   { background: var(--p-12); color: var(--primary); }
     .benef-tag.indigo { background: var(--a-12); color: var(--accent); }
     .benef-tag.green  { background: var(--s-12); color: var(--secondary); }
     .benef-tag.amber  { background: var(--w-12); color: var(--warning); }
 
-    /* ═══════════════════════════════════════════════════
-       DIFERENCIAL
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ DIFERENCIAL ═══════════════ */
     .dif-no-list { display: grid; gap: 8px; margin-bottom: 24px; }
     .dif-no {
       display: flex; align-items: center; gap: 12px; padding: 12px 16px;
@@ -557,26 +656,18 @@
     .dif-yes {
       display: flex; align-items: center; gap: 14px; padding: 16px 18px; margin-bottom: 24px;
       background: linear-gradient(135deg, var(--s-10), var(--p-08));
-      border: 1px solid var(--s-30); border-radius: 12px;
-      font-size: 14px; font-weight: 700;
+      border: 1px solid var(--s-30); border-radius: 12px; font-weight: 700;
     }
     .dif-yes-check { color: var(--secondary); font-size: 18px; flex-shrink: 0; }
-    .dif-pipeline {
-      display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap;
-    }
-    .dif-pipe-item {
-      padding: 7px 16px; border-radius: 7px; font-size: 12px; font-weight: 700;
-      border: 1px solid var(--border2);
-    }
+    .dif-pipeline { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; }
+    .dif-pipe-item { padding: 7px 16px; border-radius: 7px; font-size: 12px; font-weight: 700; border: 1px solid var(--border2); }
     .dif-pipe-item.d1 { background: var(--p-12); color: var(--primary); }
     .dif-pipe-item.d2 { background: var(--a-12); color: var(--accent); }
     .dif-pipe-item.d3 { background: var(--s-12); color: var(--secondary); }
     .dif-pipe-item.d4 { background: var(--w-12); color: var(--warning); }
     .dif-pipe-arrow { color: var(--text3); padding: 0 8px; font-size: 12px; }
 
-    /* ═══════════════════════════════════════════════════
-       POSICIONAMIENTO
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ POSICIONAMIENTO ═══════════════ */
     .pos-disclaimer {
       text-align: center; padding: 12px 18px; margin-bottom: 28px;
       background: var(--a-08); border: 1px solid var(--a-20); border-radius: 10px;
@@ -593,9 +684,7 @@
     .pos-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
     .pos-desc { font-size: 13px; color: var(--text2); line-height: 1.6; }
 
-    /* ═══════════════════════════════════════════════════
-       PRECIO
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ PRECIO ═══════════════ */
     .precio-card {
       max-width: 440px; margin: 0 auto;
       background: linear-gradient(135deg, var(--p-10), var(--a-10));
@@ -603,29 +692,17 @@
       padding: 36px 32px; text-align: center;
       box-shadow: var(--shadow-lg);
     }
-    .precio-amount {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 68px; font-weight: 900; color: var(--primary); line-height: 1;
-      margin-bottom: 4px;
-    }
-    .precio-amount sup {
-      font-size: 28px; vertical-align: top; margin-top: 14px; display: inline-block;
-    }
+    .precio-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 68px; font-weight: 900; color: var(--primary); line-height: 1; margin-bottom: 4px; }
+    .precio-amount sup { font-size: 28px; vertical-align: top; margin-top: 14px; display: inline-block; }
     .precio-per { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
     .precio-features { text-align: left; margin-bottom: 24px; display: grid; gap: 9px; }
     .precio-feat { display: flex; align-items: center; gap: 9px; font-size: 13px; }
     .precio-feat-check { color: var(--secondary); flex-shrink: 0; }
     .precio-note { font-size: 11px; color: var(--text3); }
 
-    /* ═══════════════════════════════════════════════════
-       VISIÓN
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ VISIÓN ═══════════════ */
     .vision-grid { display: grid; gap: 12px; }
-    .vision-card {
-      display: flex; align-items: center; gap: 14px; padding: 16px 20px;
-      background: var(--glass2); border: 1px solid var(--border); border-radius: 12px;
-      transition: transform .2s;
-    }
+    .vision-card { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: var(--glass2); border: 1px solid var(--border); border-radius: 12px; transition: transform .2s; }
     .vision-card:hover { transform: translateX(4px); }
     .vision-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .vision-dot.d1 { background: var(--primary); box-shadow: 0 0 6px var(--primary); }
@@ -634,38 +711,22 @@
     .vision-dot.d4 { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
     .vision-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
     .vision-desc { font-size: 13px; color: var(--text2); }
-    .vision-footer {
-      margin-top: 28px; text-align: center; padding: 14px 20px;
-      background: linear-gradient(135deg, var(--p-08), var(--a-08));
-      border: 1px solid var(--p-20); border-radius: 12px;
-      font-size: 14px; font-weight: 600; color: var(--text);
-    }
+    .vision-footer { margin-top: 28px; text-align: center; padding: 14px 20px; background: linear-gradient(135deg, var(--p-08), var(--a-08)); border: 1px solid var(--p-20); border-radius: 12px; font-size: 14px; font-weight: 600; }
 
-    /* ═══════════════════════════════════════════════════
-       CTA FINAL
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ CTA FINAL ═══════════════ */
     .cta-section {
       min-height: 60vh; display: flex; align-items: center; justify-content: center;
       text-align: center; padding: 88px 24px; position: relative; overflow: hidden;
     }
     .cta-section::before {
       content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-      background:
-        radial-gradient(ellipse 80% 60% at 50% 100%, var(--a-10) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 30% 0%, var(--p-08) 0%, transparent 50%);
+      background: radial-gradient(ellipse 80% 60% at 50% 100%, var(--a-10) 0%, transparent 60%),
+                  radial-gradient(ellipse 60% 40% at 30% 0%, var(--p-08) 0%, transparent 50%);
     }
     .cta-inner { position: relative; z-index: 1; max-width: 500px; margin: 0 auto; }
     .cta-steps { display: grid; gap: 10px; margin: 28px auto 36px; }
-    .cta-step {
-      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-      background: var(--glass2); border: 1px solid var(--border); border-radius: 10px;
-      font-size: 13px; font-weight: 600; text-align: left;
-    }
-    .cta-step-num {
-      width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 800;
-    }
+    .cta-step { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--glass2); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-weight: 600; text-align: left; }
+    .cta-step-num { width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
     .cta-step-num.n1 { background: var(--p-15); color: var(--primary); }
     .cta-step-num.n2 { background: var(--a-15); color: var(--accent); }
     .cta-step-num.n3 { background: var(--s-15); color: var(--secondary); }
@@ -673,28 +734,26 @@
     .cta-url a { color: var(--primary); font-weight: 700; text-decoration: none; }
     .cta-year { margin-top: 6px; font-size: 11px; color: var(--text3); }
 
-    /* ═══════════════════════════════════════════════════
-       FOOTER
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ FOOTER ═══════════════ */
     .site-footer {
-      border-top: 1px solid var(--border);
-      padding: 24px 32px;
+      border-top: 1px solid var(--border); padding: 24px 32px;
       display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 10px;
-      font-size: 12px; color: var(--text3);
+      flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--text3);
       background: var(--bg2);
     }
     .site-footer a { color: var(--text2); text-decoration: none; transition: color .2s; }
     .site-footer a:hover { color: var(--primary); }
     .footer-links { display: flex; gap: 20px; }
 
-    /* ═══════════════════════════════════════════════════
-       RESPONSIVE
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════ RESPONSIVE ═══════════════ */
     @media (max-width: 640px) {
       .nav { padding: 0 16px; }
-      .nav-link { display: none; }
-      .nav-login { display: none; }
+      .nav-link, .nav-login { display: none; }
+      .hero-logo-icon { width: 72px; height: 72px; font-size: 38px; border-radius: 20px; }
+      .pulse-ring { width: 72px; height: 72px; border-radius: 20px; }
+      .hero-stats { padding: 14px 16px; gap: 0; }
+      .hero-stat { padding: 0 14px; }
+      .hero-stat-val { font-size: 22px; }
       .section-wrap { padding: 64px 16px; }
       .flow-arrow { display: none; }
       .benef-tag { display: none; }
@@ -708,7 +767,7 @@
 
   <!-- ═══ NAV ═══ -->
   <nav class="nav">
-    <a href="/brochure" class="nav-logo">
+    <a href="/" class="nav-logo">
       <div class="nav-logo-icon">🩺</div>
       <span class="nav-logo-text">VitalIA</span>
     </a>
@@ -727,26 +786,93 @@
 
   <!-- ═══ HERO ═══ -->
   <section class="hero">
-    <div class="hero-inner">
-      <div class="hero-badge"><span class="hero-badge-dot"></span> Inteligencia Médica · 2026</div>
-      <h1 class="hero-title">
-        <span class="grad">VITALIA</span><br>
-        Inteligencia Médica<br>en tu Bolsillo
-      </h1>
-      <p class="hero-sub">
-        Una plataforma clínica que transforma tus exámenes médicos en información clara, personalizada y accionable — en segundos.
-      </p>
-      <div class="hero-pills">
-        <div class="hero-pill"><div class="hero-pill-dot"></div> Escanea tu examen</div>
-        <div class="hero-pill"><div class="hero-pill-dot"></div> IA médica lo interpreta</div>
-        <div class="hero-pill"><div class="hero-pill-dot"></div> Recibe tu plan de acción</div>
-      </div>
-      <div class="hero-cta-row">
-        <a href="/register" class="btn-primary">Comenzar gratis →</a>
-        <a href="#funcionalidades" class="btn-ghost">Ver funcionalidades</a>
-      </div>
-      <div class="hero-url"><a href="https://vitalia.work">www.vitalia.work</a></div>
+
+    <!-- Orbs animados -->
+    <div class="hero-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
     </div>
+
+    <!-- Línea EKG / heartbeat -->
+    <svg class="hero-ekg" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true">
+      <path class="ekg-path" d="M0,40 L180,40 L210,40 L225,8 L240,72 L255,8 L268,40 L300,40 L320,40 L340,40 L355,20 L368,58 L380,40 L420,40 L600,40 L615,40 L630,10 L645,68 L658,10 L670,40 L700,40 L900,40 L915,25 L928,55 L940,40 L960,40 L1200,40 L1215,32 L1228,48 L1240,40 L1440,40"/>
+    </svg>
+
+    <div class="hero-inner">
+
+      <!-- Badge animado -->
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Plataforma clínica · Disponible ahora
+      </div>
+
+      <!-- Logo grande con anillos de pulso -->
+      <div class="hero-logo-wrap">
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring pulse-ring-2"></div>
+        <div class="hero-logo-icon">🩺</div>
+      </div>
+
+      <!-- Título principal -->
+      <h1 class="hero-title">
+        <span class="hero-title-vitalia">VITALIA</span>
+        <span class="hero-title-sub">
+          Inteligencia Médica<br>en tu Bolsillo
+        </span>
+      </h1>
+
+      <!-- Descripción -->
+      <p class="hero-desc">
+        Una plataforma clínica que transforma tus exámenes médicos en información
+        <strong>clara, personalizada y accionable</strong> — en segundos.
+      </p>
+
+      <!-- Stats -->
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="hero-stat-val">&lt; 30s</span>
+          <span class="hero-stat-lbl">Análisis completo</span>
+        </div>
+        <div class="hero-stat-div"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-val">$3</span>
+          <span class="hero-stat-lbl">USD por examen</span>
+        </div>
+        <div class="hero-stat-div"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-val">24/7</span>
+          <span class="hero-stat-lbl">Siempre disponible</span>
+        </div>
+        <div class="hero-stat-div"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-val">IA</span>
+          <span class="hero-stat-lbl">Médica especializada</span>
+        </div>
+      </div>
+
+      <!-- CTAs -->
+      <div class="hero-cta-row">
+        <a href="/register" class="btn-hero-primary">Comenzar gratis →</a>
+        <a href="/login" class="btn-hero-ghost">Ya tengo cuenta</a>
+      </div>
+
+      <!-- Trust -->
+      <div class="hero-trust">
+        <span class="hero-trust-item">🔒 Stripe SSL</span>
+        <span class="hero-trust-item">🤖 IA Médica</span>
+        <span class="hero-trust-item">⚖️ Ley 19.628</span>
+        <span class="hero-trust-item">🌐 GDPR</span>
+      </div>
+
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="hero-scroll">
+      <span class="scroll-text">Explorar</span>
+      <div class="scroll-line"></div>
+    </div>
+
   </section>
 
   <!-- ═══ EL PROBLEMA ═══ -->
@@ -795,7 +921,7 @@
       <div class="section-badge blue">La solución</div>
       <h2 class="section-title">Aquí nace <span style="background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">VITALIA</span></h2>
       <div class="divider blue" style="margin:12px auto 20px;"></div>
-      <p class="section-sub" style="margin:0 auto 0;">Una plataforma clínica inteligente que transforma tus exámenes en información clara, con plan de acción personalizado y seguimiento de evolución médica.</p>
+      <p class="section-sub" style="margin:0 auto 0;">Una plataforma clínica que transforma tus exámenes en información clara, con plan de acción personalizado y seguimiento de evolución médica.</p>
       <div class="flow-row">
         <div class="flow-step">
           <div class="flow-circle c1">1</div>
@@ -920,7 +1046,7 @@
         <div class="feature-card">
           <div class="feature-icon">💬</div>
           <div class="feature-title">Chat con el Dr. VitalIA</div>
-          <div class="feature-desc">Después del análisis, consulta dudas específicas sobre tus resultados. El Dr. VitalIA ya conoce tu examen y responde con contexto real.</div>
+          <div class="feature-desc">Después del análisis, consulta dudas específicas. El Dr. VitalIA ya conoce tu examen y responde con contexto real.</div>
         </div>
         <div class="feature-card">
           <div class="feature-icon">👤</div>
@@ -950,42 +1076,31 @@
       <p class="section-sub">Cuatro pasos simples. Sin conocimientos médicos. Sin esperar citas.</p>
       <div class="steps-list">
         <div class="step-row">
-          <div class="step-left">
-            <div class="step-circle-num s1">1</div>
-            <div class="step-line"></div>
-          </div>
+          <div class="step-left"><div class="step-circle-num s1">1</div><div class="step-line"></div></div>
           <div class="step-body">
             <div class="step-title">Sube o escanea tu examen</div>
             <div class="step-desc">Toma una foto con tu celular o sube un PDF desde tu dispositivo. JPG, PNG y PDF son aceptados.</div>
           </div>
         </div>
         <div class="step-row">
-          <div class="step-left">
-            <div class="step-circle-num s2">2</div>
-            <div class="step-line"></div>
-          </div>
+          <div class="step-left"><div class="step-circle-num s2">2</div><div class="step-line"></div></div>
           <div class="step-body">
             <div class="step-title">La IA analiza automáticamente</div>
-            <div class="step-desc">El OCR extrae valores, unidades y rangos de referencia. La IA médica los interpreta en contexto de tu perfil. Una barra de progreso te muestra cada etapa en tiempo real.</div>
+            <div class="step-desc">El OCR extrae valores, unidades y rangos de referencia. La IA médica los interpreta en contexto de tu perfil. Una barra de progreso muestra cada etapa en tiempo real.</div>
           </div>
         </div>
         <div class="step-row">
-          <div class="step-left">
-            <div class="step-circle-num s3">3</div>
-            <div class="step-line"></div>
-          </div>
+          <div class="step-left"><div class="step-circle-num s3">3</div><div class="step-line"></div></div>
           <div class="step-body">
             <div class="step-title">Detecta valores importantes y genera tu plan</div>
-            <div class="step-desc">Identifica alertas por nivel de riesgo. Si hay anomalías, genera plan de acción en 3 capas con predicciones. Si todo está normal, celebra tus resultados y refuerza tus hábitos.</div>
+            <div class="step-desc">Identifica alertas por nivel de riesgo. Si hay anomalías, genera plan de acción en 3 capas con predicciones. Si todo está normal, celebra tus resultados.</div>
           </div>
         </div>
         <div class="step-row">
-          <div class="step-left">
-            <div class="step-circle-num s4">4</div>
-          </div>
+          <div class="step-left"><div class="step-circle-num s4">4</div></div>
           <div class="step-body">
             <div class="step-title">Recibe explicación clara y actúa</div>
-            <div class="step-desc">Resumen comprensible sin tecnicismos, preguntas para tu médico, reporte PDF descargable y acceso al chat con el Dr. VitalIA para resolver dudas adicionales.</div>
+            <div class="step-desc">Resumen comprensible, preguntas para tu médico, reporte PDF descargable y acceso al chat con el Dr. VitalIA.</div>
           </div>
         </div>
       </div>
@@ -1018,7 +1133,7 @@
         <div class="compat-item"><span class="compat-check">✓</span> Imágenes (informes)</div>
         <div class="compat-item"><span class="compat-check">✓</span> Cualquier otro</div>
       </div>
-      <div class="compat-footer">Hoy existen miles de tipos de pruebas clínicas que requieren interpretación especializada. VitalIA está preparado para todas.</div>
+      <div class="compat-footer">VitalIA está preparado para interpretar cualquier tipo de prueba clínica con inteligencia artificial especializada.</div>
     </div>
   </section>
 
@@ -1029,48 +1144,12 @@
       <h2 class="section-title">Lo que cambia<br>con VITALIA</h2>
       <div class="divider blue"></div>
       <div class="benef-grid">
-        <div class="benef-card">
-          <div class="benef-side blue"></div>
-          <div class="benef-body">
-            <div><div class="benef-title">Comprensión inmediata</div><div class="benef-desc">Resultados explicados al instante, sin esperar citas médicas. En segundos, no en semanas.</div></div>
-            <div class="benef-tag blue">RÁPIDO</div>
-          </div>
-        </div>
-        <div class="benef-card">
-          <div class="benef-side indigo"></div>
-          <div class="benef-body">
-            <div><div class="benef-title">Menos ansiedad</div><div class="benef-desc">Entender tus resultados reduce la incertidumbre y el estrés. Sabes exactamente qué significa cada valor.</div></div>
-            <div class="benef-tag indigo">TRANQUILIDAD</div>
-          </div>
-        </div>
-        <div class="benef-card">
-          <div class="benef-side green"></div>
-          <div class="benef-body">
-            <div><div class="benef-title">Decisiones informadas</div><div class="benef-desc">Llega preparado a tu consulta con toda la información clara y las preguntas correctas para tu médico.</div></div>
-            <div class="benef-tag green">EMPODERAMIENTO</div>
-          </div>
-        </div>
-        <div class="benef-card">
-          <div class="benef-side amber"></div>
-          <div class="benef-body">
-            <div><div class="benef-title">Plan de acción real</div><div class="benef-desc">No solo te explicamos — te decimos qué hacer. Nutrición, ejercicio y hábitos específicos conectados a tus biomarcadores.</div></div>
-            <div class="benef-tag amber">ACCIÓN</div>
-          </div>
-        </div>
-        <div class="benef-card">
-          <div class="benef-side blue"></div>
-          <div class="benef-body">
-            <div><div class="benef-title">Evolución médica digital</div><div class="benef-desc">Ve cómo mejoran tus indicadores examen a examen. Gráficos históricos de tus biomarcadores en el tiempo.</div></div>
-            <div class="benef-tag blue">HISTORIAL</div>
-          </div>
-        </div>
-        <div class="benef-card">
-          <div class="benef-side green"></div>
-          <div class="benef-body">
-            <div><div class="benef-title">Acceso universal 24/7</div><div class="benef-desc">Desde cualquier lugar, en tu celular. Sin instalar apps. Funciona directamente en el navegador.</div></div>
-            <div class="benef-tag green">24/7</div>
-          </div>
-        </div>
+        <div class="benef-card"><div class="benef-side blue"></div><div class="benef-body"><div><div class="benef-title">Comprensión inmediata</div><div class="benef-desc">Resultados explicados al instante, sin esperar citas médicas.</div></div><div class="benef-tag blue">RÁPIDO</div></div></div>
+        <div class="benef-card"><div class="benef-side indigo"></div><div class="benef-body"><div><div class="benef-title">Menos ansiedad</div><div class="benef-desc">Entender tus resultados reduce la incertidumbre y el estrés.</div></div><div class="benef-tag indigo">TRANQUILIDAD</div></div></div>
+        <div class="benef-card"><div class="benef-side green"></div><div class="benef-body"><div><div class="benef-title">Decisiones informadas</div><div class="benef-desc">Llega preparado a tu consulta con las preguntas correctas.</div></div><div class="benef-tag green">EMPODERAMIENTO</div></div></div>
+        <div class="benef-card"><div class="benef-side amber"></div><div class="benef-body"><div><div class="benef-title">Plan de acción real</div><div class="benef-desc">Nutrición, ejercicio y hábitos específicos para tus biomarcadores.</div></div><div class="benef-tag amber">ACCIÓN</div></div></div>
+        <div class="benef-card"><div class="benef-side blue"></div><div class="benef-body"><div><div class="benef-title">Evolución médica digital</div><div class="benef-desc">Gráficos históricos de tus biomarcadores en el tiempo.</div></div><div class="benef-tag blue">HISTORIAL</div></div></div>
+        <div class="benef-card"><div class="benef-side green"></div><div class="benef-body"><div><div class="benef-title">Acceso universal 24/7</div><div class="benef-desc">Desde cualquier lugar, en tu celular, sin instalar apps.</div></div><div class="benef-tag green">24/7</div></div></div>
       </div>
     </div>
   </section>
@@ -1095,12 +1174,9 @@
         </div>
       </div>
       <div class="dif-pipeline">
-        <div class="dif-pipe-item d1">OCR</div>
-        <div class="dif-pipe-arrow">▶</div>
-        <div class="dif-pipe-item d2">IA Médica</div>
-        <div class="dif-pipe-arrow">▶</div>
-        <div class="dif-pipe-item d3">Interpretación</div>
-        <div class="dif-pipe-arrow">▶</div>
+        <div class="dif-pipe-item d1">OCR</div><div class="dif-pipe-arrow">▶</div>
+        <div class="dif-pipe-item d2">IA Médica</div><div class="dif-pipe-arrow">▶</div>
+        <div class="dif-pipe-item d3">Interpretación</div><div class="dif-pipe-arrow">▶</div>
         <div class="dif-pipe-item d4">Plan + Chat</div>
       </div>
     </div>
@@ -1114,34 +1190,10 @@
       <div class="divider indigo"></div>
       <div class="pos-disclaimer">VITALIA no reemplaza a un médico — es tu aliado inteligente antes, durante y después de cada consulta</div>
       <div class="pos-grid">
-        <div class="pos-card">
-          <div class="pos-check">✓</div>
-          <div>
-            <div class="pos-title">Entender tu salud</div>
-            <div class="pos-desc">Información clara y accesible sobre tus resultados, adaptada a tu nivel de conocimiento. Sin tecnicismos innecesarios.</div>
-          </div>
-        </div>
-        <div class="pos-card">
-          <div class="pos-check">✓</div>
-          <div>
-            <div class="pos-title">Llegar preparado a consulta</div>
-            <div class="pos-desc">Conversa con tu doctor con conocimiento previo. Preguntas específicas generadas por IA basadas en tus resultados alterados.</div>
-          </div>
-        </div>
-        <div class="pos-card">
-          <div class="pos-check">✓</div>
-          <div>
-            <div class="pos-title">Detectar alertas tempranas</div>
-            <div class="pos-desc">Identifica valores que requieren atención antes de que se conviertan en problemas mayores. El tiempo importa en salud.</div>
-          </div>
-        </div>
-        <div class="pos-card">
-          <div class="pos-check">✓</div>
-          <div>
-            <div class="pos-title">Seguir tu evolución médica</div>
-            <div class="pos-desc">Correlaciona exámenes anteriores con nuevos resultados. Mide si seguiste el plan y ve el impacto real en tus biomarcadores.</div>
-          </div>
-        </div>
+        <div class="pos-card"><div class="pos-check">✓</div><div><div class="pos-title">Entender tu salud</div><div class="pos-desc">Información clara y accesible sobre tus resultados, sin tecnicismos innecesarios.</div></div></div>
+        <div class="pos-card"><div class="pos-check">✓</div><div><div class="pos-title">Llegar preparado a consulta</div><div class="pos-desc">Preguntas específicas generadas por IA basadas en tus resultados alterados.</div></div></div>
+        <div class="pos-card"><div class="pos-check">✓</div><div><div class="pos-title">Detectar alertas tempranas</div><div class="pos-desc">Identifica valores que requieren atención antes de que se conviertan en problemas mayores.</div></div></div>
+        <div class="pos-card"><div class="pos-check">✓</div><div><div class="pos-title">Seguir tu evolución médica</div><div class="pos-desc">Mide si seguiste el plan y ve el impacto real en tus biomarcadores examen a examen.</div></div></div>
       </div>
     </div>
   </section>
@@ -1176,38 +1228,12 @@
       <h2 class="section-title">El futuro de la salud<br>ya empezó</h2>
       <div class="divider blue"></div>
       <div class="vision-grid">
-        <div class="vision-card">
-          <div class="vision-dot d1"></div>
-          <div>
-            <div class="vision-title">Digital</div>
-            <div class="vision-desc">Acceso desde cualquier dispositivo, en cualquier momento. Sin instalar apps. 100% en el navegador.</div>
-          </div>
-        </div>
-        <div class="vision-card">
-          <div class="vision-dot d2"></div>
-          <div>
-            <div class="vision-title">Inteligente</div>
-            <div class="vision-desc">Tecnología IA de última generación que se adapta a cada examen, cada paciente y cada contexto clínico.</div>
-          </div>
-        </div>
-        <div class="vision-card">
-          <div class="vision-dot d3"></div>
-          <div>
-            <div class="vision-title">Personalizado</div>
-            <div class="vision-desc">Cada análisis adaptado a tu perfil médico único. No información genérica — inteligencia aplicada a tu caso.</div>
-          </div>
-        </div>
-        <div class="vision-card">
-          <div class="vision-dot d4"></div>
-          <div>
-            <div class="vision-title">Legal y seguro</div>
-            <div class="vision-desc">Cumplimiento con Ley 19.628 (Chile), Ley 21.719 y GDPR (UE). Consentimiento informado v2.0 con auditoría completa.</div>
-          </div>
-        </div>
+        <div class="vision-card"><div class="vision-dot d1"></div><div><div class="vision-title">Digital</div><div class="vision-desc">Acceso desde cualquier dispositivo. Sin instalar apps. 100% en el navegador.</div></div></div>
+        <div class="vision-card"><div class="vision-dot d2"></div><div><div class="vision-title">Inteligente</div><div class="vision-desc">IA de última generación adaptada a cada examen, paciente y contexto clínico.</div></div></div>
+        <div class="vision-card"><div class="vision-dot d3"></div><div><div class="vision-title">Personalizado</div><div class="vision-desc">Cada análisis adaptado a tu perfil médico único. No información genérica.</div></div></div>
+        <div class="vision-card"><div class="vision-dot d4"></div><div><div class="vision-title">Legal y seguro</div><div class="vision-desc">Ley 19.628 (Chile), Ley 21.719 y GDPR (UE). Consentimiento informado v2.0.</div></div></div>
       </div>
-      <div class="vision-footer">
-        🩺 VITALIA es parte de la nueva generación de salud digital — democratizando el acceso a la inteligencia médica.
-      </div>
+      <div class="vision-footer">🩺 VITALIA — democratizando el acceso a la inteligencia médica.</div>
     </div>
   </section>
 
@@ -1224,8 +1250,8 @@
         <div class="cta-step"><div class="cta-step-num n3">3</div> Toma control de tu salud</div>
       </div>
       <div class="hero-cta-row">
-        <a href="/register" class="btn-primary">Crear cuenta gratis →</a>
-        <a href="/login" class="btn-ghost">Ya tengo cuenta</a>
+        <a href="/register" class="btn-hero-primary">Crear cuenta gratis →</a>
+        <a href="/login" class="btn-hero-ghost">Ya tengo cuenta</a>
       </div>
       <div class="cta-url"><a href="https://vitalia.work">www.vitalia.work</a></div>
       <div class="cta-year">Inteligencia Médica en tu Bolsillo · VITALIA 2026</div>
@@ -1245,24 +1271,22 @@
   <script>
     /* ── Theme Toggle ── */
     const html = document.documentElement;
-    const STORAGE_KEY = 'vitalia-theme';
+    const KEY  = 'vitalia-theme';
 
-    function applyTheme(theme) {
-      html.setAttribute('data-theme', theme);
-      localStorage.setItem(STORAGE_KEY, theme);
+    function applyTheme(t) {
+      html.setAttribute('data-theme', t);
+      localStorage.setItem(KEY, t);
     }
-
     function toggleTheme() {
-      const current = html.getAttribute('data-theme') || 'dark';
-      applyTheme(current === 'dark' ? 'light' : 'dark');
+      applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
     }
 
-    /* Restore preference on load (before paint) */
+    /* Restore on load (before paint) */
     (function () {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(KEY);
       if (saved === 'light' || saved === 'dark') {
         html.setAttribute('data-theme', saved);
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
         html.setAttribute('data-theme', 'light');
       }
     })();
