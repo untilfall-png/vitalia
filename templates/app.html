@@ -247,6 +247,15 @@
     .exam-del-btn { display: none; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); color: #f87171; font-size: 13px; cursor: pointer; align-items: center; justify-content: center; z-index: 2; transition: all .15s; }
     .exam-del-btn:hover { background: rgba(239,68,68,0.25); border-color: rgba(239,68,68,0.6); }
     .exam-item:hover .exam-del-btn { display: flex; }
+    /* Modo selección */
+    .exam-check { display: none; width: 18px; height: 18px; border-radius: 5px; accent-color: var(--primary); flex-shrink: 0; cursor: pointer; }
+    .exam-item.sel-mode { cursor: default; }
+    .exam-item.sel-mode .exam-check { display: block; }
+    .exam-item.sel-mode .exam-del-btn { display: none !important; }
+    .exam-item.sel-selected { border-color: rgba(14,165,233,0.5); background: var(--primary-s); }
+    .bulk-toolbar { display: none; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(14,165,233,0.07); border: 1px solid rgba(14,165,233,0.2); border-radius: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .bulk-toolbar.visible { display: flex; }
+    .bulk-count { font-size: 13px; color: var(--primary); font-weight: 600; flex: 1; }
     .exam-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--primary-s); border: 1px solid rgba(14,165,233,0.2); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
     .exam-info { flex: 1; min-width: 0; }
     .exam-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -891,9 +900,19 @@
         <div class="card">
           <div class="card-header">
             <span class="card-title"><i data-lucide="folder-open"></i> Mis exámenes</span>
-            <button class="btn btn-sm btn-primary" onclick="showPanel('upload')">+ Nuevo</button>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-sm btn-ghost" id="btn-sel-mode" onclick="toggleSelectionMode()">☑ Seleccionar</button>
+              <button class="btn btn-sm btn-primary" onclick="showPanel('upload')">+ Nuevo</button>
+            </div>
           </div>
           <div class="card-body" style="padding:12px;">
+            <!-- Toolbar de selección masiva -->
+            <div class="bulk-toolbar" id="bulk-toolbar">
+              <span class="bulk-count" id="bulk-count">0 seleccionados</span>
+              <button class="btn btn-sm btn-ghost" onclick="selectAllExamenes()">Seleccionar todo</button>
+              <button class="btn btn-sm btn-ghost" onclick="toggleSelectionMode()">Cancelar</button>
+              <button class="btn btn-sm btn-danger" id="bulk-del-btn" onclick="bulkDeleteExamenes()" disabled>🗑 Eliminar seleccionados</button>
+            </div>
             <div id="all-examenes">
               <div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sin exámenes</div><div class="empty-sub">Sube tu primer examen</div></div>
             </div>
@@ -1276,9 +1295,23 @@ function renderAllExamenes(list) {
   const el = document.getElementById('all-examenes');
   if (!list.length) {
     el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sin exámenes</div><div class="empty-sub">Sube tu primer examen</div></div>`;
+    // Si estábamos en modo selección y ya no hay exámenes, salir
+    if (_selMode) { _selMode = false; _selIds.clear(); _updateBulkUI(); }
     return;
   }
   el.innerHTML = list.map(e => examCard(e)).join('');
+  // Reaplicar estado de selección si corresponde
+  if (_selMode) {
+    el.querySelectorAll('.exam-item').forEach(item => {
+      item.classList.add('sel-mode');
+      const eid = parseInt(item.dataset.eid);
+      if (_selIds.has(eid)) {
+        item.classList.add('sel-selected');
+        const cb = item.querySelector('.exam-check');
+        if (cb) cb.checked = true;
+      }
+    });
+  }
   lucide.createIcons();
 }
 
@@ -1288,7 +1321,8 @@ function examCard(e) {
   const icon = icons[e.tipo] || '🧪';
   const alertas = e.alertas || 0;
   return `
-    <div class="exam-item" onclick="openExamen(${e.id})">
+    <div class="exam-item" data-eid="${e.id}" onclick="examCardClick(${e.id},this)">
+      <input type="checkbox" class="exam-check" onclick="event.stopPropagation();toggleExamSelection(${e.id},this.closest('.exam-item'))">
       <div class="exam-icon">${icon}</div>
       <div class="exam-info">
         <div class="exam-title">${esc(e.titulo)}</div>
@@ -1896,26 +1930,112 @@ async function openExamen(eid) {
   }
 }
 
+// ─── ELIMINACIÓN INDIVIDUAL ────────────────────────────────────────────────
 async function deleteExamen(eid) {
-  if (!confirm('¿Eliminar este examen y todos sus datos? Esta acción no se puede deshacer.')) return;
-  await fetch(`/api/examenes/${eid}`, { method: 'DELETE' });
-  toast('✅ Examen eliminado');
-  showPanel('dashboard');
-  loadStats(); loadExamenes(); loadEvolucion();
+  if (!confirm('¿Eliminar este examen y todos sus datos?\nEsta acción no se puede deshacer.')) return;
+  try {
+    const r = await fetch(`/api/examenes/${eid}`, { method: 'DELETE' });
+    const d = await r.json();
+    if (!r.ok || d.error) { toast('❌ Error: ' + (d.error || 'No se pudo eliminar')); return; }
+    toast('✅ Examen eliminado');
+    // Si estaba viendo el resultado de ese examen, volver al dashboard
+    if (document.getElementById('panel-resultado')?.classList.contains('active')) showPanel('dashboard');
+    loadStats(); loadExamenes(); loadEvolucion();
+  } catch(e) { toast('❌ Error de red al eliminar'); }
 }
 
 function confirmDeleteExamen(eid, btn) {
   if (btn.dataset.confirming) { deleteExamen(eid); return; }
   btn.dataset.confirming = '1';
-  btn.textContent = '✓';
-  btn.title = 'Confirmar';
-  btn.style.cssText += 'background:rgba(239,68,68,0.35)!important;border-color:#f87171!important;';
+  btn.textContent = '✓'; btn.title = 'Confirmar eliminación';
+  btn.style.background = 'rgba(239,68,68,0.4)'; btn.style.borderColor = '#f87171';
   setTimeout(() => {
     if (!btn.dataset.confirming) return;
     delete btn.dataset.confirming;
     btn.textContent = '✕'; btn.title = 'Eliminar examen';
     btn.style.background = ''; btn.style.borderColor = '';
   }, 2500);
+}
+
+// ─── SELECCIÓN MASIVA ──────────────────────────────────────────────────────
+let _selMode = false;
+const _selIds = new Set();
+
+function examCardClick(eid, el) {
+  if (_selMode) { toggleExamSelection(eid, el); } else { openExamen(eid); }
+}
+
+function toggleSelectionMode() {
+  _selMode = !_selMode;
+  _selIds.clear();
+  // Actualizar todas las cards visibles
+  document.querySelectorAll('.exam-item').forEach(el => {
+    el.classList.toggle('sel-mode', _selMode);
+    el.classList.remove('sel-selected');
+    const cb = el.querySelector('.exam-check');
+    if (cb) cb.checked = false;
+  });
+  const btnSelMode = document.getElementById('btn-sel-mode');
+  if (btnSelMode) btnSelMode.textContent = _selMode ? '✕ Cancelar' : '☑ Seleccionar';
+  _updateBulkUI();
+}
+
+function toggleExamSelection(eid, el) {
+  if (_selIds.has(eid)) {
+    _selIds.delete(eid);
+    el.classList.remove('sel-selected');
+    const cb = el.querySelector('.exam-check');
+    if (cb) cb.checked = false;
+  } else {
+    _selIds.add(eid);
+    el.classList.add('sel-selected');
+    const cb = el.querySelector('.exam-check');
+    if (cb) cb.checked = true;
+  }
+  _updateBulkUI();
+}
+
+function selectAllExamenes() {
+  document.querySelectorAll('#all-examenes .exam-item').forEach(el => {
+    const eid = parseInt(el.dataset.eid);
+    if (!eid) return;
+    _selIds.add(eid);
+    el.classList.add('sel-selected');
+    const cb = el.querySelector('.exam-check');
+    if (cb) cb.checked = true;
+  });
+  _updateBulkUI();
+}
+
+function _updateBulkUI() {
+  const toolbar = document.getElementById('bulk-toolbar');
+  const count   = document.getElementById('bulk-count');
+  const delBtn  = document.getElementById('bulk-del-btn');
+  if (!toolbar) return;
+  toolbar.classList.toggle('visible', _selMode);
+  if (count) count.textContent = _selIds.size === 1 ? '1 seleccionado' : `${_selIds.size} seleccionados`;
+  if (delBtn) delBtn.disabled = _selIds.size === 0;
+}
+
+async function bulkDeleteExamenes() {
+  if (_selIds.size === 0) return;
+  const n = _selIds.size;
+  if (!confirm(`¿Eliminar ${n} examen${n > 1 ? 'es' : ''}?\nEsta acción no se puede deshacer.`)) return;
+  try {
+    const r = await fetch('/api/examenes/bulk-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [..._selIds] })
+    });
+    const d = await r.json();
+    if (!r.ok || d.error) { toast('❌ Error: ' + (d.error || 'No se pudo eliminar')); return; }
+    toast(`✅ ${d.deleted} examen${d.deleted > 1 ? 'es' : ''} eliminado${d.deleted > 1 ? 's' : ''}`);
+    _selMode = false; _selIds.clear();
+    const btnSelMode = document.getElementById('btn-sel-mode');
+    if (btnSelMode) btnSelMode.textContent = '☑ Seleccionar';
+    _updateBulkUI();
+    loadStats(); loadExamenes(); loadEvolucion();
+  } catch(e) { toast('❌ Error de red al eliminar'); }
 }
 
 // ════════════════════════════════════════════

@@ -1024,6 +1024,28 @@ def reporte_examen(eid):
     return FlaskResponse(html, mimetype="text/html")
 
 
+def _delete_examenes_by_ids(db, ids: list):
+    """Elimina exámenes y todos sus datos relacionados dado una lista de IDs."""
+    if not ids:
+        return
+    ph = ",".join("?" * len(ids))
+    # Mensajes → conversaciones (sin CASCADE en la FK de conversaciones)
+    convs = db.execute(f"SELECT id FROM conversaciones WHERE examen_id IN ({ph})", ids).fetchall()
+    if convs:
+        conv_ids = [c["id"] for c in convs]
+        cph = ",".join("?" * len(conv_ids))
+        db.execute(f"DELETE FROM mensajes WHERE conversacion_id IN ({cph})", conv_ids)
+    db.execute(f"DELETE FROM conversaciones WHERE examen_id IN ({ph})", ids)
+    # pagos no tiene CASCADE
+    db.execute(f"DELETE FROM pagos WHERE examen_id IN ({ph})", ids)
+    # Estos tienen CASCADE pero los borramos explícitamente por seguridad
+    db.execute(f"DELETE FROM indicadores WHERE examen_id IN ({ph})", ids)
+    db.execute(f"DELETE FROM recomendaciones WHERE examen_id IN ({ph})", ids)
+    db.execute(f"DELETE FROM planes_accion WHERE examen_id IN ({ph})", ids)
+    db.execute(f"DELETE FROM examenes WHERE id IN ({ph})", ids)
+    db.commit()
+
+
 @app.route("/api/examenes/<int:eid>", methods=["DELETE"])
 @login_required
 def eliminar_examen(eid):
@@ -1035,9 +1057,36 @@ def eliminar_examen(eid):
                        (eid, paciente["id"])).fetchone()
         if not e:
             return jsonify({"error": "No encontrado"}), 404
-        db.execute("DELETE FROM examenes WHERE id=?", (eid,))
-        db.commit()
+        _delete_examenes_by_ids(db, [eid])
     return jsonify({"ok": True})
+
+
+@app.route("/api/examenes/bulk-delete", methods=["POST"])
+@login_required
+def bulk_delete_examenes():
+    paciente = get_current_paciente()
+    if not paciente:
+        return jsonify({"error": "No autorizado"}), 403
+    data = request.json or {}
+    raw_ids = data.get("ids") or []
+    try:
+        ids = [int(i) for i in raw_ids]
+    except (ValueError, TypeError):
+        return jsonify({"error": "IDs inválidos"}), 400
+    if not ids:
+        return jsonify({"error": "Sin IDs"}), 400
+    pid = paciente["id"]
+    with get_db() as db:
+        ph = ",".join("?" * len(ids))
+        rows = db.execute(
+            f"SELECT id FROM examenes WHERE id IN ({ph}) AND paciente_id=?",
+            ids + [pid]
+        ).fetchall()
+        valid_ids = [r["id"] for r in rows]
+        if not valid_ids:
+            return jsonify({"ok": True, "deleted": 0})
+        _delete_examenes_by_ids(db, valid_ids)
+    return jsonify({"ok": True, "deleted": len(valid_ids)})
 
 
 # ── API: Pagos con Stripe ──────────────────────────────────────────────────────
