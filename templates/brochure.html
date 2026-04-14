@@ -204,6 +204,14 @@
       transition: var(--trans);
     }
     .nav-link:hover { color: var(--text); background: var(--glass2); }
+    .nav-login {
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      text-decoration: none; color: var(--text2);
+      border: 1px solid var(--border2); background: transparent;
+      transition: var(--trans);
+    }
+    .nav-login:hover { color: var(--primary); border-color: var(--primary); background: var(--p-08); }
     .nav-cta {
       padding: 8px 18px; border-radius: 8px;
       font-size: 13px; font-weight: 700;
@@ -686,6 +694,7 @@
     @media (max-width: 640px) {
       .nav { padding: 0 16px; }
       .nav-link { display: none; }
+      .nav-login { display: none; }
       .section-wrap { padding: 64px 16px; }
       .flow-arrow { display: none; }
       .benef-tag { display: none; }
@@ -711,6 +720,7 @@
         <span class="icon-sun">☀️</span>
         <span class="icon-moon">🌙</span>
       </button>
+      <a href="/login" class="nav-login">Iniciar sesión</a>
       <a href="/register" class="nav-cta">Comenzar gratis</a>
     </div>
   </nav>
