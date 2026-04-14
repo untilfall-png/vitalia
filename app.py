@@ -221,6 +221,18 @@ def init_db():
             FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
             FOREIGN KEY (examen_id) REFERENCES examenes(id)
         );
+
+        -- ── Plan de acción personalizado ──────────────────────────────────────
+        CREATE TABLE IF NOT EXISTS planes_accion (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            examen_id   INTEGER UNIQUE NOT NULL,
+            nutricion   TEXT DEFAULT '{}',
+            movimiento  TEXT DEFAULT '{}',
+            habitos     TEXT DEFAULT '{}',
+            predicciones TEXT DEFAULT '[]',
+            creado_en   TEXT DEFAULT (datetime('now','localtime')),
+            FOREIGN KEY (examen_id) REFERENCES examenes(id) ON DELETE CASCADE
+        );
         """)
         db.commit()
 
@@ -825,16 +837,26 @@ def get_examen(eid):
         indicadores    = db.execute("SELECT * FROM indicadores WHERE examen_id=? ORDER BY id", (eid,)).fetchall()
         recomendaciones = db.execute("SELECT * FROM recomendaciones WHERE examen_id=? ORDER BY prioridad DESC", (eid,)).fetchall()
         conversaciones  = db.execute("SELECT * FROM conversaciones WHERE examen_id=? ORDER BY creado_en DESC", (eid,)).fetchall()
+        plan_row       = db.execute("SELECT * FROM planes_accion WHERE examen_id=?", (eid,)).fetchone()
     examen_dict = dict(e)
     try:
         examen_dict["preguntas_doctor"] = json.loads(examen_dict.get("preguntas_doctor") or "[]")
     except Exception:
         examen_dict["preguntas_doctor"] = []
+    plan = None
+    if plan_row:
+        plan = {}
+        for key in ("nutricion", "movimiento", "habitos", "predicciones"):
+            try:
+                plan[key] = json.loads(plan_row[key] or ("[]" if key == "predicciones" else "{}"))
+            except Exception:
+                plan[key] = [] if key == "predicciones" else {}
     return jsonify({
         "examen": examen_dict,
         "indicadores": [dict(i) for i in indicadores],
         "recomendaciones": [dict(r) for r in recomendaciones],
         "conversaciones": [dict(c) for c in conversaciones],
+        "plan": plan,
     })
 
 
@@ -1140,7 +1162,7 @@ Genera UNICAMENTE este JSON (sin markdown):
             }
             preguntas_doctor = []
 
-        update("pending", msg="Guardando resultados...", progress=90)
+        update("pending", msg="Guardando resultados...", progress=85)
         with get_db() as db:
             cur = db.execute("""INSERT INTO examenes
                 (paciente_id,titulo,tipo,fecha_examen,laboratorio,imagen_path,
@@ -1190,14 +1212,140 @@ He analizado tu **{ocr_data.get('tipo_examen', titulo)}** y tengo los resultados
                        (conv_id, "assistant", saludo))
             db.commit()
 
+        # ── Generar plan de acción personalizado (solo si hay anomalías) ─────
+        tiene_plan = False
+        if alertas:
+            update("pending", msg="Creando tu plan de acción personalizado...", progress=92)
+            plan_result = _generate_and_save_plan(
+                gc, eid, patient_ctx, indicadores, alertas, interp_data, ocr_data, tipo)
+            tiene_plan = bool(plan_result)
+
         update("done", ok=True, examen_id=eid, conversacion_id=conv_id,
                resumen=interp_data.get("resumen",""), riesgo=riesgo,
                num_indicadores=len(indicadores), alertas=len(alertas), criticos=len(criticos),
-               progress=100)
+               tiene_plan=tiene_plan, progress=100)
 
     except Exception as e:
         import traceback; print("[VitalIA ERROR]", traceback.format_exc())
         update("error", error=str(e))
+
+
+def _generate_and_save_plan(gc, examen_id, patient_ctx, indicadores, alertas, interp_data, ocr_data, tipo):
+    """Genera el plan de acción de 3 capas con IA y lo guarda en planes_accion."""
+    lineas_alertas = "\n".join([
+        f"- {i['nombre']}: {i['valor']} {i.get('unidad','')} [{i.get('estado','').upper()}] (ref: {i.get('rango_ref','')})"
+        for i in alertas
+    ])
+    prompt = f"""Eres un coach de salud integrativo especializado en medicina preventiva basada en evidencia.
+Crea un plan de acción personalizado de 3 capas para este paciente, conectado directamente a sus biomarcadores.
+
+PERFIL DEL PACIENTE:
+{patient_ctx}
+
+TIPO DE EXAMEN: {ocr_data.get('tipo_examen', tipo)}
+INDICADORES FUERA DE RANGO:
+{lineas_alertas}
+
+DIAGNÓSTICO RESUMIDO:
+{interp_data.get('resumen', '')}
+
+REGLAS:
+- Usa lenguaje probabilístico: "podría", "puede ayudar a", "tiende a", "la evidencia sugiere"
+- Conecta SIEMPRE cada recomendación con los biomarcadores específicos del paciente
+- Explica el "por qué" de forma educativa pero simple
+- Predicciones realistas basadas en evidencia (no exagerar; rangos conservadores)
+- Mencionar siempre la importancia del médico tratante
+- 3-5 items en que_comer, 3-4 items en que_evitar, 2-3 actividades físicas, 2-3 predicciones
+
+Genera ÚNICAMENTE este JSON (sin markdown, sin texto adicional):
+{{
+  "nutricion": {{
+    "titulo": "Título motivador del plan nutricional (máx 8 palabras)",
+    "objetivo": "Objetivo específico conectado a los biomarcadores alterados",
+    "patron_dieta": "Nombre del patrón dietético base (ej: Mediterránea, DASH, anti-inflamatoria)",
+    "que_comer": [
+      {{"emoji": "🌾", "alimento": "nombre", "razon": "Podría ayudar a [indicador] porque contiene [componente]", "frecuencia": "X veces/semana o diario"}}
+    ],
+    "que_evitar": [
+      {{"emoji": "⚠️", "alimento": "nombre", "razon": "Tiende a elevar/empeorar [indicador] porque...", "impacto": "alto|medio|bajo"}}
+    ],
+    "dia_ejemplo": "Desayuno: ...\\nAlmuerzo: ...\\nCena: ...\\nSnack: ...",
+    "nota": "Siempre consultar con médico o nutricionista antes de cambios significativos"
+  }},
+  "movimiento": {{
+    "titulo": "Título motivador del plan de movimiento",
+    "objetivo": "Objetivo conectado a los biomarcadores",
+    "actividades": [
+      {{
+        "tipo": "cardio|fuerza|hiit|flexibilidad",
+        "emoji": "🚶",
+        "nombre": "Nombre de la actividad",
+        "frecuencia": "X días/semana",
+        "duracion": "X-Y minutos/sesión",
+        "intensidad": "suave|moderada|alta",
+        "beneficio": "Podría mejorar [indicador] aproximadamente [X%] en [plazo] si se practica regularmente",
+        "cuando": "Mejor momento del día"
+      }}
+    ],
+    "progresion": "Cómo ir aumentando gradualmente la intensidad en 8-12 semanas",
+    "contraindicaciones": "Lo que debe evitar dado el perfil específico",
+    "nota": "Consultar con médico antes de iniciar programa de ejercicio intenso"
+  }},
+  "habitos": {{
+    "sueno": {{
+      "objetivo": "X-Y horas por noche",
+      "por_que": "El sueño insuficiente podría elevar [hormona/indicador] lo que...",
+      "conexion": "Tu [indicador específico] podría verse afectado por la falta de sueño porque...",
+      "tips": ["tip concreto 1", "tip concreto 2", "tip concreto 3"]
+    }},
+    "estres": {{
+      "impacto": "El estrés crónico tiende a elevar el cortisol, lo que podría...",
+      "conexion": "Esto podría afectar directamente tus niveles de [indicador]...",
+      "tecnicas": ["Técnica 1 con instrucciones breves", "Técnica 2 con instrucciones"]
+    }},
+    "alcohol": {{
+      "recomendacion": "Recomendación específica (cantidad máxima o abstención si aplica)",
+      "por_que": "El alcohol tiende a [efecto metabólico específico]...",
+      "conexion": "Tu [indicador] podría mejorar notablemente al reducir el consumo porque..."
+    }},
+    "otros": "Otras 1-2 recomendaciones de hábitos específicas para este caso (hidratación, tabaco si aplica, etc.)"
+  }},
+  "predicciones": [
+    {{
+      "indicador": "Nombre exacto del indicador (igual que en el examen)",
+      "valor_actual": 0.0,
+      "unidad": "unidad de medida",
+      "rango_normal": "<X o X-Y",
+      "mejora_esperada": "X-Y%",
+      "valor_estimado": "rango estimado tras seguir el plan",
+      "plazo": "X meses",
+      "condicion": "Si sigues [acción específica del plan]...",
+      "evidencia": "La evidencia científica muestra que [patrón/ejercicio] puede reducir [indicador] en [rango]"
+    }}
+  ]
+}}"""
+    try:
+        resp = _generate(gc, prompt)
+        raw = re.sub(r"```json\s*|\s*```", "", resp.text.strip()).strip()
+        plan_data = json.loads(raw)
+    except Exception as e:
+        print(f"[VitalIA] Plan generation failed: {e}")
+        return None
+    try:
+        with get_db() as db:
+            db.execute("""INSERT OR REPLACE INTO planes_accion
+                (examen_id, nutricion, movimiento, habitos, predicciones)
+                VALUES (?, ?, ?, ?, ?)""",
+                (examen_id,
+                 json.dumps(plan_data.get("nutricion", {}), ensure_ascii=False),
+                 json.dumps(plan_data.get("movimiento", {}), ensure_ascii=False),
+                 json.dumps(plan_data.get("habitos", {}), ensure_ascii=False),
+                 json.dumps(plan_data.get("predicciones", []), ensure_ascii=False)))
+            db.commit()
+        return examen_id
+    except Exception as e:
+        print(f"[VitalIA] Plan save failed: {e}")
+        return None
 
 
 @app.route("/api/analizar", methods=["GET", "POST"])
@@ -1504,6 +1652,117 @@ def nueva_conversacion():
         )
         db.commit()
         return jsonify({"ok": True, "id": cur.lastrowid})
+
+
+# ── API: Evolución médica ─────────────────────────────────────────────────────
+@app.route("/api/paciente/evolucion")
+@login_required
+def get_evolucion():
+    paciente = get_current_paciente()
+    if not paciente:
+        return jsonify({"error": "No encontrado"}), 404
+    pid = paciente["id"]
+    with get_db() as db:
+        exams = db.execute(
+            "SELECT id, titulo, tipo, fecha_examen, creado_en, riesgo FROM examenes "
+            "WHERE paciente_id=? ORDER BY id ASC", (pid,)
+        ).fetchall()
+        if not exams:
+            return jsonify({"tiene_datos": False, "series": [], "examenes": []})
+        exam_ids = [e["id"] for e in exams]
+        placeholders = ",".join("?" * len(exam_ids))
+        all_inds = db.execute(
+            f"SELECT examen_id, nombre, valor, unidad, rango_min, rango_max, estado "
+            f"FROM indicadores WHERE examen_id IN ({placeholders}) ORDER BY examen_id, id",
+            exam_ids
+        ).fetchall()
+
+    exams_list = []
+    for e in exams:
+        fecha = (e["fecha_examen"] or e["creado_en"] or "")[:10]
+        exams_list.append({"id": e["id"], "titulo": e["titulo"], "fecha": fecha, "riesgo": e["riesgo"]})
+    exam_date = {e["id"]: e["fecha"] for e in exams_list}
+
+    # Group by exam
+    inds_by_exam = {}
+    for ind in all_inds:
+        eid = ind["examen_id"]
+        inds_by_exam.setdefault(eid, []).append(ind)
+
+    # Count appearances per indicator name (normalized)
+    name_count = {}
+    name_meta = {}
+    for eid, inds in inds_by_exam.items():
+        seen = set()
+        for ind in inds:
+            key = ind["nombre"].strip().lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            name_count[key] = name_count.get(key, 0) + 1
+            if key not in name_meta:
+                name_meta[key] = {
+                    "nombre": ind["nombre"],
+                    "unidad": ind["unidad"],
+                    "rango_min": ind["rango_min"],
+                    "rango_max": ind["rango_max"],
+                }
+
+    common = {k for k, v in name_count.items() if v >= 2}
+    if not common:
+        return jsonify({
+            "tiene_datos": True,
+            "necesita_mas_examenes": len(exams) < 2,
+            "sin_indicadores_comunes": True,
+            "examenes": exams_list,
+            "series": [],
+            "resumen": {"mejorados": [], "empeorados": [], "estables": []}
+        })
+
+    # Build time series per common indicator
+    series = []
+    for name_key in sorted(common):
+        meta = name_meta[name_key]
+        datos = []
+        for exam in exams_list:
+            eid = exam["id"]
+            for ind in inds_by_exam.get(eid, []):
+                if ind["nombre"].strip().lower() == name_key:
+                    val_str = str(ind["valor"]).replace("~", "").replace(",", ".").strip()
+                    try:
+                        val = float(val_str)
+                        datos.append({"examen_id": eid, "fecha": exam_date[eid],
+                                      "valor": val, "estado": ind["estado"]})
+                    except Exception:
+                        pass
+                    break
+        if len(datos) >= 2:
+            series.append({
+                "nombre": meta["nombre"], "unidad": meta["unidad"],
+                "rango_min": meta["rango_min"], "rango_max": meta["rango_max"],
+                "datos": datos
+            })
+
+    # Compute summary
+    mejorados, empeorados, estables = [], [], []
+    for s in series:
+        d = s["datos"]
+        primero, ultimo = d[0]["estado"], d[-1]["estado"]
+        if primero != "normal" and ultimo == "normal":
+            mejorados.append(s["nombre"])
+        elif primero == "normal" and ultimo != "normal":
+            empeorados.append(s["nombre"])
+        else:
+            estables.append(s["nombre"])
+
+    return jsonify({
+        "tiene_datos": True,
+        "necesita_mas_examenes": False,
+        "sin_indicadores_comunes": False,
+        "examenes": exams_list,
+        "series": series,
+        "resumen": {"mejorados": mejorados, "empeorados": empeorados, "estables": estables}
+    })
 
 
 # ── API: Stats ────────────────────────────────────────────────────────────────

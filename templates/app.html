@@ -10,6 +10,7 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -387,6 +388,86 @@
     .ocr-step.done .ocr-step-icon { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); }
     .ocr-step-label { font-size: 10px; color: var(--text2); text-align: center; line-height: 1.3; }
 
+    /* ── PLAN DE ACCIÓN ── */
+    .plan-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .plan-tab { padding: 8px 16px; border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .plan-tab.active { background: var(--primary-s); border-color: var(--primary); color: var(--primary); }
+    .plan-tab:hover:not(.active) { border-color: rgba(255,255,255,0.2); color: var(--text1); }
+    .plan-panel { display: none; }
+    .plan-panel.active { display: block; }
+    .plan-section-title { font-size: 14px; font-weight: 700; color: var(--text1); margin-bottom: 4px; }
+    .plan-section-sub { font-size: 12px; color: var(--text2); margin-bottom: 16px; }
+    .plan-patron { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; font-size: 12px; font-weight: 600; margin-bottom: 16px; }
+    .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    @media (max-width: 600px) { .plan-grid { grid-template-columns: 1fr; } }
+    .plan-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 12px; }
+    .plan-item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .plan-item-emoji { font-size: 20px; line-height: 1; }
+    .plan-item-name { font-size: 13px; font-weight: 600; color: var(--text1); }
+    .plan-item-freq { font-size: 11px; color: var(--primary); font-weight: 500; margin-left: auto; }
+    .plan-item-reason { font-size: 11px; color: var(--text2); line-height: 1.5; }
+    .plan-item-impact { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 600; margin-top: 4px; }
+    .plan-item-impact.alto { background: rgba(239,68,68,0.15); color: #f87171; }
+    .plan-item-impact.medio { background: rgba(245,158,11,0.15); color: #fbbf24; }
+    .plan-item-impact.bajo { background: rgba(16,185,129,0.15); color: #34d399; }
+    .plan-dia-ejemplo { background: rgba(255,255,255,0.03); border-left: 3px solid var(--primary); border-radius: 0 8px 8px 0; padding: 12px 14px; font-size: 12px; color: var(--text2); line-height: 1.8; white-space: pre-line; margin-bottom: 16px; }
+    .plan-nota { font-size: 11px; color: var(--text2); font-style: italic; opacity: 0.8; }
+    .plan-actividad { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .plan-act-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .plan-act-emoji { font-size: 22px; }
+    .plan-act-nombre { font-size: 14px; font-weight: 600; color: var(--text1); }
+    .plan-act-tipo { font-size: 10px; padding: 2px 8px; border-radius: 8px; font-weight: 600; text-transform: uppercase; }
+    .plan-act-tipo.cardio { background: rgba(14,165,233,0.15); color: #38bdf8; }
+    .plan-act-tipo.fuerza { background: rgba(139,92,246,0.15); color: #a78bfa; }
+    .plan-act-tipo.hiit { background: rgba(239,68,68,0.15); color: #f87171; }
+    .plan-act-tipo.flexibilidad { background: rgba(16,185,129,0.15); color: #34d399; }
+    .plan-act-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+    .plan-act-meta-item { font-size: 11px; color: var(--text2); }
+    .plan-act-meta-item strong { color: var(--text1); }
+    .plan-act-beneficio { font-size: 12px; color: var(--primary); line-height: 1.5; margin-bottom: 4px; }
+    .plan-act-cuando { font-size: 11px; color: var(--text2); }
+    .plan-progresion { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+    .plan-contraindicacion { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #fbbf24; margin-bottom: 10px; }
+    .plan-habito-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .plan-habito-title { font-size: 13px; font-weight: 700; color: var(--text1); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .plan-habito-objetivo { font-size: 13px; color: var(--primary); font-weight: 600; margin-bottom: 4px; }
+    .plan-habito-conexion { font-size: 12px; color: var(--text2); margin-bottom: 8px; line-height: 1.5; }
+    .plan-habito-tips { list-style: none; padding: 0; margin: 0; }
+    .plan-habito-tips li { font-size: 12px; color: var(--text2); padding: 3px 0; padding-left: 16px; position: relative; }
+    .plan-habito-tips li::before { content: "→"; position: absolute; left: 0; color: var(--primary); }
+
+    /* ── PREDICCIONES ── */
+    .predicciones-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .pred-card { background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(139,92,246,0.05)); border: 1px solid rgba(14,165,233,0.2); border-radius: 14px; padding: 16px; position: relative; overflow: hidden; }
+    .pred-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+    .pred-indicador { font-size: 13px; font-weight: 700; color: var(--text1); margin-bottom: 12px; }
+    .pred-valores { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .pred-val-actual { text-align: center; }
+    .pred-val-actual .num { font-size: 22px; font-weight: 700; color: #f87171; font-family: 'JetBrains Mono', monospace; }
+    .pred-val-actual .lbl { font-size: 10px; color: var(--text2); }
+    .pred-arrow { font-size: 20px; color: var(--primary); }
+    .pred-val-est { text-align: center; }
+    .pred-val-est .num { font-size: 22px; font-weight: 700; color: #34d399; font-family: 'JetBrains Mono', monospace; }
+    .pred-val-est .lbl { font-size: 10px; color: var(--text2); }
+    .pred-mejora { display: inline-flex; align-items: center; gap: 4px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #34d399; border-radius: 8px; padding: 3px 10px; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+    .pred-condicion { font-size: 11px; color: var(--text2); line-height: 1.5; margin-bottom: 6px; }
+    .pred-evidencia { font-size: 10px; color: var(--text2); opacity: 0.7; line-height: 1.4; font-style: italic; }
+    .pred-plazo { font-size: 10px; color: var(--primary); font-weight: 600; margin-bottom: 6px; }
+
+    /* ── EVOLUCIÓN MÉDICA ── */
+    .evol-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+    .evol-summary { display: flex; gap: 10px; flex-wrap: wrap; }
+    .evol-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .evol-badge.mejorado { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+    .evol-badge.empeorado { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .evol-badge.estable { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }
+    .evol-charts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .evol-chart-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 14px; }
+    .evol-chart-title { font-size: 13px; font-weight: 600; color: var(--text1); margin-bottom: 2px; }
+    .evol-chart-unit { font-size: 11px; color: var(--text2); margin-bottom: 10px; }
+    .evol-chart-trend { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 11px; }
+    .evol-empty { text-align: center; padding: 32px 20px; color: var(--text2); font-size: 13px; }
+
     /* ── EMPTY STATE ── */
     .empty { text-align: center; padding: 60px 24px; color: var(--text2); }
     .empty-icon { font-size: 52px; margin-bottom: 14px; }
@@ -631,6 +712,16 @@
             <div id="recent-examenes">
               <div class="empty"><div class="empty-icon">🩺</div><div class="empty-title">Sin exámenes aún</div><div class="empty-sub">Sube tu primer examen para comenzar</div></div>
             </div>
+          </div>
+        </div>
+
+        <!-- ─── EVOLUCIÓN MÉDICA ─── -->
+        <div class="card" id="evolucion-card">
+          <div class="card-header">
+            <span class="card-title"><i data-lucide="trending-up"></i> Tu evolución médica</span>
+          </div>
+          <div class="card-body" id="evolucion-content">
+            <div class="evol-empty"><div class="spinner" style="width:28px;height:28px;margin:0 auto 10px;"></div><p>Cargando evolución...</p></div>
           </div>
         </div>
 
@@ -940,6 +1031,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStats();
   loadExamenes();
   loadPerfil();
+  loadEvolucion();
   initStripe();
 });
 
@@ -994,6 +1086,149 @@ async function loadStats() {
       document.getElementById('stat-ultimo').textContent = f.toLocaleDateString('es-CL',{day:'2-digit',month:'short'});
     }
   } catch {}
+}
+
+// ════════════════════════════════════════════
+// EVOLUCIÓN MÉDICA
+// ════════════════════════════════════════════
+const _evolCharts = {};
+
+async function loadEvolucion() {
+  const el = document.getElementById('evolucion-content');
+  if (!el) return;
+  try {
+    const r = await fetch('/api/paciente/evolucion');
+    const d = await r.json();
+
+    if (!d.tiene_datos) {
+      el.innerHTML = `<div class="evol-empty">
+        <div style="font-size:32px;margin-bottom:8px;">📊</div>
+        <div style="font-weight:600;color:var(--text1);margin-bottom:4px;">Sube tu primer examen</div>
+        <div>Tu evolución médica aparecerá aquí cuando analices exámenes.</div>
+      </div>`;
+      return;
+    }
+    if (d.necesita_mas_examenes) {
+      el.innerHTML = `<div class="evol-empty">
+        <div style="font-size:32px;margin-bottom:8px;">📈</div>
+        <div style="font-weight:600;color:var(--text1);margin-bottom:4px;">¡Primer examen listo!</div>
+        <div>Sube un segundo examen para comenzar a ver tu evolución en el tiempo.</div>
+      </div>`;
+      return;
+    }
+    if (d.sin_indicadores_comunes) {
+      el.innerHTML = `<div class="evol-empty">
+        <div style="font-size:32px;margin-bottom:8px;">🔬</div>
+        <div style="font-weight:600;color:var(--text1);margin-bottom:4px;">Sin indicadores comunes aún</div>
+        <div>Sube exámenes del mismo tipo para ver la evolución de tus biomarcadores.</div>
+      </div>`;
+      return;
+    }
+
+    const res = d.resumen || {};
+    const sumBadges = [
+      ...(res.mejorados||[]).map(n => `<span class="evol-badge mejorado">✅ ${esc(n)}</span>`),
+      ...(res.empeorados||[]).map(n => `<span class="evol-badge empeorado">⚠️ ${esc(n)}</span>`),
+      ...(res.estables||[]).map(n => `<span class="evol-badge estable">→ ${esc(n)}</span>`),
+    ].join('');
+
+    const chartCards = d.series.map((s, i) => {
+      const cid = `evol-chart-${i}`;
+      const primer = s.datos[0];
+      const ultimo = s.datos[s.datos.length - 1];
+      const tendencia = ultimo.valor < primer.valor ? '↓' : ultimo.valor > primer.valor ? '↑' : '=';
+      const tendColor = ultimo.estado === 'normal' ? '#34d399'
+                      : ultimo.estado === 'alto' || ultimo.estado === 'critico' ? '#f87171' : '#fbbf24';
+      const diff = ((ultimo.valor - primer.valor) / Math.abs(primer.valor || 1) * 100).toFixed(1);
+      return `
+        <div class="evol-chart-card">
+          <div class="evol-chart-title">${esc(s.nombre)}</div>
+          <div class="evol-chart-unit">${esc(s.unidad||'')} — ${s.datos.length} mediciones</div>
+          <canvas id="${cid}" height="120"></canvas>
+          <div class="evol-chart-trend" style="color:${tendColor};">
+            <strong style="font-size:15px;">${tendencia}</strong>
+            <span>${Math.abs(diff)}% vs primer examen</span>
+            <span style="margin-left:auto;font-size:11px;color:var(--text2);">Último: ${ultimo.valor} ${esc(s.unidad||'')}</span>
+          </div>
+        </div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="evol-header">
+        <div style="font-size:13px;color:var(--text2);">${d.examenes.length} exámenes analizados</div>
+        <div class="evol-summary">${sumBadges}</div>
+      </div>
+      <div class="evol-charts-grid">${chartCards}</div>`;
+
+    lucide.createIcons();
+
+    // Renderizar charts con Chart.js
+    d.series.forEach((s, i) => {
+      const cid = `evol-chart-${i}`;
+      const canvas = document.getElementById(cid);
+      if (!canvas) return;
+      if (_evolCharts[cid]) { _evolCharts[cid].destroy(); }
+
+      const labels = s.datos.map(p => p.fecha);
+      const valores = s.datos.map(p => p.valor);
+      const colores = s.datos.map(p =>
+        p.estado === 'normal' ? '#34d399' : p.estado === 'alto' || p.estado === 'critico' ? '#f87171' : '#fbbf24'
+      );
+      const datasets = [{
+        label: s.nombre,
+        data: valores,
+        borderColor: '#0ea5e9',
+        backgroundColor: 'rgba(14,165,233,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 5,
+        pointBackgroundColor: colores,
+        pointBorderColor: colores,
+        pointBorderWidth: 2,
+      }];
+      if (s.rango_max) datasets.push({
+        label: 'Límite normal',
+        data: Array(labels.length).fill(s.rango_max),
+        borderColor: 'rgba(16,185,129,0.4)',
+        borderDash: [5,4],
+        pointRadius: 0,
+        fill: false,
+        tension: 0,
+      });
+      if (s.rango_min) datasets.push({
+        label: 'Mínimo normal',
+        data: Array(labels.length).fill(s.rango_min),
+        borderColor: 'rgba(245,158,11,0.4)',
+        borderDash: [5,4],
+        pointRadius: 0,
+        fill: false,
+        tension: 0,
+      });
+
+      _evolCharts[cid] = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y} ${s.unidad||''}`
+              }
+            }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } }
+          }
+        }
+      });
+    });
+
+  } catch(e) {
+    if (el) el.innerHTML = `<div class="evol-empty">No se pudo cargar la evolución.</div>`;
+  }
 }
 
 async function loadExamenes() {
@@ -1221,7 +1456,7 @@ async function analyzeExam(paymentIntentId) {
         { id: 'ocr-step-1', from: 5  },
         { id: 'ocr-step-2', from: 20 },
         { id: 'ocr-step-3', from: 60 },
-        { id: 'ocr-step-4', from: 90 },
+        { id: 'ocr-step-4', from: 85 },
       ];
       steps.forEach((s, idx) => {
         const el = document.getElementById(s.id);
@@ -1303,12 +1538,173 @@ async function analyzeExam(paymentIntentId) {
     btnEl.style.display = 'block';
     loadingEl.style.display = 'none';
     btnEl.disabled = !selectedFile;
-    loadStats(); loadExamenes();
+    loadStats(); loadExamenes(); loadEvolucion();
   }
 }
 
 // ════════════════════════════════════════════
 // OPEN EXAMEN
+// ════════════════════════════════════════════
+// PLAN DE ACCIÓN
+// ════════════════════════════════════════════
+function renderPlanAccion(plan, eid) {
+  const nut = plan.nutricion || {};
+  const mov = plan.movimiento || {};
+  const hab = plan.habitos || {};
+  const preds = plan.predicciones || [];
+
+  // ── Nutrición ──────────────────────────────────────────────────────────────
+  const queComerId = `qc-${eid}`;
+  const queEv = (nut.que_evitar || []).map(a => `
+    <div class="plan-item">
+      <div class="plan-item-head">
+        <span class="plan-item-emoji">${esc(a.emoji||'⚠️')}</span>
+        <span class="plan-item-name">${esc(a.alimento)}</span>
+        <span class="plan-item-impact ${a.impacto||'medio'}">${esc(a.impacto||'medio')}</span>
+      </div>
+      <div class="plan-item-reason">${esc(a.razon)}</div>
+    </div>`).join('');
+  const queCom = (nut.que_comer || []).map(a => `
+    <div class="plan-item">
+      <div class="plan-item-head">
+        <span class="plan-item-emoji">${esc(a.emoji||'🥦')}</span>
+        <span class="plan-item-name">${esc(a.alimento)}</span>
+        <span class="plan-item-freq">${esc(a.frecuencia||'')}</span>
+      </div>
+      <div class="plan-item-reason">${esc(a.razon)}</div>
+    </div>`).join('');
+
+  const nutHtml = `
+    <div class="plan-section-title">${esc(nut.titulo||'Plan nutricional')}</div>
+    <div class="plan-section-sub">${esc(nut.objetivo||'')}</div>
+    ${nut.patron_dieta ? `<div class="plan-patron">🍽️ Patrón: ${esc(nut.patron_dieta)}</div>` : ''}
+    <div style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:8px;">✅ Qué comer</div>
+    <div class="plan-grid">${queCom}</div>
+    <div style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:8px;">🚫 Qué evitar</div>
+    <div class="plan-grid">${queEv}</div>
+    ${nut.dia_ejemplo ? `
+      <div style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:8px;">📅 Ejemplo de día</div>
+      <div class="plan-dia-ejemplo">${esc(nut.dia_ejemplo)}</div>` : ''}
+    <div class="plan-nota">⚕️ ${esc(nut.nota||'Consultar con médico o nutricionista antes de cambios significativos')}</div>`;
+
+  // ── Movimiento ─────────────────────────────────────────────────────────────
+  const actHtml = (mov.actividades || []).map(a => `
+    <div class="plan-actividad">
+      <div class="plan-act-head">
+        <span class="plan-act-emoji">${esc(a.emoji||'🏃')}</span>
+        <span class="plan-act-nombre">${esc(a.nombre||'')}</span>
+        <span class="plan-act-tipo ${a.tipo||'cardio'}">${esc(a.tipo||'cardio')}</span>
+      </div>
+      <div class="plan-act-meta">
+        <div class="plan-act-meta-item"><strong>Frecuencia:</strong> ${esc(a.frecuencia||'')}</div>
+        <div class="plan-act-meta-item"><strong>Duración:</strong> ${esc(a.duracion||'')}</div>
+        <div class="plan-act-meta-item"><strong>Intensidad:</strong> ${esc(a.intensidad||'')}</div>
+      </div>
+      <div class="plan-act-beneficio">📈 ${esc(a.beneficio||'')}</div>
+      ${a.cuando ? `<div class="plan-act-cuando">⏰ ${esc(a.cuando)}</div>` : ''}
+    </div>`).join('');
+
+  const movHtml = `
+    <div class="plan-section-title">${esc(mov.titulo||'Plan de movimiento')}</div>
+    <div class="plan-section-sub">${esc(mov.objetivo||'')}</div>
+    ${actHtml}
+    ${mov.progresion ? `<div class="plan-progresion">📈 <strong>Progresión:</strong> ${esc(mov.progresion)}</div>` : ''}
+    ${mov.contraindicaciones ? `<div class="plan-contraindicacion">⚠️ <strong>Precaución:</strong> ${esc(mov.contraindicaciones)}</div>` : ''}
+    <div class="plan-nota">⚕️ ${esc(mov.nota||'Consultar con médico antes de iniciar programa de ejercicio intenso')}</div>`;
+
+  // ── Hábitos ────────────────────────────────────────────────────────────────
+  const sueno = hab.sueno || {};
+  const estres = hab.estres || {};
+  const alcohol = hab.alcohol || {};
+  const habHtml = `
+    <div class="plan-habito-card">
+      <div class="plan-habito-title">😴 Sueño</div>
+      <div class="plan-habito-objetivo">${esc(sueno.objetivo||'7-9 horas por noche')}</div>
+      <div class="plan-habito-conexion">${esc(sueno.por_que||'')} ${esc(sueno.conexion||'')}</div>
+      ${(sueno.tips||[]).length ? `<ul class="plan-habito-tips">${(sueno.tips||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+    </div>
+    <div class="plan-habito-card">
+      <div class="plan-habito-title">🧘 Manejo del estrés</div>
+      <div class="plan-habito-conexion">${esc(estres.impacto||'')} ${esc(estres.conexion||'')}</div>
+      ${(estres.tecnicas||[]).length ? `<ul class="plan-habito-tips">${(estres.tecnicas||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+    </div>
+    <div class="plan-habito-card">
+      <div class="plan-habito-title">🍷 Alcohol</div>
+      <div class="plan-habito-objetivo">${esc(alcohol.recomendacion||'')}</div>
+      <div class="plan-habito-conexion">${esc(alcohol.por_que||'')} ${esc(alcohol.conexion||'')}</div>
+    </div>
+    ${hab.otros ? `<div class="plan-habito-card"><div class="plan-habito-title">💡 Otros hábitos</div><div class="plan-habito-conexion">${esc(hab.otros)}</div></div>` : ''}`;
+
+  // ── Predicciones ───────────────────────────────────────────────────────────
+  const predHtml = preds.length ? `
+    <div class="card" style="margin-top:0;border-color:rgba(14,165,233,0.2);">
+      <div class="card-header">
+        <span class="card-title" style="color:var(--primary);">
+          <i data-lucide="trending-up"></i> Si sigues el plan: predicciones
+        </span>
+      </div>
+      <div class="card-body">
+        <p style="font-size:12px;color:var(--text2);margin-bottom:16px;">
+          Estimaciones basadas en evidencia científica. Los resultados individuales pueden variar — siempre correlacionar con tu médico.
+        </p>
+        <div class="predicciones-grid">
+          ${preds.map(p => `
+            <div class="pred-card">
+              <div class="pred-indicador">${esc(p.indicador||'')}</div>
+              <div class="pred-valores">
+                <div class="pred-val-actual">
+                  <div class="num">${esc(String(p.valor_actual||'?'))}</div>
+                  <div class="lbl">${esc(p.unidad||'')} actual</div>
+                </div>
+                <div class="pred-arrow">→</div>
+                <div class="pred-val-est">
+                  <div class="num">${esc(p.valor_estimado||'?')}</div>
+                  <div class="lbl">${esc(p.unidad||'')} estimado</div>
+                </div>
+              </div>
+              ${p.mejora_esperada ? `<div class="pred-mejora">📉 ${esc(p.mejora_esperada)} en ${esc(p.plazo||'')}</div>` : ''}
+              ${p.rango_normal ? `<div style="font-size:10px;color:var(--text2);margin-bottom:6px;">Rango normal: ${esc(p.rango_normal)}</div>` : ''}
+              <div class="pred-condicion">${esc(p.condicion||'')}</div>
+              <div class="pred-evidencia">${esc(p.evidencia||'')}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>` : '';
+
+  // ── Panel principal con tabs ───────────────────────────────────────────────
+  const tabId = `plan-${eid}`;
+  return `
+    <div class="card" style="border-color:rgba(16,185,129,0.25);">
+      <div class="card-header" style="border-bottom-color:rgba(16,185,129,0.15);">
+        <span class="card-title" style="color:#34d399;">
+          <i data-lucide="rocket"></i> Plan de acción personalizado
+        </span>
+        <span class="badge" style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);">3 capas</span>
+      </div>
+      <div class="card-body">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:18px;">
+          Plan basado en tus biomarcadores alterados. Usa lenguaje orientativo — complementa siempre con tu médico tratante.
+        </p>
+        <div class="plan-tabs">
+          <div class="plan-tab active" onclick="switchPlanTab('${tabId}','nut',this)">🥗 Nutrición</div>
+          <div class="plan-tab" onclick="switchPlanTab('${tabId}','mov',this)">🏃 Movimiento</div>
+          <div class="plan-tab" onclick="switchPlanTab('${tabId}','hab',this)">😴 Hábitos</div>
+        </div>
+        <div class="plan-panel active" id="${tabId}-nut">${nutHtml}</div>
+        <div class="plan-panel" id="${tabId}-mov">${movHtml}</div>
+        <div class="plan-panel" id="${tabId}-hab">${habHtml}</div>
+      </div>
+    </div>
+    ${predHtml}`;
+}
+
+function switchPlanTab(tabId, panel, btn) {
+  document.querySelectorAll(`#${tabId}-nut, #${tabId}-mov, #${tabId}-hab`).forEach(p => p.classList.remove('active'));
+  document.getElementById(`${tabId}-${panel}`).classList.add('active');
+  btn.closest('.plan-tabs').querySelectorAll('.plan-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
 // ════════════════════════════════════════════
 async function openExamen(eid) {
   showPanel('resultado');
@@ -1322,6 +1718,7 @@ async function openExamen(eid) {
     const recs = d.recomendaciones || [];
     const convs= d.conversaciones || [];
     const preguntas = ex.preguntas_doctor || [];
+    const plan = d.plan || null;
     state.currentExamenId = eid;
     if (convs.length) state.currentConvId = convs[0].id;
 
@@ -1420,6 +1817,8 @@ async function openExamen(eid) {
           </ol>
         </div>
       </div>` : ''}
+
+      ${plan ? renderPlanAccion(plan, eid) : ''}
 
       <div class="card">
         <div class="card-header">
