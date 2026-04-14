@@ -264,6 +264,10 @@ def init_db():
         ]:
             if col not in pcols:
                 db.execute(ddl)
+        # examenes.descargas — contador de reportes descargados
+        ecols2 = [r[1] for r in db.execute("PRAGMA table_info(examenes)").fetchall()]
+        if "descargas" not in ecols2:
+            db.execute("ALTER TABLE examenes ADD COLUMN descargas INTEGER DEFAULT 0")
         db.commit()
 
     # ── Superusuario admin ────────────────────────────────────────────────────
@@ -833,6 +837,98 @@ def _build_reporte_html(nombre_paciente: str, examen: dict,
     return html
 
 
+# ── Rutas: Admin ─────────────────────────────────────────────────────────────
+@app.route("/api/admin/stats")
+@login_required
+def admin_stats():
+    if not is_admin():
+        return jsonify({"error": "Acceso denegado"}), 403
+    with get_db() as db:
+        # Cuentas
+        total_usuarios  = db.execute("SELECT COUNT(*) FROM usuarios WHERE es_admin=0").fetchone()[0]
+        nuevos_mes      = db.execute("SELECT COUNT(*) FROM usuarios WHERE es_admin=0 AND creado_en >= date('now','start of month')").fetchone()[0]
+        # Exámenes
+        total_examenes  = db.execute("SELECT COUNT(*) FROM examenes").fetchone()[0]
+        examenes_mes    = db.execute("SELECT COUNT(*) FROM examenes WHERE creado_en >= date('now','start of month')").fetchone()[0]
+        alto_riesgo     = db.execute("SELECT COUNT(*) FROM examenes WHERE riesgo IN ('alto','critico')").fetchone()[0]
+        # Ingresos (monto en centavos → USD)
+        rec_total       = db.execute("SELECT COALESCE(SUM(monto),0) FROM pagos WHERE estado='completado'").fetchone()[0]
+        rec_mes         = db.execute("SELECT COALESCE(SUM(monto),0) FROM pagos WHERE estado='completado' AND creado_en >= date('now','start of month')").fetchone()[0]
+        transacciones   = db.execute("SELECT COUNT(*) FROM pagos WHERE estado='completado'").fetchone()[0]
+        # Chatbot
+        total_msgs      = db.execute("SELECT COUNT(*) FROM mensajes WHERE rol='user'").fetchone()[0]
+        msgs_mes        = db.execute("SELECT COUNT(*) FROM mensajes WHERE rol='user' AND creado_en >= date('now','start of month')").fetchone()[0]
+        # Descargas
+        total_descargas = db.execute("SELECT COALESCE(SUM(descargas),0) FROM examenes").fetchone()[0]
+        # Usuarios recurrentes (≥2 exámenes)
+        recurrentes     = db.execute("""
+            SELECT COUNT(*) FROM (
+                SELECT p.usuario_id FROM examenes e
+                JOIN pacientes p ON e.paciente_id=p.id
+                JOIN usuarios u ON p.usuario_id=u.id
+                WHERE u.es_admin=0
+                GROUP BY p.usuario_id HAVING COUNT(*)>=2
+            )""").fetchone()[0]
+        # Planes de acción generados
+        planes          = db.execute("SELECT COUNT(*) FROM planes_accion").fetchone()[0]
+        # Actividad últimos 30 días (exámenes por día)
+        actividad = [dict(r) for r in db.execute("""
+            SELECT date(creado_en) dia, COUNT(*) cantidad
+            FROM examenes WHERE creado_en >= date('now','-29 days')
+            GROUP BY dia ORDER BY dia""").fetchall()]
+        # Exámenes por tipo
+        por_tipo = [dict(r) for r in db.execute("""
+            SELECT tipo, COUNT(*) cantidad FROM examenes
+            GROUP BY tipo ORDER BY cantidad DESC""").fetchall()]
+        # Exámenes por riesgo
+        por_riesgo = [dict(r) for r in db.execute("""
+            SELECT riesgo, COUNT(*) cantidad FROM examenes
+            GROUP BY riesgo ORDER BY cantidad DESC""").fetchall()]
+        # Últimos usuarios registrados
+        ultimos_usuarios = [dict(r) for r in db.execute("""
+            SELECT id, nombre, email, creado_en FROM usuarios
+            WHERE es_admin=0 ORDER BY creado_en DESC LIMIT 10""").fetchall()]
+        # Usuarios más activos
+        top_usuarios = [dict(r) for r in db.execute("""
+            SELECT u.nombre, u.email, COUNT(e.id) examenes,
+                   COALESCE(SUM(e.descargas),0) descargas,
+                   MAX(e.creado_en) ultimo_examen
+            FROM usuarios u
+            JOIN pacientes p ON p.usuario_id=u.id
+            JOIN examenes e ON e.paciente_id=p.id
+            WHERE u.es_admin=0
+            GROUP BY u.id ORDER BY examenes DESC LIMIT 10""").fetchall()]
+        # Exámenes de alto riesgo recientes
+        examenes_riesgo = [dict(r) for r in db.execute("""
+            SELECT e.id, e.titulo, e.tipo, e.riesgo, e.creado_en, u.nombre usuario, u.email
+            FROM examenes e
+            JOIN pacientes p ON e.paciente_id=p.id
+            JOIN usuarios u ON p.usuario_id=u.id
+            WHERE e.riesgo IN ('alto','critico')
+            ORDER BY e.creado_en DESC LIMIT 8""").fetchall()]
+        # Ingresos por día (últimos 30 días)
+        ingresos_dia = [dict(r) for r in db.execute("""
+            SELECT date(creado_en) dia, COALESCE(SUM(monto),0) monto
+            FROM pagos WHERE estado='completado' AND creado_en >= date('now','-29 days')
+            GROUP BY dia ORDER BY dia""").fetchall()]
+
+    return jsonify({
+        "cuentas":         {"total": total_usuarios, "mes": nuevos_mes},
+        "examenes":        {"total": total_examenes, "mes": examenes_mes, "alto_riesgo": alto_riesgo},
+        "ingresos":        {"total_cents": rec_total, "mes_cents": rec_mes, "transacciones": transacciones},
+        "chatbot":         {"total": total_msgs, "mes": msgs_mes},
+        "descargas":       int(total_descargas),
+        "recurrentes":     recurrentes,
+        "planes":          planes,
+        "actividad":       actividad,
+        "por_tipo":        por_tipo,
+        "por_riesgo":      por_riesgo,
+        "ultimos_usuarios": ultimos_usuarios,
+        "top_usuarios":    top_usuarios,
+        "examenes_riesgo": examenes_riesgo,
+        "ingresos_dia":    ingresos_dia,
+    })
+
 # ── Rutas: Autenticación ──────────────────────────────────────────────────────
 @app.route("/register", methods=["GET","POST"])
 def register():
@@ -1088,6 +1184,9 @@ def reporte_examen(eid):
         preguntas=preguntas,
         plan=plan,
     )
+    with get_db() as db:
+        db.execute("UPDATE examenes SET descargas = COALESCE(descargas,0)+1 WHERE id=?", (eid,))
+        db.commit()
     from flask import Response as FlaskResponse
     return FlaskResponse(html, mimetype="text/html")
 

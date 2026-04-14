@@ -596,6 +596,54 @@
       font-size: 12px; color: var(--accent); line-height: 1.5;
     }
 
+    /* ── ADMIN DASHBOARD ── */
+    .adm-kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .adm-kpi {
+      background: var(--glass); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 18px 20px; position: relative; overflow: hidden;
+    }
+    .adm-kpi::before { content:''; position:absolute; inset:0; opacity:.06; }
+    .adm-kpi.blue::before  { background:var(--primary); }
+    .adm-kpi.green::before { background:var(--secondary); }
+    .adm-kpi.purple::before{ background:var(--accent); }
+    .adm-kpi.amber::before { background:var(--warning); }
+    .adm-kpi.red::before   { background:var(--danger); }
+    .adm-kpi-icon  { font-size:26px; margin-bottom:10px; }
+    .adm-kpi-val   { font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:700; line-height:1; margin-bottom:4px; }
+    .adm-kpi.blue .adm-kpi-val   { color:var(--primary); }
+    .adm-kpi.green .adm-kpi-val  { color:var(--secondary); }
+    .adm-kpi.purple .adm-kpi-val { color:var(--accent); }
+    .adm-kpi.amber .adm-kpi-val  { color:var(--warning); }
+    .adm-kpi.red .adm-kpi-val    { color:var(--danger); }
+    .adm-kpi-lbl   { font-size:12px; color:var(--text2); font-weight:500; }
+    .adm-kpi-sub   { font-size:11px; color:var(--text3); margin-top:6px; padding-top:6px; border-top:1px solid var(--border); }
+    .adm-kpi-sub span { color:var(--secondary); font-weight:600; }
+
+    .adm-charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 20px; }
+    .adm-chart-card { background:var(--glass); border:1px solid var(--border); border-radius:var(--r); padding:18px 20px; }
+    .adm-chart-title { font-size:13px; font-weight:700; color:var(--text); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+    .adm-chart-title span { font-size:10px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; }
+
+    .adm-table-wrap { background:var(--glass); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; margin-bottom:14px; }
+    .adm-table-header { padding:14px 18px; border-bottom:1px solid var(--border); font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; justify-content:space-between; }
+    .adm-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .adm-table th { padding:9px 14px; text-align:left; font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.02); }
+    .adm-table td { padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text2); vertical-align:middle; }
+    .adm-table tr:last-child td { border-bottom:none; }
+    .adm-table tr:hover td { background:rgba(255,255,255,0.02); }
+    .adm-table .td-name { color:var(--text); font-weight:600; }
+    .adm-table .td-email { color:var(--text3); font-size:11px; }
+    .adm-2col { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+
+    .adm-riesgo-badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:10px; font-weight:700; text-transform:capitalize; }
+    .adm-riesgo-badge.normal  { background:rgba(16,185,129,0.15); color:#34d399; }
+    .adm-riesgo-badge.medio   { background:rgba(245,158,11,0.15); color:#fbbf24; }
+    .adm-riesgo-badge.alto    { background:rgba(239,68,68,0.15); color:#f87171; }
+    .adm-riesgo-badge.critico { background:rgba(239,68,68,0.25); color:#ef4444; font-size:11px; }
+
+    .adm-refresh { background:none; border:1px solid var(--border); color:var(--text2); border-radius:8px; padding:5px 12px; font-size:12px; cursor:pointer; transition:all .15s; }
+    .adm-refresh:hover { border-color:var(--primary); color:var(--primary); }
+
     /* ── USER FOOTER ── */
     .user-footer {
       display: flex; align-items: center; gap: 10px;
@@ -712,6 +760,13 @@
       <a class="nav-item" onclick="openModal('modal-config')" id="nav-config">
         <i data-lucide="settings"></i> Configuración
       </a>
+
+      {% if es_admin %}
+      <div class="nav-section">Administración</div>
+      <a class="nav-item" onclick="showPanel('admin')" id="nav-admin">
+        <i data-lucide="layout-dashboard"></i> Panel de control
+      </a>
+      {% endif %}
     </div>
 
     <div class="sidebar-footer">
@@ -968,6 +1023,70 @@
         </div>
       </div>
 
+      <!-- ─── ADMIN PANEL ─── -->
+      {% if es_admin %}
+      <div class="panel" id="panel-admin">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div>
+            <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;margin-bottom:3px;">Panel de Administración</h2>
+            <div style="font-size:13px;color:var(--text2);">Vista general del sistema VitalIA</div>
+          </div>
+          <button class="adm-refresh" onclick="loadAdminStats()">↻ Actualizar</button>
+        </div>
+
+        <!-- KPIs -->
+        <div class="adm-kpi-grid">
+          <div class="adm-kpi blue"><div class="adm-kpi-icon">👥</div><div class="adm-kpi-val" id="adm-cuentas">—</div><div class="adm-kpi-lbl">Cuentas registradas</div><div class="adm-kpi-sub">Este mes: <span id="adm-cuentas-mes">—</span></div></div>
+          <div class="adm-kpi green"><div class="adm-kpi-icon">🧪</div><div class="adm-kpi-val" id="adm-examenes">—</div><div class="adm-kpi-lbl">Exámenes analizados</div><div class="adm-kpi-sub">Este mes: <span id="adm-examenes-mes">—</span></div></div>
+          <div class="adm-kpi amber"><div class="adm-kpi-icon">💵</div><div class="adm-kpi-val" id="adm-ingresos">—</div><div class="adm-kpi-lbl">Ingresos totales</div><div class="adm-kpi-sub">Este mes: <span id="adm-ingresos-mes">—</span></div></div>
+          <div class="adm-kpi purple"><div class="adm-kpi-icon">💬</div><div class="adm-kpi-val" id="adm-chatbot">—</div><div class="adm-kpi-lbl">Consultas al chatbot</div><div class="adm-kpi-sub">Este mes: <span id="adm-chatbot-mes">—</span></div></div>
+          <div class="adm-kpi blue"><div class="adm-kpi-icon">⬇️</div><div class="adm-kpi-val" id="adm-descargas">—</div><div class="adm-kpi-lbl">Reportes descargados</div><div class="adm-kpi-sub">Acumulado histórico</div></div>
+          <div class="adm-kpi green"><div class="adm-kpi-icon">🔁</div><div class="adm-kpi-val" id="adm-recurrentes">—</div><div class="adm-kpi-lbl">Usuarios recurrentes</div><div class="adm-kpi-sub">Con ≥2 exámenes</div></div>
+          <div class="adm-kpi red"><div class="adm-kpi-icon">⚠️</div><div class="adm-kpi-val" id="adm-alto-riesgo">—</div><div class="adm-kpi-lbl">Alto / Crítico riesgo</div><div class="adm-kpi-sub">Exámenes destacados</div></div>
+          <div class="adm-kpi purple"><div class="adm-kpi-icon">📋</div><div class="adm-kpi-val" id="adm-planes">—</div><div class="adm-kpi-lbl">Planes de acción</div><div class="adm-kpi-sub">Generados por IA</div></div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="adm-charts-row">
+          <div class="adm-chart-card">
+            <div class="adm-chart-title">📈 Actividad últimos 30 días <span>exámenes / día</span></div>
+            <canvas id="adm-chart-actividad" height="110"></canvas>
+          </div>
+          <div class="adm-chart-card">
+            <div class="adm-chart-title">🍩 Exámenes por tipo</div>
+            <canvas id="adm-chart-tipos" height="110"></canvas>
+          </div>
+        </div>
+
+        <!-- Tablas: últimas cuentas + usuarios más activos -->
+        <div class="adm-2col">
+          <div class="adm-table-wrap">
+            <div class="adm-table-header">👤 Últimas cuentas registradas <span style="font-size:11px;color:var(--text3);font-weight:400;">Top 10</span></div>
+            <table class="adm-table">
+              <thead><tr><th>Nombre</th><th>Email</th><th>Registro</th></tr></thead>
+              <tbody id="adm-tbl-usuarios"></tbody>
+            </table>
+          </div>
+          <div class="adm-table-wrap">
+            <div class="adm-table-header">🏆 Usuarios más activos <span style="font-size:11px;color:var(--text3);font-weight:400;">Top 10</span></div>
+            <table class="adm-table">
+              <thead><tr><th>Usuario</th><th style="text-align:center;">Exámenes</th><th style="text-align:center;">Descargas</th></tr></thead>
+              <tbody id="adm-tbl-top"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tabla: exámenes de alto riesgo -->
+        <div class="adm-table-wrap">
+          <div class="adm-table-header">🚨 Exámenes de alto riesgo recientes</div>
+          <table class="adm-table">
+            <thead><tr><th>Paciente</th><th>Examen</th><th>Tipo</th><th>Riesgo</th><th>Fecha</th></tr></thead>
+            <tbody id="adm-tbl-riesgo"></tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app-layout -->
@@ -1131,7 +1250,8 @@ const PANEL_TITLES = {
   upload: 'Analizar examen',
   chat: 'Dr. VitalIA',
   history: 'Mis exámenes',
-  resultado: 'Resultado del examen'
+  resultado: 'Resultado del examen',
+  admin: 'Panel de Administración'
 };
 
 function showPanel(id) {
@@ -1145,6 +1265,7 @@ function showPanel(id) {
   state.activePanel = id;
   closeSidebar();
   lucide.createIcons();
+  if (id === 'admin') loadAdminStats();
 }
 
 function openSidebar()  { document.getElementById('sidebar').classList.add('open'); }
@@ -2385,6 +2506,131 @@ function toast(msg, dur = 3000) {
   const el = document.getElementById('toast');
   el.textContent = msg; el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// ════════════════════════════════════════════
+// ADMIN DASHBOARD
+// ════════════════════════════════════════════
+const _admCharts = {};
+
+async function loadAdminStats() {
+  try {
+    const r = await fetch('/api/admin/stats');
+    if (!r.ok) return;
+    const d = await r.json();
+
+    // KPIs
+    document.getElementById('adm-cuentas').textContent       = d.cuentas.total;
+    document.getElementById('adm-cuentas-mes').textContent   = '+' + d.cuentas.mes;
+    document.getElementById('adm-examenes').textContent      = d.examenes.total;
+    document.getElementById('adm-examenes-mes').textContent  = '+' + d.examenes.mes;
+    document.getElementById('adm-ingresos').textContent      = '$' + (d.ingresos.total_cents / 100).toFixed(2);
+    document.getElementById('adm-ingresos-mes').textContent  = '$' + (d.ingresos.mes_cents / 100).toFixed(2);
+    document.getElementById('adm-chatbot').textContent       = d.chatbot.total;
+    document.getElementById('adm-chatbot-mes').textContent   = '+' + d.chatbot.mes;
+    document.getElementById('adm-descargas').textContent     = d.descargas;
+    document.getElementById('adm-recurrentes').textContent   = d.recurrentes;
+    document.getElementById('adm-alto-riesgo').textContent   = d.examenes.alto_riesgo;
+    document.getElementById('adm-planes').textContent        = d.planes;
+
+    // Gráfico actividad (line)
+    _renderAdmLine(d.actividad);
+
+    // Gráfico tipos (doughnut)
+    _renderAdmDoughnut(d.por_tipo);
+
+    // Tabla: últimos usuarios
+    const tbU = document.getElementById('adm-tbl-usuarios');
+    tbU.innerHTML = d.ultimos_usuarios.length
+      ? d.ultimos_usuarios.map(u => `<tr>
+          <td class="td-name">${esc(u.nombre)}</td>
+          <td class="td-email">${esc(u.email)}</td>
+          <td style="color:var(--text3);font-size:11px;">${(u.creado_en||'').split(' ')[0]}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:20px;">Sin registros</td></tr>';
+
+    // Tabla: top usuarios
+    const tbT = document.getElementById('adm-tbl-top');
+    tbT.innerHTML = d.top_usuarios.length
+      ? d.top_usuarios.map((u, i) => `<tr>
+          <td><div class="td-name">${i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':''}${esc(u.nombre)}</div><div class="td-email">${esc(u.email)}</div></td>
+          <td style="text-align:center;font-weight:700;color:var(--primary);">${u.examenes}</td>
+          <td style="text-align:center;color:var(--text2);">${u.descargas}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:20px;">Sin datos</td></tr>';
+
+    // Tabla: alto riesgo
+    const tbR = document.getElementById('adm-tbl-riesgo');
+    tbR.innerHTML = d.examenes_riesgo.length
+      ? d.examenes_riesgo.map(e => `<tr>
+          <td><div class="td-name">${esc(e.usuario)}</div><div class="td-email">${esc(e.email)}</div></td>
+          <td style="color:var(--text);">${esc(e.titulo)}</td>
+          <td style="color:var(--text2);font-size:11px;">${esc(e.tipo)}</td>
+          <td><span class="adm-riesgo-badge ${e.riesgo}">${e.riesgo}</span></td>
+          <td style="color:var(--text3);font-size:11px;">${(e.creado_en||'').split(' ')[0]}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px;">Sin exámenes de alto riesgo</td></tr>';
+
+  } catch(e) { console.error('Admin stats error', e); }
+}
+
+function _renderAdmLine(actividad) {
+  const ctx = document.getElementById('adm-chart-actividad');
+  if (!ctx) return;
+  if (_admCharts.actividad) { _admCharts.actividad.destroy(); delete _admCharts.actividad; }
+
+  // Rellenar días faltantes en los últimos 30 días
+  const days = {};
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    days[key] = 0;
+  }
+  actividad.forEach(r => { if (days[r.dia] !== undefined) days[r.dia] = r.cantidad; });
+  const labels = Object.keys(days).map(d => d.slice(5)); // MM-DD
+  const data   = Object.values(days);
+
+  _admCharts.actividad = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data, fill: true, tension: 0.4,
+        borderColor: '#0ea5e9', borderWidth: 2,
+        backgroundColor: 'rgba(14,165,233,0.08)',
+        pointRadius: 3, pointBackgroundColor: '#0ea5e9'
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#475569', font: { size: 10 }, maxTicksLimit: 10 } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#475569', font: { size: 10 }, precision: 0 }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function _renderAdmDoughnut(porTipo) {
+  const ctx = document.getElementById('adm-chart-tipos');
+  if (!ctx) return;
+  if (_admCharts.tipos) { _admCharts.tipos.destroy(); delete _admCharts.tipos; }
+  const colors = ['#0ea5e9','#10b981','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#84cc16','#ec4899'];
+  const labels = porTipo.map(r => r.tipo);
+  const data   = porTipo.map(r => r.cantidad);
+  _admCharts.tipos = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderWidth: 2, borderColor: '#0f172a' }]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12, padding: 10 } }
+      },
+      cutout: '65%'
+    }
+  });
 }
 </script>
 </body>
