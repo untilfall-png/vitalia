@@ -117,6 +117,19 @@
     .link-row { text-align: center; font-size: 14px; color: var(--text2); }
     .link-row a { color: var(--primary); text-decoration: none; font-weight: 600; }
     .link-row a:hover { text-decoration: underline; }
+    .forgot-box {
+      display: none; margin-top: 14px;
+      background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 12px; padding: 14px 16px; text-align: center;
+    }
+    .forgot-box p { font-size: 13px; color: #fbbf24; margin-bottom: 10px; line-height: 1.5; }
+    .btn-forgot {
+      display: inline-block; padding: 9px 22px;
+      background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4);
+      color: #fbbf24; border-radius: 10px; font-size: 13px; font-weight: 600;
+      text-decoration: none; cursor: pointer; transition: all .2s;
+    }
+    .btn-forgot:hover { background: rgba(245,158,11,0.25); }
     .spinner {
       display: inline-block; width: 16px; height: 16px;
       border: 2px solid rgba(255,255,255,0.3);
@@ -149,6 +162,11 @@
       </div>
       <button type="submit" class="btn-primary" id="btnSubmit">Iniciar sesión</button>
     </form>
+
+    <div class="forgot-box" id="forgotBox">
+      <p>🔐 Demasiados intentos fallidos. ¿Olvidaste tu contraseña?</p>
+      <a href="/forgot-password" class="btn-forgot">Recuperar contraseña</a>
+    </div>
 
     <div class="divider">o</div>
     <p class="link-row">
@@ -183,6 +201,9 @@
           errDiv.style.display = 'block';
           btn.disabled = false;
           btn.textContent = 'Iniciar sesión';
+          if ((data.intentos || 0) >= 3) {
+            document.getElementById('forgotBox').style.display = 'block';
+          }
         }
       } catch {
         errDiv.textContent = 'Error de conexión. Intenta de nuevo.';

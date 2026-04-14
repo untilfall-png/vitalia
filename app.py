@@ -2,9 +2,11 @@
 VitalIA — Dr. Digital
 Análisis inteligente de exámenes médicos con IA
 """
-import os, sys, json, sqlite3, base64, re, uuid, threading
+import os, sys, json, sqlite3, base64, re, uuid, threading, secrets, smtplib
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from functools import wraps
 
 # ── In-memory job store ───────────────────────────────────────────────────────
@@ -98,6 +100,14 @@ EXAM_PRICE_CENTS       = 300  # $3.00 USD
 # Admin
 ADMIN_EMAIL    = os.environ.get("ADMIN_EMAIL", "admin@vitalia.app")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "VitalIA#Admin2025")
+
+# ── Mail (recuperación de contraseña) ─────────────────────────────────────────
+MAIL_SERVER   = os.environ.get("MAIL_SERVER",   "smtp.gmail.com")
+MAIL_PORT     = int(os.environ.get("MAIL_PORT", "587"))
+MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+MAIL_FROM     = os.environ.get("MAIL_FROM",     MAIL_USERNAME)
+APP_URL       = os.environ.get("APP_URL",        "https://vitalia.work")
 
 if STRIPE_SECRET_KEY:
     stripe.api_key = STRIPE_SECRET_KEY
@@ -268,6 +278,15 @@ def init_db():
         ecols2 = [r[1] for r in db.execute("PRAGMA table_info(examenes)").fetchall()]
         if "descargas" not in ecols2:
             db.execute("ALTER TABLE examenes ADD COLUMN descargas INTEGER DEFAULT 0")
+        # usuarios — recuperación de contraseña y control de intentos
+        ucols2 = [r[1] for r in db.execute("PRAGMA table_info(usuarios)").fetchall()]
+        for col, ddl in [
+            ("intentos_fallidos",  "ALTER TABLE usuarios ADD COLUMN intentos_fallidos INTEGER DEFAULT 0"),
+            ("reset_token",        "ALTER TABLE usuarios ADD COLUMN reset_token TEXT DEFAULT NULL"),
+            ("reset_token_expiry", "ALTER TABLE usuarios ADD COLUMN reset_token_expiry TEXT DEFAULT NULL"),
+        ]:
+            if col not in ucols2:
+                db.execute(ddl)
         db.commit()
 
     # ── Superusuario admin ────────────────────────────────────────────────────
@@ -837,6 +856,81 @@ def _build_reporte_html(nombre_paciente: str, examen: dict,
     return html
 
 
+# ── Email helper ─────────────────────────────────────────────────────────────
+def _send_reset_email(to_email: str, nombre: str, token: str) -> bool:
+    """Envía email con enlace de recuperación. Retorna True si OK."""
+    reset_url = f"{APP_URL}/reset-password/{token}"
+    expiry_min = 60
+
+    html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body
+      style="margin:0;padding:0;background:#f8fafc;font-family:'Segoe UI',Arial,sans-serif;">
+      <div style="max-width:520px;margin:40px auto;background:#fff;border-radius:16px;
+                  box-shadow:0 4px 24px rgba(0,0,0,0.08);overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#0ea5e9,#8b5cf6);padding:32px 36px;">
+          <div style="font-size:26px;font-weight:800;color:#fff;letter-spacing:-.5px;">🩺 VitalIA</div>
+          <div style="color:rgba(255,255,255,0.85);font-size:14px;margin-top:4px;">Recuperación de contraseña</div>
+        </div>
+        <div style="padding:36px;">
+          <p style="font-size:16px;font-weight:600;color:#1e293b;margin:0 0 12px;">Hola, {nombre} 👋</p>
+          <p style="font-size:14px;color:#475569;line-height:1.7;margin:0 0 24px;">
+            Recibimos una solicitud para restablecer la contraseña de tu cuenta VitalIA.
+            Haz clic en el botón para crear una nueva contraseña:
+          </p>
+          <div style="text-align:center;margin-bottom:28px;">
+            <a href="{reset_url}"
+               style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#0284c7);
+                      color:#fff;text-decoration:none;padding:14px 36px;border-radius:12px;
+                      font-size:15px;font-weight:700;letter-spacing:.2px;">
+              Restablecer contraseña
+            </a>
+          </div>
+          <div style="background:#f1f5f9;border-radius:10px;padding:14px 16px;
+                      font-size:12px;color:#64748b;line-height:1.7;">
+            <strong style="color:#334155;">⚠ Importante:</strong><br>
+            • Este enlace expira en <strong>{expiry_min} minutos</strong>.<br>
+            • Si no solicitaste este cambio, ignora este correo; tu contraseña no cambiará.<br>
+            • Por seguridad, el enlace solo puede usarse una vez.
+          </div>
+          <p style="font-size:11px;color:#94a3b8;margin-top:24px;line-height:1.6;">
+            Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+            <span style="color:#0ea5e9;word-break:break-all;">{reset_url}</span>
+          </p>
+        </div>
+        <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 36px;
+                    text-align:center;font-size:11px;color:#94a3b8;">
+          VitalIA — Análisis médico con inteligencia artificial &nbsp;·&nbsp;
+          Este es un correo automático, por favor no respondas.
+        </div>
+      </div>
+    </body></html>"""
+
+    if not MAIL_USERNAME or not MAIL_PASSWORD:
+        # Modo dev: imprimir enlace en consola
+        print(f"\n[VitalIA] RESET LINK (dev mode — configura MAIL_USERNAME/MAIL_PASSWORD):\n{reset_url}\n")
+        return True
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Restablecer contraseña — VitalIA"
+        msg["From"]    = f"VitalIA <{MAIL_FROM}>"
+        msg["To"]      = to_email
+        msg.attach(MIMEText(
+            f"Hola {nombre},\n\nRestablece tu contraseña aquí: {reset_url}\n\n"
+            f"Este enlace expira en {expiry_min} minutos.\n\nVitalIA",
+            "plain", "utf-8"
+        ))
+        msg.attach(MIMEText(html, "html", "utf-8"))
+
+        with smtplib.SMTP(MAIL_SERVER, MAIL_PORT, timeout=10) as s:
+            s.ehlo()
+            s.starttls()
+            s.login(MAIL_USERNAME, MAIL_PASSWORD)
+            s.sendmail(MAIL_FROM, [to_email], msg.as_string())
+        return True
+    except Exception as e:
+        print(f"[VitalIA] Error enviando email: {e}")
+        return False
+
 # ── Rutas: Admin ─────────────────────────────────────────────────────────────
 @app.route("/api/admin/stats")
 @login_required
@@ -1013,7 +1107,25 @@ def login():
             u = db.execute("SELECT * FROM usuarios WHERE email=? AND activo=1", (email,)).fetchone()
 
         if not u or not check_password_hash(u["password_hash"], pwd):
-            return jsonify({"error": "Email o contraseña incorrectos"}), 401
+            # Incrementar contador de intentos fallidos
+            intentos = 0
+            if u:
+                with get_db() as db:
+                    db.execute(
+                        "UPDATE usuarios SET intentos_fallidos = COALESCE(intentos_fallidos,0)+1 WHERE id=?",
+                        (u["id"],)
+                    )
+                    db.commit()
+                    intentos = (u["intentos_fallidos"] or 0) + 1
+            msg = "Email o contraseña incorrectos"
+            if intentos >= 2:
+                msg = f"Contraseña incorrecta ({intentos+1}° intento). ¿Olvidaste tu contraseña?"
+            return jsonify({"error": msg, "intentos": intentos + 1}), 401
+
+        # Login correcto → resetear contador
+        with get_db() as db:
+            db.execute("UPDATE usuarios SET intentos_fallidos=0 WHERE id=?", (u["id"],))
+            db.commit()
 
         session["usuario_id"]     = u["id"]
         session["usuario_nombre"] = u["nombre"]
@@ -1022,6 +1134,69 @@ def login():
         return jsonify({"ok": True, "redirect": "/app"})
 
     return render_template("login.html")
+
+
+@app.route("/forgot-password", methods=["GET","POST"])
+def forgot_password():
+    if request.method == "POST":
+        d = request.json or request.form
+        email = (d.get("email","")).strip().lower()
+        if not email:
+            return jsonify({"error": "Ingresa tu email"}), 400
+
+        with get_db() as db:
+            u = db.execute("SELECT * FROM usuarios WHERE email=? AND activo=1", (email,)).fetchone()
+
+        # Siempre responder OK para no revelar si el email existe (seguridad)
+        if u:
+            token  = secrets.token_urlsafe(48)
+            expiry = (datetime.now() + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+            with get_db() as db:
+                db.execute(
+                    "UPDATE usuarios SET reset_token=?, reset_token_expiry=? WHERE id=?",
+                    (token, expiry, u["id"])
+                )
+                db.commit()
+            _send_reset_email(u["email"], u["nombre"], token)
+
+        return jsonify({"ok": True})
+
+    return render_template("forgot_password.html")
+
+
+@app.route("/reset-password/<token>", methods=["GET","POST"])
+def reset_password(token):
+    with get_db() as db:
+        u = db.execute(
+            "SELECT * FROM usuarios WHERE reset_token=? AND activo=1", (token,)
+        ).fetchone()
+
+    # Validar token y expiración
+    if not u:
+        return render_template("reset_password.html", error="El enlace no es válido o ya fue utilizado.", token=None)
+    expiry = u["reset_token_expiry"]
+    if not expiry or datetime.now() > datetime.strptime(expiry, "%Y-%m-%d %H:%M:%S"):
+        return render_template("reset_password.html", error="El enlace ha expirado. Solicita uno nuevo.", token=None)
+
+    if request.method == "POST":
+        d = request.json or request.form
+        nueva  = d.get("password","")
+        nueva2 = d.get("password2","")
+        if len(nueva) < 8:
+            return jsonify({"error": "La contraseña debe tener al menos 8 caracteres"}), 400
+        if nueva != nueva2:
+            return jsonify({"error": "Las contraseñas no coinciden"}), 400
+
+        with get_db() as db:
+            db.execute(
+                "UPDATE usuarios SET password_hash=?, reset_token=NULL, "
+                "reset_token_expiry=NULL, intentos_fallidos=0 WHERE id=?",
+                (generate_password_hash(nueva), u["id"])
+            )
+            db.commit()
+        return jsonify({"ok": True})
+
+    return render_template("reset_password.html", error=None, token=token)
 
 
 @app.route("/logout")
