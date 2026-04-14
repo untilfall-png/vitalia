@@ -468,9 +468,133 @@ def _build_patient_ctx(paciente: dict) -> str:
 
 
 # ── Reporte HTML ──────────────────────────────────────────────────────────────
+def _build_plan_html_reporte(plan: dict) -> str:
+    """Construye la sección HTML del plan de acción para el reporte imprimible."""
+    if not plan:
+        return ""
+    nut = plan.get("nutricion") or {}
+    mov = plan.get("movimiento") or {}
+    hab = plan.get("habitos") or {}
+    preds = plan.get("predicciones") or []
+    if not (nut or mov or hab or preds):
+        return ""
+
+    H = lambda s: str(s).replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace('"',"&quot;")
+
+    # ── Nutrición ─────────────────────────────────────────────────────────────
+    com_rows = "".join([
+        f'<tr><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;">{H(a.get("emoji",""))} {H(a.get("alimento",""))}</td>'
+        f'<td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#475569;">{H(a.get("razon",""))}</td>'
+        f'<td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#4f46e5;white-space:nowrap;">{H(a.get("frecuencia",""))}</td></tr>'
+        for a in (nut.get("que_comer") or [])
+    ])
+    ev_rows = "".join([
+        f'<tr><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;">{H(a.get("emoji",""))} {H(a.get("alimento",""))}</td>'
+        f'<td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#475569;">{H(a.get("razon",""))}</td>'
+        f'<td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;font-weight:700;color:#991b1b;white-space:nowrap;">{H((a.get("impacto","") or "").upper())} impacto</td></tr>'
+        for a in (nut.get("que_evitar") or [])
+    ])
+    dia_ej = f'<div style="margin-top:10px;padding:12px 14px;background:#f8fafc;border-left:3px solid #4f46e5;border-radius:0 6px 6px 0;font-size:12px;color:#475569;line-height:1.8;white-space:pre-line;">{H(nut.get("dia_ejemplo",""))}</div>' if nut.get("dia_ejemplo") else ""
+    nut_html = f"""<div style="margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:18px;">🥗</span>
+        <div style="font-weight:700;font-size:14px;color:#1e293b;">{H(nut.get("titulo","Nutrición"))}</div>
+        {f'<span style="background:#ede9fe;color:#5b21b6;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;margin-left:auto;">{H(nut.get("patron_dieta",""))}</span>' if nut.get("patron_dieta") else ""}
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:12px;">{H(nut.get("objetivo",""))}</div>
+      {f'<div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">✅ Qué comer</div><table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#fff;margin-bottom:12px;"><tbody>{com_rows}</tbody></table>' if com_rows else ""}
+      {f'<div style="font-size:11px;font-weight:700;color:#991b1b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">🚫 Qué evitar</div><table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#fff;margin-bottom:12px;"><tbody>{ev_rows}</tbody></table>' if ev_rows else ""}
+      {dia_ej}
+    </div>"""
+
+    # ── Movimiento ────────────────────────────────────────────────────────────
+    act_items = "".join([
+        f'<div style="padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #4f46e5;border-radius:0 8px 8px 0;margin-bottom:8px;">'
+        f'<div style="font-weight:700;font-size:13px;color:#1e293b;margin-bottom:6px;">{H(a.get("emoji",""))} {H(a.get("nombre",""))}'
+        f'  <span style="background:#ede9fe;color:#5b21b6;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600;margin-left:6px;">{H(a.get("tipo",""))}</span></div>'
+        f'<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#475569;margin-bottom:6px;">'
+        f'  <span><strong>Frecuencia:</strong> {H(a.get("frecuencia",""))}</span>'
+        f'  <span><strong>Duración:</strong> {H(a.get("duracion",""))}</span>'
+        f'  <span><strong>Intensidad:</strong> {H(a.get("intensidad",""))}</span></div>'
+        f'<div style="font-size:12px;color:#1d4ed8;">{H(a.get("beneficio",""))}</div>'
+        f'</div>'
+        for a in (mov.get("actividades") or [])
+    ])
+    mov_html = f"""<div style="margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:18px;">🏃</span>
+        <div style="font-weight:700;font-size:14px;color:#1e293b;">{H(mov.get("titulo","Movimiento"))}</div>
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:12px;">{H(mov.get("objetivo",""))}</div>
+      {act_items}
+      {f'<div style="padding:10px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:12px;color:#166534;margin-top:8px;"><strong>Progresión:</strong> {H(mov.get("progresion",""))}</div>' if mov.get("progresion") else ""}
+      {f'<div style="padding:10px 14px;background:#fefce8;border:1px solid #fcd34d;border-radius:8px;font-size:12px;color:#92400e;margin-top:8px;"><strong>⚠️ Precaución:</strong> {H(mov.get("contraindicaciones",""))}</div>' if mov.get("contraindicaciones") else ""}
+    </div>"""
+
+    # ── Hábitos ───────────────────────────────────────────────────────────────
+    sueno  = hab.get("sueno") or {}
+    estres = hab.get("estres") or {}
+    alc    = hab.get("alcohol") or {}
+    otros  = hab.get("otros","")
+    def habito_card(emoji, titulo, objetivo, conexion, tips_or_tecnicas, key_list):
+        tips_html = "".join(['<li style="font-size:12px;color:#475569;margin-bottom:4px;">' + H(t) + '</li>' for t in (tips_or_tecnicas or [])])
+        obj_html  = ('<div style="font-weight:600;font-size:12px;color:#4f46e5;margin-bottom:6px;">' + H(objetivo) + '</div>') if objetivo else ""
+        con_html  = ('<div style="font-size:12px;color:#64748b;margin-bottom:8px;line-height:1.5;">' + H(conexion) + '</div>') if conexion else ""
+        ul_html   = ('<ul style="margin:0;padding-left:16px;">' + tips_html + '</ul>') if tips_html else ""
+        return ('<div style="flex:1;min-width:200px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;">'
+                '<div style="font-weight:700;font-size:13px;color:#1e293b;margin-bottom:4px;">' + emoji + ' ' + titulo + '</div>'
+                + obj_html + con_html + ul_html + '</div>')
+    hab_html = f"""<div style="margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="font-size:18px;">😴</span>
+        <div style="font-weight:700;font-size:14px;color:#1e293b;">Hábitos críticos</div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        {habito_card("😴","Sueño", sueno.get("objetivo",""), f"{sueno.get('por_que','')} {sueno.get('conexion','')}", sueno.get("tips",[]), "tips")}
+        {habito_card("🧘","Estrés", "", estres.get("impacto",""), estres.get("tecnicas",[]), "tecnicas")}
+        {habito_card("🍷","Alcohol", alc.get("recomendacion",""), f"{alc.get('por_que','')} {alc.get('conexion','')}", [], "")}
+      </div>
+      {f'<div style="margin-top:10px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#475569;"><strong>💡 Otros hábitos:</strong> {H(otros)}</div>' if otros else ""}
+    </div>"""
+
+    # ── Predicciones ──────────────────────────────────────────────────────────
+    pred_rows = "".join([
+        f'<tr>'
+        f'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-weight:600;font-size:13px;color:#1e293b;">{H(p.get("indicador",""))}</td>'
+        f'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-family:monospace;font-weight:700;color:#991b1b;font-size:13px;">{H(str(p.get("valor_actual","")))} {H(p.get("unidad",""))}</td>'
+        f'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-family:monospace;font-weight:700;color:#166534;font-size:13px;">{H(p.get("valor_estimado",""))}</td>'
+        f'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-weight:700;color:#166534;font-size:12px;">{H(p.get("mejora_esperada",""))} en {H(p.get("plazo",""))}</td>'
+        f'<td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#64748b;">{H(p.get("condicion",""))}</td>'
+        f'</tr>'
+        for p in preds
+    ])
+    pred_html = f"""<div style="margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📈 Si sigues el plan: predicciones estimadas</div>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#fff;">
+        <thead><tr style="background:#f1f5f9;">
+          <th style="padding:8px 12px;font-size:11px;color:#64748b;text-align:left;border-bottom:1px solid #e2e8f0;">Indicador</th>
+          <th style="padding:8px 12px;font-size:11px;color:#64748b;text-align:left;border-bottom:1px solid #e2e8f0;">Actual</th>
+          <th style="padding:8px 12px;font-size:11px;color:#64748b;text-align:left;border-bottom:1px solid #e2e8f0;">Estimado</th>
+          <th style="padding:8px 12px;font-size:11px;color:#64748b;text-align:left;border-bottom:1px solid #e2e8f0;">Mejora / Plazo</th>
+          <th style="padding:8px 12px;font-size:11px;color:#64748b;text-align:left;border-bottom:1px solid #e2e8f0;">Condición</th>
+        </tr></thead>
+        <tbody>{pred_rows}</tbody>
+      </table>
+      <p style="font-size:11px;color:#94a3b8;margin-top:8px;font-style:italic;">Estimaciones orientativas basadas en evidencia. Los resultados individuales pueden variar. Siempre consultar con el médico tratante.</p>
+    </div>""" if pred_rows else ""
+
+    return f"""<div style="margin-bottom:32px;padding:22px;background:#fff;border:1px solid #c7d2fe;border-radius:12px;border-top:4px solid #4f46e5;">
+      <div style="font-size:13px;font-weight:700;color:#4f46e5;text-transform:uppercase;letter-spacing:.8px;margin-bottom:20px;">🚀 Plan de acción personalizado</div>
+      {nut_html}
+      {mov_html}
+      {hab_html}
+      {pred_html}
+    </div>"""
+
+
 def _build_reporte_html(nombre_paciente: str, examen: dict,
                          indicadores: list, recomendaciones: list,
-                         preguntas: list) -> str:
+                         preguntas: list, plan: dict = None) -> str:
 
     # Paleta clara, legible en papel y pantalla
     estado_cfg = {
@@ -624,6 +748,8 @@ def _build_reporte_html(nombre_paciente: str, examen: dict,
   {"<div style='margin-bottom:30px;'><div style='font-size:13px;font-weight:700;color:#4f46e5;text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;'>Recomendaciones</div>" + recs_html + "</div>" if recs_html else ''}
 
   {preguntas_html}
+
+  {_build_plan_html_reporte(plan)}
 
   <!-- Footer -->
   <div style="border-top:1px solid #e2e8f0;padding-top:20px;text-align:center;">
@@ -873,16 +999,26 @@ def reporte_examen(eid):
             return "Examen no encontrado", 404
         indicadores     = db.execute("SELECT * FROM indicadores WHERE examen_id=? ORDER BY id", (eid,)).fetchall()
         recomendaciones = db.execute("SELECT * FROM recomendaciones WHERE examen_id=? ORDER BY prioridad DESC", (eid,)).fetchall()
+        plan_row        = db.execute("SELECT * FROM planes_accion WHERE examen_id=?", (eid,)).fetchone()
     try:
         preguntas = json.loads(dict(e).get("preguntas_doctor") or "[]")
     except Exception:
         preguntas = []
+    plan = None
+    if plan_row:
+        plan = {}
+        for key in ("nutricion", "movimiento", "habitos", "predicciones"):
+            try:
+                plan[key] = json.loads(plan_row[key] or ("[]" if key == "predicciones" else "{}"))
+            except Exception:
+                plan[key] = [] if key == "predicciones" else {}
     html = _build_reporte_html(
         nombre_paciente=paciente.get("nombre","Paciente"),
         examen=dict(e),
         indicadores=[dict(i) for i in indicadores],
         recomendaciones=[dict(r) for r in recomendaciones],
         preguntas=preguntas,
+        plan=plan,
     )
     from flask import Response as FlaskResponse
     return FlaskResponse(html, mimetype="text/html")
