@@ -230,6 +230,17 @@ def init_db():
             FOREIGN KEY (examen_id) REFERENCES examenes(id)
         );
 
+        -- ── Consentimientos ───────────────────────────────────────────────────
+        CREATE TABLE IF NOT EXISTS consentimientos (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id  INTEGER NOT NULL,
+            version     TEXT NOT NULL DEFAULT '2.0',
+            ip          TEXT DEFAULT '',
+            user_agent  TEXT DEFAULT '',
+            aceptado_en TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        );
+
         -- ── Plan de acción personalizado ──────────────────────────────────────
         CREATE TABLE IF NOT EXISTS planes_accion (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1061,6 +1072,8 @@ def register():
             peso = None
 
         try:
+            ip_addr    = request.headers.get("X-Forwarded-For", request.remote_addr or "").split(",")[0].strip()
+            user_agent = request.headers.get("User-Agent", "")[:512]
             with get_db() as db:
                 # Crear usuario
                 cur = db.execute(
@@ -1074,6 +1087,11 @@ def register():
                        (usuario_id, nombre, email, genero, edad, peso, condiciones, medicamentos, sintomas)
                        VALUES (?,?,?,?,?,?,?,?,?)""",
                     (uid, nombre, email, genero, edad, peso, condiciones, medicamentos, sintomas)
+                )
+                # Registrar consentimiento informado (cláusula 9 — evidencia de aceptación)
+                db.execute(
+                    "INSERT INTO consentimientos (usuario_id, version, ip, user_agent) VALUES (?,?,?,?)",
+                    (uid, "2.0", ip_addr, user_agent)
                 )
                 db.commit()
 
@@ -1207,6 +1225,10 @@ def logout():
 @app.route("/")
 def landing():
     return render_template("landing.html")
+
+@app.route("/terminos")
+def terminos():
+    return render_template("terminos.html")
 
 
 @app.route("/app")

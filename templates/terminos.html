@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Consentimiento Informado — VitalIA</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #0a0f1e;
+      --bg2:     #0f172a;
+      --bg3:     #1e293b;
+      --primary: #0ea5e9;
+      --accent:  #8b5cf6;
+      --text:    #f1f5f9;
+      --text2:   #94a3b8;
+      --border:  rgba(255,255,255,0.08);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; padding: 0;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 40% at 10% 10%, rgba(14,165,233,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 90% 90%, rgba(139,92,246,0.05) 0%, transparent 50%);
+    }
+
+    /* ── Header ── */
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(15,23,42,0.92); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .logo-text {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .btn-back {
+      padding: 8px 18px; border-radius: 10px;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      color: var(--text2); font-size: 13px; font-weight: 500; text-decoration: none;
+      transition: all .2s;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+    /* ── Content ── */
+    .page-wrap {
+      position: relative; z-index: 1;
+      max-width: 780px; margin: 0 auto; padding: 48px 24px 80px;
+    }
+
+    .doc-header {
+      text-align: center; margin-bottom: 48px;
+      padding-bottom: 32px; border-bottom: 1px solid var(--border);
+    }
+    .doc-badge {
+      display: inline-block; margin-bottom: 16px;
+      padding: 5px 16px; border-radius: 20px; font-size: 12px; font-weight: 700;
+      background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3);
+      color: var(--primary); letter-spacing: .5px; text-transform: uppercase;
+    }
+    .doc-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 32px; font-weight: 800; margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--text), var(--text2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .doc-meta { font-size: 13px; color: var(--text2); }
+    .doc-meta span { margin: 0 8px; }
+
+    /* ── TOC ── */
+    .toc {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px 24px; margin-bottom: 40px;
+    }
+    .toc-title { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 12px; }
+    .toc-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; }
+    .toc-list li a {
+      font-size: 13px; color: var(--text2); text-decoration: none;
+      display: flex; align-items: center; gap: 8px; transition: color .15s;
+    }
+    .toc-list li a:hover { color: var(--primary); }
+    .toc-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 6px; font-size: 10px; font-weight: 700;
+      background: rgba(14,165,233,0.12); color: var(--primary); flex-shrink: 0;
+    }
+
+    /* ── Sections ── */
+    .section {
+      margin-bottom: 36px; scroll-margin-top: 80px;
+    }
+    .section-header {
+      display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px;
+    }
+    .section-num {
+      display: flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0; margin-top: 2px;
+      background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.25);
+      font-size: 13px; font-weight: 800; color: var(--primary);
+    }
+    .section-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.3;
+    }
+    .section-body {
+      margin-left: 46px; font-size: 14px; color: var(--text2);
+      line-height: 1.85; border-left: 2px solid rgba(255,255,255,0.06); padding-left: 18px;
+    }
+    .section-body strong { color: var(--text); }
+    .section-body ul { padding-left: 18px; margin-top: 8px; }
+    .section-body li { margin-bottom: 5px; }
+
+    /* ── Declaration box ── */
+    .declaration {
+      background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(14,165,233,0.06));
+      border: 1px solid rgba(16,185,129,0.3); border-radius: 14px;
+      padding: 24px 28px; margin-top: 48px;
+    }
+    .declaration-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px; font-weight: 700; color: #34d399; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .declaration-body { font-size: 13px; color: var(--text2); line-height: 1.8; }
+
+    /* ── Footer ── */
+    .page-footer {
+      text-align: center; margin-top: 56px; padding-top: 24px;
+      border-top: 1px solid var(--border); font-size: 12px; color: var(--text2);
+    }
+    .page-footer a { color: var(--primary); text-decoration: none; }
+
+    @media (max-width: 600px) {
+      .toc-list { grid-template-columns: 1fr; }
+      .doc-title { font-size: 24px; }
+      .site-header { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <a href="/" class="logo">
+      <div class="logo-icon">🩺</div>
+      <span class="logo-text">VitalIA</span>
+    </a>
+    <a href="javascript:history.back()" class="btn-back">← Volver</a>
+  </header>
+
+  <div class="page-wrap">
+
+    <!-- Encabezado del documento -->
+    <div class="doc-header">
+      <div class="doc-badge">Documento legal</div>
+      <h1 class="doc-title">Consentimiento Informado</h1>
+      <div class="doc-meta">
+        <span>VitalIA — Plataforma de Análisis Asistido por IA</span>·
+        <span>Versión 2.0</span>·
+        <span>Abril 2026</span>
+      </div>
+    </div>
+
+    <!-- Índice -->
+    <div class="toc">
+      <div class="toc-title">Índice de contenidos</div>
+      <ul class="toc-list">
+        <li><a href="#s1"><span class="toc-num">1</span> Naturaleza del servicio</a></li>
+        <li><a href="#s2"><span class="toc-num">2</span> No sustitución médica</a></li>
+        <li><a href="#s3"><span class="toc-num">3</span> Tratamiento de datos</a></li>
+        <li><a href="#s4"><span class="toc-num">4</span> Limitación de responsabilidad</a></li>
+        <li><a href="#s5"><span class="toc-num">5</span> Seguridad y retención</a></li>
+        <li><a href="#s6"><span class="toc-num">6</span> Restricción de edad</a></li>
+        <li><a href="#s7"><span class="toc-num">7</span> Revocación del consentimiento</a></li>
+        <li><a href="#s8"><span class="toc-num">8</span> Legislación y conflictos</a></li>
+        <li><a href="#s9"><span class="toc-num">9</span> Registro de aceptación</a></li>
+        <li><a href="#s10"><span class="toc-num">10</span> Aplicación del GDPR</a></li>
+        <li><a href="#s11"><span class="toc-num">11</span> Consentimiento libre</a></li>
+        <li><a href="#s12"><span class="toc-num">12</span> Modificaciones</a></li>
+      </ul>
+    </div>
+
+    <!-- Cláusulas -->
+    <div class="section" id="s1">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <div class="section-title">Naturaleza del servicio</div>
+      </div>
+      <div class="section-body">
+        VitalIA es una plataforma de análisis asistido por inteligencia artificial. Los informes generados tienen carácter exclusivamente <strong>informativo y orientativo</strong>. No constituyen diagnóstico médico, prescripción terapéutica ni acto médico de ninguna clase.
+      </div>
+    </div>
+
+    <div class="section" id="s2">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <div class="section-title">No sustitución de la atención médica</div>
+      </div>
+      <div class="section-body">
+        Los análisis proporcionados por VitalIA <strong>no reemplazan</strong> la consulta, evaluación ni el criterio clínico de un médico u otro profesional de la salud debidamente habilitado. El usuario se obliga a no adoptar decisiones clínicas basándose únicamente en los resultados de esta plataforma. Ante cualquier síntoma, duda o urgencia médica, deberá consultar a un profesional certificado.
+      </div>
+    </div>
+
+    <div class="section" id="s3">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <div class="section-title">Tratamiento de datos personales de salud</div>
+      </div>
+      <div class="section-body">
+        El usuario autoriza expresamente a VitalIA para recopilar, almacenar y procesar sus datos personales de salud —incluyendo nombre, resultados de exámenes, biomarcadores y antecedentes médicos— con el único propósito de prestar el servicio de análisis solicitado.<br><br>
+        El tratamiento se realiza conforme a:
+        <ul>
+          <li><strong>Ley N.° 19.628</strong> sobre Protección de la Vida Privada (Chile)</li>
+          <li><strong>Ley N.° 21.719</strong> que regula la protección y el tratamiento de los datos personales (publicada el 13 de diciembre de 2024, con entrada en vigencia el 1 de diciembre de 2026)</li>
+          <li><strong>GDPR — UE 2016/679</strong>, para usuarios ubicados en la Unión Europea</li>
+        </ul>
+        <br>Los datos no serán cedidos a terceros sin consentimiento expreso, salvo obligación legal. El usuario podrá ejercer sus derechos de <strong>acceso, rectificación, supresión, oposición, portabilidad y bloqueo</strong> en cualquier momento a través de los canales habilitados en la plataforma.
+      </div>
+    </div>
+
+    <div class="section" id="s4">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <div class="section-title">Limitación de responsabilidad</div>
+      </div>
+      <div class="section-body">
+        VitalIA y sus operadores no asumen responsabilidad por decisiones adoptadas por el usuario o por terceros con base en los análisis generados. El usuario reconoce y acepta que la inteligencia artificial puede cometer errores, y que el resultado final siempre debe ser validado por un profesional de la salud. <strong>La responsabilidad máxima del prestador se limita al valor del servicio contratado.</strong>
+      </div>
+    </div>
+
+    <div class="section" id="s5">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <div class="section-title">Seguridad y retención de datos</div>
+      </div>
+      <div class="section-body">
+        VitalIA aplica medidas técnicas y organizativas para proteger los datos almacenados. El usuario podrá solicitar la eliminación de su información en cualquier momento. Los datos serán conservados durante el período necesario para la prestación del servicio y, posteriormente, anonimizados o destruidos conforme a la normativa vigente.
+      </div>
+    </div>
+
+    <div class="section" id="s6">
+      <div class="section-header">
+        <div class="section-num">6</div>
+        <div class="section-title">Restricción de edad</div>
+      </div>
+      <div class="section-body">
+        El acceso y uso de VitalIA está reservado exclusivamente a <strong>personas mayores de 18 años</strong>. En caso de que un representante legal desee utilizar la plataforma en nombre de un menor de edad, deberá otorgar su consentimiento expreso a través del mecanismo habilitado por VitalIA, asumiendo plena responsabilidad por el uso del servicio y la veracidad de los datos proporcionados. VitalIA se reserva el derecho de suspender o cancelar cuentas cuando existan indicios razonables de que el usuario es menor de edad y no cuenta con la autorización requerida.
+      </div>
+    </div>
+
+    <div class="section" id="s7">
+      <div class="section-header">
+        <div class="section-num">7</div>
+        <div class="section-title">Revocación del consentimiento</div>
+      </div>
+      <div class="section-body">
+        El usuario podrá revocar el presente consentimiento en cualquier momento, sin necesidad de expresar causa, mediante comunicación escrita dirigida a los canales habilitados por VitalIA o a través de la opción correspondiente en la plataforma.<br><br>
+        La revocación del consentimiento tendrá los siguientes efectos inmediatos:
+        <ul>
+          <li>(a) la suspensión del acceso a las funcionalidades de análisis de la plataforma</li>
+          <li>(b) el inicio del proceso de eliminación o anonimización de los datos personales del usuario dentro de un plazo máximo de <strong>30 días hábiles</strong>, salvo que exista una obligación legal de conservación</li>
+          <li>(c) la imposibilidad de recuperar análisis previamente generados una vez completada la eliminación</li>
+        </ul>
+        <br>La revocación no afectará la licitud del tratamiento realizado con anterioridad ni las obligaciones contractuales ya devengadas.
+      </div>
+    </div>
+
+    <div class="section" id="s8">
+      <div class="section-header">
+        <div class="section-num">8</div>
+        <div class="section-title">Legislación aplicable y resolución de conflictos</div>
+      </div>
+      <div class="section-body">
+        El presente consentimiento y toda relación derivada del uso de VitalIA se regirán por las <strong>leyes de la República de Chile</strong>.<br><br>
+        Para la resolución de cualquier controversia, las partes acuerdan someterse a la competencia de los <strong>Tribunales Ordinarios de Justicia de la ciudad de Valparaíso, Chile</strong>, renunciando expresamente a cualquier otro fuero que pudiere corresponderles en razón de su domicilio presente o futuro.<br><br>
+        Sin perjuicio de lo anterior, las partes podrán someter la controversia a mediación ante un mediador registrado en el Registro de Mediadores del Ministerio de Justicia, como instancia previa y voluntaria.
+      </div>
+    </div>
+
+    <div class="section" id="s9">
+      <div class="section-header">
+        <div class="section-num">9</div>
+        <div class="section-title">Registro y evidencia de aceptación</div>
+      </div>
+      <div class="section-body">
+        La aceptación del presente consentimiento se formalizará mediante la activación de una casilla de verificación (checkbox) en la plataforma, acompañada del registro automático de los siguientes datos:
+        <ul>
+          <li>(a) fecha y hora exacta de la aceptación (timestamp en formato UTC)</li>
+          <li>(b) dirección IP del dispositivo desde el cual se otorgó el consentimiento</li>
+          <li>(c) versión del documento aceptado</li>
+          <li>(d) identificación del usuario</li>
+        </ul>
+        <br>Este registro constituirá prueba suficiente de la aceptación libre e informada del usuario. VitalIA conservará estos registros durante todo el período de vigencia de la relación con el usuario y por un plazo adicional de <strong>cinco (5) años</strong> contados desde la última interacción, o por el plazo que establezca la normativa vigente, lo que sea mayor.
+      </div>
+    </div>
+
+    <div class="section" id="s10">
+      <div class="section-header">
+        <div class="section-num">10</div>
+        <div class="section-title">Aplicación del GDPR</div>
+      </div>
+      <div class="section-body">
+        Las disposiciones del Reglamento General de Protección de Datos (GDPR — UE 2016/679) se aplicarán únicamente cuando el usuario se encuentre físicamente en un Estado miembro de la Unión Europea o del Espacio Económico Europeo al momento de utilizar la plataforma, o cuando VitalIA dirija activamente sus servicios a usuarios en dichos territorios.<br><br>
+        En tales casos, VitalIA designará un representante en la Unión Europea conforme al artículo 27 del GDPR, cuyos datos de contacto estarán disponibles en la política de privacidad de la plataforma. El usuario podrá ejercer ante dicho representante los derechos adicionales que el GDPR le confiere, incluyendo el derecho a presentar una reclamación ante la autoridad de control competente.
+      </div>
+    </div>
+
+    <div class="section" id="s11">
+      <div class="section-header">
+        <div class="section-num">11</div>
+        <div class="section-title">Consentimiento libre e informado</div>
+      </div>
+      <div class="section-body">
+        El usuario declara haber leído el presente texto en su totalidad, comprenderlo y prestar su consentimiento de forma <strong>libre, voluntaria e informada</strong>, sin que medie coacción ni engaño de ninguna especie.
+      </div>
+    </div>
+
+    <div class="section" id="s12">
+      <div class="section-header">
+        <div class="section-num">12</div>
+        <div class="section-title">Modificaciones al consentimiento</div>
+      </div>
+      <div class="section-body">
+        VitalIA se reserva el derecho de modificar el presente consentimiento informado cuando sea necesario para adaptarlo a cambios normativos, tecnológicos o en las condiciones del servicio. Toda modificación sustancial será notificada al usuario con al menos <strong>quince (15) días de anticipación</strong> a través de la plataforma y/o por correo electrónico. El uso continuado del servicio tras dicho plazo se entenderá como aceptación de los nuevos términos. En caso de desacuerdo, el usuario podrá revocar su consentimiento conforme a la cláusula 7.
+      </div>
+    </div>
+
+    <!-- Declaración de aceptación -->
+    <div class="declaration">
+      <div class="declaration-title">✅ Declaración de Aceptación</div>
+      <div class="declaration-body">
+        <em>Declaro haber leído íntegramente el presente consentimiento informado (versión 2.0), comprender su contenido y alcance, y aceptar todos sus términos de forma libre, voluntaria e informada.</em>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="page-footer">
+      <p>VitalIA — Plataforma de Análisis Médico con Inteligencia Artificial</p>
+      <p style="margin-top:6px;">Versión 2.0 · Abril 2026 · <a href="/register">Crear cuenta</a> · <a href="/login">Iniciar sesión</a></p>
+    </div>
+
+  </div>
+</body>
+</html>
