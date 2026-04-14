@@ -194,6 +194,49 @@
 
     .step-panel { display: none; }
     .step-panel.active { display: block; }
+
+    /* ── Términos y Condiciones ── */
+    .terms-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 14px 16px;
+      max-height: 160px;
+      overflow-y: auto;
+      font-size: 11.5px;
+      color: var(--text2);
+      line-height: 1.75;
+      margin-bottom: 10px;
+      scroll-behavior: smooth;
+    }
+    .terms-box::-webkit-scrollbar { width: 4px; }
+    .terms-box::-webkit-scrollbar-track { background: transparent; }
+    .terms-box::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+    .terms-box strong { color: var(--text); font-weight: 600; }
+    .terms-box .terms-title {
+      font-size: 11px; font-weight: 700; color: var(--primary);
+      text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; display: block;
+    }
+    .terms-accept {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: rgba(14,165,233,0.06);
+      border: 1px solid rgba(14,165,233,0.2);
+      border-radius: 10px; padding: 11px 13px;
+      cursor: pointer; transition: border-color .2s, background .2s;
+      margin-bottom: 14px;
+    }
+    .terms-accept:hover { border-color: rgba(14,165,233,0.4); background: rgba(14,165,233,0.1); }
+    .terms-accept.checked { border-color: var(--secondary); background: rgba(16,185,129,0.08); }
+    .terms-accept input[type="checkbox"] {
+      width: 16px; height: 16px; min-width: 16px; padding: 0; margin: 0; margin-top: 1px;
+      accent-color: var(--primary); cursor: pointer;
+    }
+    .terms-accept span { font-size: 12px; color: var(--text2); line-height: 1.5; }
+    .terms-accept.checked span { color: var(--text); }
+    .terms-required {
+      font-size: 11px; color: var(--danger); font-weight: 600;
+      margin-bottom: 10px; display: none;
+    }
   </style>
 </head>
 <body>
@@ -239,6 +282,34 @@
         <label>Confirmar contraseña</label>
         <input type="password" id="password2" placeholder="Repite tu contraseña" required autocomplete="new-password"/>
       </div>
+      <!-- ── Consentimiento informado ── -->
+      <div class="field" style="margin-top:18px;">
+        <label>Consentimiento informado y términos de uso <span style="color:var(--danger);margin-left:2px;">*</span></label>
+
+        <div class="terms-box">
+          <span class="terms-title">📋 Consentimiento Informado — VitalIA</span>
+
+          <strong>1. Naturaleza del servicio.</strong> VitalIA es una plataforma de análisis asistido por inteligencia artificial. Los informes generados tienen carácter exclusivamente informativo y orientativo. No constituyen diagnóstico médico, prescripción terapéutica ni acto médico de ninguna clase.<br><br>
+
+          <strong>2. No sustitución de la atención médica.</strong> Los análisis proporcionados por VitalIA no reemplazan la consulta, evaluación ni el criterio clínico de un médico u otro profesional de la salud debidamente habilitado. El usuario se obliga a no adoptar decisiones clínicas basándose únicamente en los resultados de esta plataforma. Ante cualquier síntoma, duda o urgencia médica, deberá consultar a un profesional certificado.<br><br>
+
+          <strong>3. Tratamiento de datos personales de salud.</strong> El usuario autoriza expresamente a VitalIA para recopilar, almacenar y procesar sus datos personales de salud —incluyendo nombre, resultados de exámenes, biomarcadores y antecedentes médicos— con el único propósito de prestar el servicio de análisis solicitado. El tratamiento se realiza conforme a la Ley N.° 19.628 sobre Protección de la Vida Privada (Chile), la futura Ley N.° 21.719 y, donde corresponda, el Reglamento General de Protección de Datos (GDPR — UE). Los datos no serán cedidos a terceros sin consentimiento expreso, salvo obligación legal. El usuario podrá ejercer sus derechos de acceso, rectificación, cancelación y oposición (ARCO) en cualquier momento a través de los canales habilitados.<br><br>
+
+          <strong>4. Limitación de responsabilidad.</strong> VitalIA y sus operadores no asumen responsabilidad por decisiones adoptadas por el usuario o por terceros con base en los análisis generados. El usuario reconoce y acepta que la inteligencia artificial puede cometer errores, y que el resultado final siempre debe ser validado por un profesional de la salud. La responsabilidad máxima del prestador se limita al valor del servicio contratado.<br><br>
+
+          <strong>5. Seguridad y retención de datos.</strong> VitalIA aplica medidas técnicas y organizativas para proteger los datos almacenados. El usuario podrá solicitar la eliminación de su información en cualquier momento. Los datos serán conservados durante el período necesario para la prestación del servicio y, posteriormente, anonimizados o destruidos conforme a la normativa vigente.<br><br>
+
+          <strong>6. Consentimiento libre e informado.</strong> El usuario declara haber leído el presente texto en su totalidad, comprenderlo y prestar su consentimiento de forma libre, voluntaria e informada, sin que medie coacción ni engaño de ninguna especie.
+        </div>
+
+        <div class="terms-required" id="termsError">⚠ Debes aceptar los términos para continuar.</div>
+
+        <label class="terms-accept" id="termsLabel" onclick="toggleTerms(this)">
+          <input type="checkbox" id="termsCheck"/>
+          <span>He leído y acepto en su totalidad el <strong>Consentimiento Informado</strong>, los <strong>Términos de Uso</strong> y autorizo el tratamiento de mis datos personales de salud conforme a lo indicado.</span>
+        </label>
+      </div>
+
       <button type="button" class="btn-primary" id="btnStep1" onclick="goStep2()">
         Siguiente &rarr;
       </button>
@@ -354,6 +425,14 @@
   </div>
 
   <script>
+    function toggleTerms(el) {
+      const cb = el.querySelector('input[type="checkbox"]');
+      setTimeout(() => {
+        el.classList.toggle('checked', cb.checked);
+        if (cb.checked) document.getElementById('termsError').style.display = 'none';
+      }, 0);
+    }
+
     function goStep2() {
       const err = document.getElementById('errorMsg');
       err.style.display = 'none';
@@ -362,6 +441,7 @@
       const email    = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const password2 = document.getElementById('password2').value;
+      const termsOk  = document.getElementById('termsCheck').checked;
 
       if (!nombre || !email || !password) {
         err.textContent = 'Completa todos los campos obligatorios';
@@ -374,6 +454,11 @@
       if (password !== password2) {
         err.textContent = 'Las contraseñas no coinciden';
         err.style.display = 'block'; return;
+      }
+      if (!termsOk) {
+        document.getElementById('termsError').style.display = 'block';
+        document.getElementById('termsLabel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
       }
 
       // Avanzar al paso 2
