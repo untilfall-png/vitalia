@@ -1224,7 +1224,7 @@ def logout():
 # ── Ruta principal ────────────────────────────────────────────────────────────
 @app.route("/")
 def landing():
-    return render_template("landing.html")
+    return redirect("/brochure")
 
 @app.route("/terminos")
 def terminos():
