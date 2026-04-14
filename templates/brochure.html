@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>VitalIA — Inteligencia Médica en tu Bolsillo</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0a0f1e;
+      --bg2:      #0f172a;
+      --bg3:      #1e293b;
+      --primary:  #0ea5e9;
+      --primary-d:#0284c7;
+      --accent:   #8b5cf6;
+      --secondary:#10b981;
+      --warning:  #f59e0b;
+      --danger:   #ef4444;
+      --text:     #f1f5f9;
+      --text2:    #94a3b8;
+      --text3:    #475569;
+      --border:   rgba(255,255,255,0.08);
+      --glass:    rgba(255,255,255,0.04);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg); color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(10,15,30,0.9); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+      box-shadow: 0 0 16px rgba(14,165,233,0.4);
+    }
+    .nav-logo-text {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .nav-links { display: flex; align-items: center; gap: 10px; }
+    .nav-link {
+      padding: 7px 16px; border-radius: 10px; font-size: 13px; font-weight: 500;
+      text-decoration: none; color: var(--text2); transition: all .2s;
+    }
+    .nav-link:hover { color: var(--text); background: var(--glass); }
+    .nav-cta {
+      padding: 9px 20px; border-radius: 10px; font-size: 13px; font-weight: 700;
+      text-decoration: none; color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-d));
+      box-shadow: 0 0 20px rgba(14,165,233,0.35); transition: all .2s;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(14,165,233,0.5); }
+
+    /* ── SECTIONS ── */
+    section { position: relative; overflow: hidden; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 120px 24px 80px;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(14,165,233,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(139,92,246,0.1) 0%, transparent 50%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 18px; border-radius: 20px; margin-bottom: 28px;
+      background: rgba(14,165,233,0.12); border: 1px solid rgba(14,165,233,0.3);
+      font-size: 12px; font-weight: 700; color: var(--primary); letter-spacing: .8px; text-transform: uppercase;
+    }
+    .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+    .hero-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(48px, 8vw, 88px); font-weight: 900; line-height: 1.05;
+      letter-spacing: -2px; margin-bottom: 24px;
+    }
+    .hero-title .grad {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-sub {
+      font-size: clamp(16px, 2.5vw, 20px); color: var(--text2); max-width: 580px;
+      margin: 0 auto 40px; line-height: 1.7;
+    }
+    .hero-bullets {
+      display: flex; align-items: center; justify-content: center; gap: 28px;
+      flex-wrap: wrap; margin-bottom: 44px;
+    }
+    .hero-bullet { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text2); }
+    .hero-bullet-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+    .hero-cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn-hero-primary {
+      padding: 14px 32px; border-radius: 14px; font-size: 16px; font-weight: 700;
+      text-decoration: none; color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      box-shadow: 0 0 40px rgba(14,165,233,0.4);
+      font-family: 'Plus Jakarta Sans', sans-serif; transition: all .2s;
+    }
+    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 0 60px rgba(14,165,233,0.6); }
+    .btn-hero-ghost {
+      padding: 14px 32px; border-radius: 14px; font-size: 16px; font-weight: 600;
+      text-decoration: none; color: var(--text);
+      border: 1px solid var(--border); background: var(--glass);
+      font-family: 'Plus Jakarta Sans', sans-serif; transition: all .2s;
+    }
+    .btn-hero-ghost:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); }
+    .hero-url { margin-top: 20px; font-size: 13px; color: var(--text3); }
+    .hero-url a { color: var(--primary); text-decoration: none; font-weight: 600; }
+
+    /* ── GENERIC SECTION STYLES ── */
+    .section-wrap { max-width: 900px; margin: 0 auto; padding: 96px 24px; }
+    .section-badge {
+      display: inline-block; padding: 4px 14px; border-radius: 20px; margin-bottom: 16px;
+      font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+    }
+    .section-badge.blue   { background: rgba(14,165,233,0.12);  border: 1px solid rgba(14,165,233,0.3);  color: var(--primary); }
+    .section-badge.purple { background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.3); color: var(--accent); }
+    .section-badge.green  { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: var(--secondary); }
+    .section-badge.amber  { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: var(--warning); }
+    .section-badge.red    { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3);  color: var(--danger); }
+    .section-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(28px, 4vw, 42px); font-weight: 800; margin-bottom: 16px;
+      letter-spacing: -.5px; line-height: 1.2;
+    }
+    .section-sub { font-size: 16px; color: var(--text2); max-width: 600px; line-height: 1.7; margin-bottom: 52px; }
+    .divider-line { width: 48px; height: 3px; border-radius: 2px; margin: 16px 0 24px; }
+    .divider-line.blue   { background: var(--primary); }
+    .divider-line.purple { background: var(--accent); }
+    .divider-line.green  { background: var(--secondary); }
+    .divider-line.amber  { background: var(--warning); }
+
+    /* ── PROBLEMA ── */
+    .problema-bg { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .problema-grid { display: grid; gap: 16px; }
+    .problema-card {
+      display: flex; align-items: flex-start; gap: 18px;
+      background: var(--glass); border: 1px solid var(--border);
+      border-left: 4px solid var(--danger); border-radius: 14px; padding: 20px 22px;
+      transition: transform .2s;
+    }
+    .problema-card:hover { transform: translateX(4px); }
+    .problema-num {
+      width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+      background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: var(--danger);
+    }
+    .problema-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .problema-desc { font-size: 13px; color: var(--text2); line-height: 1.6; }
+    .problema-footer {
+      margin-top: 28px; text-align: center; padding: 14px 20px;
+      background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); border-radius: 12px;
+      font-size: 14px; font-weight: 600; color: #f87171;
+    }
+
+    /* ── SOLUCIÓN ── */
+    .flow-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; flex-wrap: wrap; margin: 48px 0;
+    }
+    .flow-step { text-align: center; flex: 1; min-width: 140px; }
+    .flow-circle {
+      width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 900; border: 2px solid transparent;
+    }
+    .flow-circle.c1 { background: rgba(14,165,233,0.15); border-color: rgba(14,165,233,0.4); color: var(--primary); }
+    .flow-circle.c2 { background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.4); color: var(--accent); }
+    .flow-circle.c3 { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: var(--secondary); }
+    .flow-step-label { font-size: 14px; font-weight: 700; }
+    .flow-step-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+    .flow-arrow { font-size: 24px; color: var(--text3); padding: 0 8px; margin-bottom: 28px; }
+    .flow-footer {
+      text-align: center; padding: 14px 24px;
+      background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(139,92,246,0.08));
+      border: 1px solid rgba(14,165,233,0.2); border-radius: 40px;
+      font-size: 14px; font-weight: 600; color: var(--primary); display: inline-block;
+    }
+
+    /* ── TECNOLOGÍA ── */
+    .tech-bg { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .tech-grid { display: grid; gap: 16px; }
+    .tech-card {
+      display: flex; align-items: flex-start; gap: 18px;
+      background: var(--glass); border: 1px solid var(--border); border-radius: 14px;
+      padding: 22px 24px; transition: border-color .2s, transform .2s;
+    }
+    .tech-card:hover { border-color: rgba(14,165,233,0.3); transform: translateY(-2px); }
+    .tech-num {
+      width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 800;
+    }
+    .tech-num.t1 { background: rgba(14,165,233,0.12); color: var(--primary); }
+    .tech-num.t2 { background: rgba(139,92,246,0.12); color: var(--accent); }
+    .tech-num.t3 { background: rgba(16,185,129,0.12); color: var(--secondary); }
+    .tech-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .tech-desc { font-size: 13px; color: var(--text2); margin-bottom: 2px; }
+    .tech-sub { font-size: 12px; color: var(--text3); }
+
+    /* ── FUNCIONALIDADES ── */
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;
+    }
+    .feature-card {
+      background: var(--glass); border: 1px solid var(--border); border-radius: 14px;
+      padding: 22px 20px; transition: border-color .2s, transform .2s;
+    }
+    .feature-card:hover { border-color: rgba(14,165,233,0.25); transform: translateY(-3px); }
+    .feature-icon { font-size: 28px; margin-bottom: 12px; }
+    .feature-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .feature-desc { font-size: 13px; color: var(--text2); line-height: 1.65; }
+    .feature-tag {
+      display: inline-block; margin-top: 10px; padding: 2px 10px; border-radius: 20px;
+      font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+    }
+    .feature-tag.new { background: rgba(16,185,129,0.15); color: var(--secondary); border: 1px solid rgba(16,185,129,0.3); }
+    .feature-tag.ai  { background: rgba(139,92,246,0.15); color: var(--accent);    border: 1px solid rgba(139,92,246,0.3); }
+
+    /* ── CÓMO FUNCIONA ── */
+    .steps-list { display: grid; gap: 0; }
+    .step-row {
+      display: flex; align-items: flex-start; gap: 20px; position: relative; padding-bottom: 32px;
+    }
+    .step-row:last-child { padding-bottom: 0; }
+    .step-row:last-child .step-line { display: none; }
+    .step-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+    .step-circle-num {
+      width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .step-circle-num.s1 { background: rgba(14,165,233,0.15); border: 2px solid rgba(14,165,233,0.4); color: var(--primary); }
+    .step-circle-num.s2 { background: rgba(139,92,246,0.15); border: 2px solid rgba(139,92,246,0.4); color: var(--accent); }
+    .step-circle-num.s3 { background: rgba(16,185,129,0.15); border: 2px solid rgba(16,185,129,0.4); color: var(--secondary); }
+    .step-circle-num.s4 { background: rgba(245,158,11,0.15); border: 2px solid rgba(245,158,11,0.4); color: var(--warning); }
+    .step-line { flex: 1; width: 2px; background: var(--border); margin-top: 8px; min-height: 40px; }
+    .step-body { padding-top: 8px; }
+    .step-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .step-desc { font-size: 13px; color: var(--text2); line-height: 1.65; }
+    .steps-footer {
+      margin-top: 36px; display: flex; gap: 14px; flex-wrap: wrap;
+    }
+    .steps-pill {
+      padding: 10px 20px; border-radius: 40px; font-size: 13px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--glass); color: var(--text2);
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ── COMPATIBILIDAD ── */
+    .compat-bg { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .compat-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;
+    }
+    .compat-item {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--glass); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 16px; font-size: 14px; font-weight: 600;
+      transition: border-color .2s, transform .2s;
+    }
+    .compat-item:hover { border-color: rgba(16,185,129,0.35); transform: translateY(-2px); }
+    .compat-check { color: var(--secondary); font-size: 16px; }
+    .compat-footer {
+      margin-top: 24px; text-align: center; font-size: 13px; color: var(--text2);
+      padding: 12px; background: var(--glass); border-radius: 10px; border: 1px solid var(--border);
+    }
+
+    /* ── BENEFICIOS ── */
+    .benef-grid { display: grid; gap: 16px; }
+    .benef-card {
+      display: flex; align-items: flex-start; gap: 0;
+      background: var(--glass); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; transition: transform .2s;
+    }
+    .benef-card:hover { transform: translateY(-2px); }
+    .benef-side { width: 5px; flex-shrink: 0; }
+    .benef-side.blue   { background: var(--primary); }
+    .benef-side.purple { background: var(--accent); }
+    .benef-side.green  { background: var(--secondary); }
+    .benef-side.amber  { background: var(--warning); }
+    .benef-body { padding: 18px 20px; flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .benef-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .benef-desc { font-size: 13px; color: var(--text2); }
+    .benef-tag {
+      padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .benef-tag.blue   { background: rgba(14,165,233,0.12); color: var(--primary); }
+    .benef-tag.purple { background: rgba(139,92,246,0.12); color: var(--accent); }
+    .benef-tag.green  { background: rgba(16,185,129,0.12); color: var(--secondary); }
+    .benef-tag.amber  { background: rgba(245,158,11,0.12); color: var(--warning); }
+
+    /* ── DIFERENCIAL ── */
+    .dif-bg { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .dif-no-list { display: grid; gap: 10px; margin-bottom: 28px; }
+    .dif-no {
+      display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+      background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.15); border-radius: 12px;
+      font-size: 14px; color: var(--text2);
+    }
+    .dif-no-x { color: var(--danger); font-size: 16px; }
+    .dif-yes {
+      display: flex; align-items: center; gap: 14px; padding: 18px 20px;
+      background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(14,165,233,0.08));
+      border: 1px solid rgba(16,185,129,0.3); border-radius: 14px;
+      font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 28px;
+    }
+    .dif-yes-check { color: var(--secondary); font-size: 20px; }
+    .dif-pipeline {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; flex-wrap: wrap;
+    }
+    .dif-pipe-item {
+      padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 700;
+      border: 1px solid var(--border);
+    }
+    .dif-pipe-item.d1 { background: rgba(14,165,233,0.12); color: var(--primary); }
+    .dif-pipe-item.d2 { background: rgba(139,92,246,0.12); color: var(--accent); }
+    .dif-pipe-item.d3 { background: rgba(16,185,129,0.12); color: var(--secondary); }
+    .dif-pipe-item.d4 { background: rgba(245,158,11,0.12); color: var(--warning); }
+    .dif-pipe-arrow { color: var(--text3); padding: 0 8px; font-size: 14px; }
+
+    /* ── POSICIONAMIENTO ── */
+    .pos-disclaimer {
+      text-align: center; padding: 14px 20px; margin-bottom: 32px;
+      background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 12px;
+      font-size: 14px; color: #a78bfa;
+    }
+    .pos-grid { display: grid; gap: 14px; }
+    .pos-card {
+      display: flex; align-items: flex-start; gap: 14px; padding: 18px 20px;
+      background: var(--glass); border: 1px solid var(--border); border-radius: 14px;
+      transition: border-color .2s;
+    }
+    .pos-card:hover { border-color: rgba(139,92,246,0.3); }
+    .pos-check { color: var(--secondary); font-size: 18px; margin-top: 2px; }
+    .pos-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .pos-desc { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+    /* ── PRECIO ── */
+    .precio-bg { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .precio-card {
+      max-width: 460px; margin: 0 auto;
+      background: linear-gradient(135deg, rgba(14,165,233,0.1), rgba(139,92,246,0.1));
+      border: 1px solid rgba(14,165,233,0.3); border-radius: 20px; padding: 40px;
+      text-align: center;
+    }
+    .precio-amount {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 72px; font-weight: 900; color: var(--primary); line-height: 1;
+      margin-bottom: 4px;
+    }
+    .precio-amount sup { font-size: 30px; vertical-align: top; margin-top: 16px; display: inline-block; }
+    .precio-per { font-size: 14px; color: var(--text2); margin-bottom: 28px; }
+    .precio-features { text-align: left; margin-bottom: 28px; display: grid; gap: 10px; }
+    .precio-feat { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .precio-feat-check { color: var(--secondary); }
+    .precio-note { font-size: 12px; color: var(--text3); }
+
+    /* ── VISIÓN ── */
+    .vision-grid { display: grid; gap: 16px; }
+    .vision-card {
+      display: flex; align-items: center; gap: 16px; padding: 18px 22px;
+      background: var(--glass); border: 1px solid var(--border); border-radius: 14px;
+      transition: transform .2s;
+    }
+    .vision-card:hover { transform: translateX(4px); }
+    .vision-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .vision-dot.d1 { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+    .vision-dot.d2 { background: var(--accent);  box-shadow: 0 0 8px var(--accent); }
+    .vision-dot.d3 { background: var(--secondary);box-shadow: 0 0 8px var(--secondary); }
+    .vision-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .vision-desc { font-size: 13px; color: var(--text2); }
+    .vision-footer {
+      margin-top: 32px; text-align: center; padding: 16px 24px;
+      background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(139,92,246,0.08));
+      border: 1px solid rgba(14,165,233,0.2); border-radius: 14px;
+      font-size: 15px; font-weight: 700; color: var(--text);
+    }
+
+    /* ── CTA FINAL ── */
+    .cta-section {
+      min-height: 60vh; display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 96px 24px;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 100%, rgba(139,92,246,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 30% 0%, rgba(14,165,233,0.08) 0%, transparent 50%);
+    }
+    .cta-steps { display: grid; gap: 12px; max-width: 440px; margin: 32px auto 40px; }
+    .cta-step {
+      display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+      background: var(--glass); border: 1px solid var(--border); border-radius: 12px;
+      font-size: 14px; font-weight: 600; text-align: left;
+    }
+    .cta-step-num {
+      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800;
+    }
+    .cta-step-num.n1 { background: rgba(14,165,233,0.15); color: var(--primary); }
+    .cta-step-num.n2 { background: rgba(139,92,246,0.15); color: var(--accent); }
+    .cta-step-num.n3 { background: rgba(16,185,129,0.15); color: var(--secondary); }
+    .cta-url { margin-top: 20px; font-size: 14px; color: var(--text2); }
+    .cta-url a { color: var(--primary); font-weight: 700; text-decoration: none; }
+    .cta-year { margin-top: 8px; font-size: 12px; color: var(--text3); }
+
+    /* ── FOOTER ── */
+    .site-footer {
+      border-top: 1px solid var(--border); padding: 28px 32px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+      font-size: 12px; color: var(--text3);
+    }
+    .site-footer a { color: var(--text2); text-decoration: none; }
+    .site-footer a:hover { color: var(--primary); }
+
+    @media (max-width: 640px) {
+      .nav-links .nav-link { display: none; }
+      .flow-arrow { display: none; }
+      .benef-tag { display: none; }
+      .dif-pipeline { gap: 6px; }
+      .site-footer { justify-content: center; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAV ── -->
+  <nav class="nav">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon">🩺</div>
+      <span class="nav-logo-text">VitalIA</span>
+    </a>
+    <div class="nav-links">
+      <a href="#problema" class="nav-link">El problema</a>
+      <a href="#funcionalidades" class="nav-link">Funciones</a>
+      <a href="#tecnologia" class="nav-link">Tecnología</a>
+      <a href="#precio" class="nav-link">Precio</a>
+      <a href="/register" class="nav-cta">Crear cuenta gratis</a>
+    </div>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div>
+      <div class="hero-badge"><span class="hero-badge-dot"></span> Inteligencia Médica</div>
+      <h1 class="hero-title">
+        <span class="grad">VITALIA</span><br>
+        Inteligencia Médica<br>en tu Bolsillo
+      </h1>
+      <p class="hero-sub">
+        Una plataforma inteligente que transforma tus exámenes médicos en información clara, personalizada y accionable — en segundos.
+      </p>
+      <div class="hero-bullets">
+        <div class="hero-bullet"><div class="hero-bullet-dot"></div> Escanea tus exámenes</div>
+        <div class="hero-bullet"><div class="hero-bullet-dot"></div> Interpreta resultados con IA</div>
+        <div class="hero-bullet"><div class="hero-bullet-dot"></div> Entiende tu salud en segundos</div>
+      </div>
+      <div class="hero-cta-row">
+        <a href="/register" class="btn-hero-primary">Comenzar gratis →</a>
+        <a href="#funcionalidades" class="btn-hero-ghost">Ver funcionalidades</a>
+      </div>
+      <div class="hero-url"><a href="https://vitalia.work">www.vitalia.work</a></div>
+    </div>
+  </section>
+
+  <!-- ── EL PROBLEMA ── -->
+  <section class="problema-bg" id="problema">
+    <div class="section-wrap">
+      <div class="section-badge red">El problema</div>
+      <h2 class="section-title">Entender un examen médico<br>no debería ser difícil</h2>
+      <div class="divider-line" style="background:var(--danger);"></div>
+
+      <div class="problema-grid">
+        <div class="problema-card">
+          <div class="problema-num">1</div>
+          <div>
+            <div class="problema-title">Resultados complejos</div>
+            <div class="problema-desc">Recibes información técnica que no puedes interpretar sin ayuda profesional. Los valores de laboratorio requieren conocimiento médico especializado.</div>
+          </div>
+        </div>
+        <div class="problema-card">
+          <div class="problema-num">2</div>
+          <div>
+            <div class="problema-title">Sin contexto clínico</div>
+            <div class="problema-desc">Valores fuera de rango sin explicación de qué significan para tu salud específica, tu edad, tus condiciones previas o tus medicamentos actuales.</div>
+          </div>
+        </div>
+        <div class="problema-card">
+          <div class="problema-num">3</div>
+          <div>
+            <div class="problema-title">Internet confunde</div>
+            <div class="problema-desc">Buscar en la web genera más dudas, ansiedad y autodiagnósticos erróneos. La información general no aplica a tu caso particular.</div>
+          </div>
+        </div>
+        <div class="problema-card">
+          <div class="problema-num">4</div>
+          <div>
+            <div class="problema-title">Esperas innecesarias</div>
+            <div class="problema-desc">Días o semanas hasta poder hablar con tu médico para entender resultados que ya tienes en tu mano. La información médica no está pensada para pacientes.</div>
+          </div>
+        </div>
+      </div>
+      <div class="problema-footer">La información médica no está pensada para pacientes — VitalIA lo cambia.</div>
+    </div>
+  </section>
+
+  <!-- ── LA SOLUCIÓN ── -->
+  <section id="solucion">
+    <div class="section-wrap" style="text-align:center;">
+      <div class="section-badge blue">La solución</div>
+      <h2 class="section-title">Aquí nace <span style="background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">VITALIA</span></h2>
+      <div class="divider-line blue" style="margin:16px auto 24px;"></div>
+      <p class="section-sub" style="margin:0 auto 0;">
+        Una plataforma inteligente que transforma tus exámenes en información clara, con un plan de acción personalizado y seguimiento de tu evolución médica.
+      </p>
+
+      <div class="flow-row">
+        <div class="flow-step">
+          <div class="flow-circle c1">1</div>
+          <div class="flow-step-label">Escanea</div>
+          <div class="flow-step-sub">Foto o PDF</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-circle c2">2</div>
+          <div class="flow-step-label">Analiza</div>
+          <div class="flow-step-sub">IA médica</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-circle c3">3</div>
+          <div class="flow-step-label">Explica</div>
+          <div class="flow-step-sub">Lenguaje claro</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-circle" style="background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.4);color:var(--warning);">4</div>
+          <div class="flow-step-label">Actúa</div>
+          <div class="flow-step-sub">Plan personalizado</div>
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <span class="flow-footer">Todo en segundos · Desde tu celular · Sin conocimientos médicos</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TECNOLOGÍA ── -->
+  <section class="tech-bg" id="tecnologia">
+    <div class="section-wrap">
+      <div class="section-badge purple">Tecnología</div>
+      <h2 class="section-title">Potenciado por<br>Inteligencia Artificial</h2>
+      <div class="divider-line purple"></div>
+      <p class="section-sub">Tres capas de IA trabajando juntas para darte el análisis más preciso y personalizado.</p>
+
+      <div class="tech-grid">
+        <div class="tech-card">
+          <div class="tech-num t1">1</div>
+          <div>
+            <div class="tech-title">OCR Avanzado con IA</div>
+            <div class="tech-desc">Convierte exámenes en datos estructurados automáticamente. Tecnología que digitaliza documentos médicos con precisión, ya sea foto o PDF.</div>
+            <div class="tech-sub">Soporta: imágenes JPG, PNG y documentos PDF · Extracción de valores, unidades y rangos de referencia</div>
+          </div>
+        </div>
+        <div class="tech-card">
+          <div class="tech-num t2">2</div>
+          <div>
+            <div class="tech-title">IA Médica Especializada (Dr. VitalIA)</div>
+            <div class="tech-desc">Interpreta valores clínicos con modelos de IA de última generación. Análisis contextual adaptado a tu perfil: edad, peso, condiciones y medicamentos actuales.</div>
+            <div class="tech-sub">Genera interpretación clínica · Detecta alertas · Crea preguntas específicas para tu médico tratante</div>
+          </div>
+        </div>
+        <div class="tech-card">
+          <div class="tech-num t3">3</div>
+          <div>
+            <div class="tech-title">Chat Inteligente 24/7</div>
+            <div class="tech-desc">Explica resultados en lenguaje humano comprensible. El Dr. VitalIA ya conoce tu examen y puede responder tus dudas específicas en cualquier momento.</div>
+            <div class="tech-sub">Comunicación clara y accesible · Sin terminología compleja · Siempre conectado a tus resultados</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FUNCIONALIDADES ── -->
+  <section id="funcionalidades">
+    <div class="section-wrap">
+      <div class="section-badge green">Funcionalidades</div>
+      <h2 class="section-title">Todo lo que VitalIA<br>hace por ti</h2>
+      <div class="divider-line green"></div>
+      <p class="section-sub">Más allá del análisis básico — un ecosistema completo de salud digital personalizada.</p>
+
+      <div class="features-grid">
+
+        <div class="feature-card">
+          <div class="feature-icon">🔬</div>
+          <div class="feature-title">Análisis de examen con IA</div>
+          <div class="feature-desc">Sube una foto o PDF de tu examen y recibe interpretación clínica completa con indicadores clasificados por estado (normal, alto, bajo, crítico).</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🚨</div>
+          <div class="feature-title">Hallazgos visuales</div>
+          <div class="feature-desc">Los valores fuera de rango se muestran en tarjetas visuales con iconos de color. Identificas alertas de un vistazo, sin leer tablas.</div>
+          <span class="feature-tag ai">IA</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📋</div>
+          <div class="feature-title">Plan de acción personalizado en 3 capas</div>
+          <div class="feature-desc">Cuando se detectan anomalías, la IA genera un plan específico para ti:<br>🥗 <strong>Nutrición</strong> — qué comer, qué evitar<br>🏃 <strong>Movimiento</strong> — cardio, fuerza, HIIT<br>😴 <strong>Hábitos críticos</strong> — sueño, estrés, alcohol</div>
+          <span class="feature-tag new">Nuevo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📈</div>
+          <div class="feature-title">Predicciones de mejora</div>
+          <div class="feature-desc">La IA estima mejoras probables: "Si sigues este plan, tu colesterol podría bajar un X% en Y meses". Lenguaje probabilístico, educativo y conectado a tus biomarcadores.</div>
+          <span class="feature-tag ai">IA</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <div class="feature-title">Dashboard de evolución médica</div>
+          <div class="feature-desc">Gráficos históricos de tus biomarcadores a lo largo del tiempo. Visualiza si mejoraste, estabilizaste o empeoraste entre exámenes.</div>
+          <span class="feature-tag new">Nuevo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎉</div>
+          <div class="feature-title">Experiencia positiva total</div>
+          <div class="feature-desc">Cuando todos tus indicadores están en verde, VitalIA lo celebra: destacamos tus mejores indicadores y reforzamos lo que estás haciendo bien.</div>
+          <span class="feature-tag new">Nuevo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">❓</div>
+          <div class="feature-title">Preguntas para tu médico</div>
+          <div class="feature-desc">La IA genera automáticamente 6-9 preguntas específicas en primera persona basadas en tus resultados alterados. Llega preparado a tu consulta.</div>
+          <span class="feature-tag ai">IA</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📄</div>
+          <div class="feature-title">Reporte PDF descargable</div>
+          <div class="feature-desc">Descarga un reporte profesional con: resumen, tabla de indicadores, recomendaciones, plan de acción en 3 capas y preguntas para tu médico. Todo en un documento.</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <div class="feature-title">Chat con el Dr. VitalIA</div>
+          <div class="feature-desc">Después del análisis, consulta dudas específicas sobre tus resultados. El Dr. VitalIA ya conoce tu examen y te responde con contexto real.</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">👤</div>
+          <div class="feature-title">Perfil médico personalizado</div>
+          <div class="feature-desc">Registra tu edad, peso, género, condiciones médicas preexistentes y medicamentos actuales. Cada análisis se adapta a tu perfil único.</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📁</div>
+          <div class="feature-title">Historial de exámenes</div>
+          <div class="feature-desc">Todos tus exámenes guardados de forma segura. Accede, compara y elimina cuando quieras — de forma individual o masiva.</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <div class="feature-title">Seguridad y privacidad</div>
+          <div class="feature-desc">Datos protegidos bajo Ley 19.628 (Chile) y GDPR (UE). Consentimiento informado v2.0 con registro de aceptación y IP para cumplimiento legal.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CÓMO FUNCIONA ── -->
+  <section id="como-funciona" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+    <div class="section-wrap">
+      <div class="section-badge amber">Experiencia</div>
+      <h2 class="section-title">Así funciona</h2>
+      <div class="divider-line amber"></div>
+      <p class="section-sub">Cuatro pasos simples. Sin conocimientos médicos. Sin esperar citas.</p>
+
+      <div class="steps-list">
+        <div class="step-row">
+          <div class="step-left">
+            <div class="step-circle-num s1">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">Sube o escanea tu examen</div>
+            <div class="step-desc">Toma una foto con tu celular o sube un PDF directamente desde tu dispositivo. JPG, PNG y PDF son aceptados sin límite de tamaño razonable.</div>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-left">
+            <div class="step-circle-num s2">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">La IA analiza automáticamente</div>
+            <div class="step-desc">El sistema OCR extrae todos los valores, unidades y rangos de referencia. Luego la IA médica los interpreta en contexto de tu perfil personal. Una barra de progreso te muestra cada etapa en tiempo real.</div>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-left">
+            <div class="step-circle-num s3">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">Detecta valores importantes y genera tu plan</div>
+            <div class="step-desc">Identifica alertas con iconos visuales por nivel de riesgo. Si hay anomalías, genera un plan de acción en 3 capas con predicciones de mejora. Si todo está normal, celebra tus resultados y refuerza tus hábitos.</div>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-left">
+            <div class="step-circle-num s4">4</div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">Recibes explicación clara y actúas</div>
+            <div class="step-desc">Un resumen comprensible sin terminología compleja, preguntas listas para tu médico, reporte PDF descargable y acceso al chat con el Dr. VitalIA para resolver dudas adicionales.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="steps-footer">
+        <div class="steps-pill">✅ Sin conocimientos médicos</div>
+        <div class="steps-pill">⚡ Sin esperar citas</div>
+        <div class="steps-pill">📱 Desde tu celular</div>
+        <div class="steps-pill">🌐 24/7 disponible</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── COMPATIBILIDAD ── -->
+  <section class="compat-bg" id="compatibilidad">
+    <div class="section-wrap">
+      <div class="section-badge green">Compatibilidad</div>
+      <h2 class="section-title">Compatible con<br>múltiples exámenes</h2>
+      <div class="divider-line green"></div>
+
+      <div class="compat-grid">
+        <div class="compat-item"><span class="compat-check">✓</span> Hemogramas</div>
+        <div class="compat-item"><span class="compat-check">✓</span> Perfil lipídico</div>
+        <div class="compat-item"><span class="compat-check">✓</span> Glicemia</div>
+        <div class="compat-item"><span class="compat-check">✓</span> Hormonas</div>
+        <div class="compat-item"><span class="compat-check">✓</span> Exámenes generales</div>
+        <div class="compat-item"><span class="compat-check">✓</span> Función hepática</div>
+        <div class="compat-item"><span class="compat-check">✓</span> Función renal</div>
+        <div class="compat-item"><span class="compat-check">✓</span> Perfil tiroideo</div>
+        <div class="compat-item"><span class="compat-check">✓</span> Orina completa</div>
+        <div class="compat-item"><span class="compat-check">✓</span> Perfil bioquímico</div>
+        <div class="compat-item"><span class="compat-check">✓</span> Imágenes (informes)</div>
+        <div class="compat-item"><span class="compat-check">✓</span> Cualquier otro</div>
+      </div>
+      <div class="compat-footer">Hoy existen miles de tipos de pruebas clínicas que requieren interpretación especializada. VitalIA está preparado para todas.</div>
+    </div>
+  </section>
+
+  <!-- ── BENEFICIOS ── -->
+  <section id="beneficios">
+    <div class="section-wrap">
+      <div class="section-badge blue">Beneficios</div>
+      <h2 class="section-title">Lo que cambia<br>con VITALIA</h2>
+      <div class="divider-line blue"></div>
+
+      <div class="benef-grid">
+        <div class="benef-card">
+          <div class="benef-side blue"></div>
+          <div class="benef-body">
+            <div><div class="benef-title">Comprensión inmediata</div><div class="benef-desc">Resultados explicados al instante, sin esperar citas médicas. En segundos, no en semanas.</div></div>
+            <div class="benef-tag blue">RÁPIDO</div>
+          </div>
+        </div>
+        <div class="benef-card">
+          <div class="benef-side purple"></div>
+          <div class="benef-body">
+            <div><div class="benef-title">Menos ansiedad</div><div class="benef-desc">Entender tus resultados reduce la incertidumbre y el estrés. Sabes exactamente qué significa cada valor.</div></div>
+            <div class="benef-tag purple">TRANQUILIDAD</div>
+          </div>
+        </div>
+        <div class="benef-card">
+          <div class="benef-side green"></div>
+          <div class="benef-body">
+            <div><div class="benef-title">Decisiones informadas</div><div class="benef-desc">Llega preparado a tu consulta con toda la información clara y las preguntas correctas para tu médico.</div></div>
+            <div class="benef-tag green">EMPODERAMIENTO</div>
+          </div>
+        </div>
+        <div class="benef-card">
+          <div class="benef-side amber"></div>
+          <div class="benef-body">
+            <div><div class="benef-title">Plan de acción real</div><div class="benef-desc">No solo te explicamos — te decimos qué hacer. Nutrición, ejercicio y hábitos específicos conectados a tus biomarcadores.</div></div>
+            <div class="benef-tag amber">ACCIÓN</div>
+          </div>
+        </div>
+        <div class="benef-card">
+          <div class="benef-side" style="background:var(--primary);"></div>
+          <div class="benef-body">
+            <div><div class="benef-title">Evolución médica digital</div><div class="benef-desc">Ve cómo mejoran tus indicadores examen a examen. Gráficos históricos de tus biomarcadores en el tiempo.</div></div>
+            <div class="benef-tag blue">HISTORIAL</div>
+          </div>
+        </div>
+        <div class="benef-card">
+          <div class="benef-side" style="background:var(--secondary);"></div>
+          <div class="benef-body">
+            <div><div class="benef-title">Acceso universal 24/7</div><div class="benef-desc">Desde cualquier lugar, cualquier momento, en tu celular. Sin instalar apps. Funciona en el navegador.</div></div>
+            <div class="benef-tag green">24/7</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DIFERENCIAL ── -->
+  <section class="dif-bg" id="diferencial">
+    <div class="section-wrap">
+      <div class="section-badge purple">Diferencial</div>
+      <h2 class="section-title">No es solo un chatbot</h2>
+      <div class="divider-line purple"></div>
+
+      <div class="dif-no-list">
+        <div class="dif-no"><span class="dif-no-x">✕</span> No es solo OCR — digitalizar un examen no vale nada sin interpretación</div>
+        <div class="dif-no"><span class="dif-no-x">✕</span> No es solo telemedicina — no remplazamos médicos, los complementamos</div>
+        <div class="dif-no"><span class="dif-no-x">✕</span> No es solo IA genérica — cada análisis se adapta a tu perfil médico personal</div>
+        <div class="dif-no"><span class="dif-no-x">✕</span> No es solo información — entregamos un plan de acción concreto y ejecutable</div>
+      </div>
+
+      <div class="dif-yes">
+        <span class="dif-yes-check">✓</span>
+        <div>
+          <div style="font-size:16px;font-weight:800;margin-bottom:4px;">Es un sistema integrado inteligente</div>
+          <div style="font-size:13px;color:var(--text2);font-weight:400;">OCR + IA Médica + Interpretación Personalizada + Plan de Acción + Chat + Evolución Histórica</div>
+        </div>
+      </div>
+
+      <div class="dif-pipeline">
+        <div class="dif-pipe-item d1">OCR</div>
+        <div class="dif-pipe-arrow">▶</div>
+        <div class="dif-pipe-item d2">IA</div>
+        <div class="dif-pipe-arrow">▶</div>
+        <div class="dif-pipe-item d3">Interpretación</div>
+        <div class="dif-pipe-arrow">▶</div>
+        <div class="dif-pipe-item d4">Plan + Chat</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── POSICIONAMIENTO ── -->
+  <section id="posicionamiento">
+    <div class="section-wrap">
+      <div class="section-badge purple">Posicionamiento</div>
+      <h2 class="section-title">Tu segundo<br>cerebro médico</h2>
+      <div class="divider-line purple"></div>
+
+      <div class="pos-disclaimer">VITALIA no reemplaza a un médico — es tu aliado inteligente antes, durante y después de cada consulta</div>
+
+      <div class="pos-grid">
+        <div class="pos-card">
+          <div class="pos-check">✓</div>
+          <div>
+            <div class="pos-title">Entender tu salud</div>
+            <div class="pos-desc">Información clara y accesible sobre tus resultados, adaptada a tu nivel de conocimiento. Sin tecnicismos innecesarios.</div>
+          </div>
+        </div>
+        <div class="pos-card">
+          <div class="pos-check">✓</div>
+          <div>
+            <div class="pos-title">Llegar preparado a consulta</div>
+            <div class="pos-desc">Conversa con tu doctor con conocimiento previo. Preguntas específicas generadas por IA basadas en tus resultados alterados.</div>
+          </div>
+        </div>
+        <div class="pos-card">
+          <div class="pos-check">✓</div>
+          <div>
+            <div class="pos-title">Detectar alertas tempranas</div>
+            <div class="pos-desc">Identifica valores que requieren atención inmediata antes de que se conviertan en problemas mayores. El tiempo importa en salud.</div>
+          </div>
+        </div>
+        <div class="pos-card">
+          <div class="pos-check">✓</div>
+          <div>
+            <div class="pos-title">Seguir tu evolución médica</div>
+            <div class="pos-desc">Correlaciona exámenes anteriores con nuevos resultados. Mide si seguiste el plan y ve el impacto real en tus biomarcadores.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PRECIO ── -->
+  <section class="precio-bg" id="precio">
+    <div class="section-wrap" style="text-align:center;">
+      <div class="section-badge amber">Precio</div>
+      <h2 class="section-title">Simple y transparente</h2>
+      <div class="divider-line amber" style="margin:16px auto 24px;"></div>
+      <p class="section-sub" style="margin:0 auto 40px;">Sin suscripciones. Sin costos ocultos. Pagas solo por lo que usas.</p>
+
+      <div class="precio-card">
+        <div class="precio-amount"><sup>$</sup>3</div>
+        <div class="precio-per">USD por análisis · Pago seguro con Stripe</div>
+        <div class="precio-features">
+          <div class="precio-feat"><span class="precio-feat-check">✓</span> Análisis completo con IA médica especializada</div>
+          <div class="precio-feat"><span class="precio-feat-check">✓</span> Plan de acción personalizado en 3 capas</div>
+          <div class="precio-feat"><span class="precio-feat-check">✓</span> Preguntas para tu médico generadas automáticamente</div>
+          <div class="precio-feat"><span class="precio-feat-check">✓</span> Reporte PDF descargable completo</div>
+          <div class="precio-feat"><span class="precio-feat-check">✓</span> Chat con el Dr. VitalIA incluido</div>
+          <div class="precio-feat"><span class="precio-feat-check">✓</span> Historial y evolución médica de por vida</div>
+        </div>
+        <div class="precio-note">🔒 Pago procesado por Stripe · SSL · VitalIA nunca almacena datos de tu tarjeta</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── VISIÓN ── -->
+  <section id="vision">
+    <div class="section-wrap">
+      <div class="section-badge blue">Visión</div>
+      <h2 class="section-title">El futuro de la salud<br>ya empezó</h2>
+      <div class="divider-line blue"></div>
+
+      <div class="vision-grid">
+        <div class="vision-card">
+          <div class="vision-dot d1"></div>
+          <div>
+            <div class="vision-title">Digital</div>
+            <div class="vision-desc">Acceso desde cualquier dispositivo, en cualquier momento. Sin instalar apps. 100% en el navegador.</div>
+          </div>
+        </div>
+        <div class="vision-card">
+          <div class="vision-dot d2"></div>
+          <div>
+            <div class="vision-title">Inteligente</div>
+            <div class="vision-desc">Tecnología IA de última generación que se adapta a cada examen, cada paciente y cada contexto clínico.</div>
+          </div>
+        </div>
+        <div class="vision-card">
+          <div class="vision-dot d3"></div>
+          <div>
+            <div class="vision-title">Personalizado</div>
+            <div class="vision-desc">Cada análisis adaptado a tu perfil médico único. No información genérica — inteligencia aplicada a tu caso.</div>
+          </div>
+        </div>
+        <div class="vision-card">
+          <div class="vision-dot" style="background:var(--warning);box-shadow:0 0 8px var(--warning);"></div>
+          <div>
+            <div class="vision-title">Legal y seguro</div>
+            <div class="vision-desc">Cumplimiento con Ley 19.628 (Chile), Ley 21.719 y GDPR (UE). Consentimiento informado v2.0 con auditoría de aceptación.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="vision-footer">
+        🩺 VITALIA es parte de la nueva generación de salud digital — democratizando el acceso a la inteligencia médica.
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA FINAL ── -->
+  <section class="cta-section" id="empezar">
+    <div>
+      <div class="section-badge blue" style="margin:0 auto 20px;">Empieza hoy</div>
+      <h2 class="section-title" style="font-size:clamp(32px,5vw,56px);">
+        <span style="background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">VITALIA</span>
+      </h2>
+
+      <div class="cta-steps">
+        <div class="cta-step"><div class="cta-step-num n1">1</div> Sube tu examen médico</div>
+        <div class="cta-step"><div class="cta-step-num n2">2</div> Recibe interpretación inmediata con IA</div>
+        <div class="cta-step"><div class="cta-step-num n3">3</div> Toma control de tu salud</div>
+      </div>
+
+      <div class="hero-cta-row">
+        <a href="/register" class="btn-hero-primary">Crear cuenta gratis →</a>
+        <a href="/login" class="btn-hero-ghost">Ya tengo cuenta</a>
+      </div>
+      <div class="cta-url"><a href="https://vitalia.work">www.vitalia.work</a></div>
+      <div class="cta-year">Inteligencia Médica en tu Bolsillo · VITALIA 2026</div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="site-footer">
+    <div>© 2026 VitalIA · Inteligencia Médica en tu Bolsillo</div>
+    <div style="display:flex;gap:20px;">
+      <a href="/terminos">Términos de uso</a>
+      <a href="/login">Iniciar sesión</a>
+      <a href="/register">Crear cuenta</a>
+    </div>
+  </footer>
+
+</body>
+</html>

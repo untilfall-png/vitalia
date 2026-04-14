@@ -1231,6 +1231,11 @@ def terminos():
     return render_template("terminos.html")
 
 
+@app.route("/brochure")
+def brochure():
+    return render_template("brochure.html")
+
+
 @app.route("/app")
 @login_required
 def app_main():
