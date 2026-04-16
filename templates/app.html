@@ -346,6 +346,86 @@
 
     /* ── CHAT ── */
     .chat-layout { display: flex; flex-direction: column; height: calc(100vh - 58px - 48px); }
+
+    /* Barra de contexto de exámenes */
+    .chat-exam-bar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 10px 20px; border-bottom: 1px solid var(--border);
+      background: var(--glass); font-size: 13px; flex-shrink: 0;
+    }
+    .chat-exam-label { color: var(--text2); flex: 1; }
+    .chat-exam-label strong { color: var(--primary); }
+    .chat-exam-pills { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+    .chat-exam-pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      background: var(--primary-s); border: 1px solid rgba(14,165,233,0.25); color: var(--primary);
+      cursor: pointer;
+    }
+    .chat-exam-pill .pill-x { opacity: .6; font-size: 12px; }
+    .chat-exam-pill .pill-x:hover { opacity: 1; }
+    .btn-sel-exams {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;
+      background: var(--primary-s); border: 1px solid rgba(14,165,233,0.3); color: var(--primary);
+      cursor: pointer; transition: all .2s; white-space: nowrap; font-family: 'Plus Jakarta Sans',sans-serif;
+    }
+    .btn-sel-exams:hover { background: var(--primary); color: #fff; }
+
+    /* Panel selector de exámenes */
+    .exam-selector-overlay {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    .exam-selector-overlay.open { display: flex; }
+    .exam-selector-modal {
+      background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: 18px; width: 100%; max-width: 500px;
+      max-height: 80vh; display: flex; flex-direction: column;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5); margin: 16px;
+    }
+    .esm-header {
+      padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .esm-title { font-family: 'Plus Jakarta Sans',sans-serif; font-size: 17px; font-weight: 800; }
+    .esm-close { background: none; border: none; color: var(--text2); font-size: 20px; cursor: pointer; padding: 4px; }
+    .esm-close:hover { color: var(--text); }
+    .esm-actions { padding: 12px 24px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
+    .esm-list { flex: 1; overflow-y: auto; padding: 12px 24px; display: grid; gap: 8px; }
+    .esm-list::-webkit-scrollbar { width: 4px; }
+    .esm-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .esm-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+      background: var(--glass); border: 1px solid var(--border); border-radius: 12px;
+      cursor: pointer; transition: all .15s;
+    }
+    .esm-item:hover { border-color: var(--primary); background: var(--primary-s); }
+    .esm-item.selected { border-color: var(--primary); background: var(--primary-s); }
+    .esm-checkbox {
+      width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
+      border: 2px solid var(--border2); display: flex; align-items: center; justify-content: center;
+      font-size: 11px; transition: all .15s;
+    }
+    .esm-item.selected .esm-checkbox { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .esm-info { flex: 1; }
+    .esm-tipo { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+    .esm-meta { font-size: 11px; color: var(--text2); }
+    .esm-risk {
+      font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+    }
+    .esm-risk.normal  { background: var(--sec-s); color: var(--secondary); }
+    .esm-risk.bajo    { background: var(--primary-s); color: var(--primary); }
+    .esm-risk.moderado { background: var(--warn-s); color: var(--warning); }
+    .esm-risk.alto    { background: var(--danger-s); color: var(--danger); }
+    .esm-risk.critico { background: var(--danger-s); color: var(--danger); }
+    .esm-footer {
+      padding: 16px 24px; border-top: 1px solid var(--border);
+      display: flex; gap: 10px; align-items: center;
+    }
+    .esm-count { flex: 1; font-size: 13px; color: var(--text2); }
+    .esm-count strong { color: var(--primary); }
     .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
     .chat-messages::-webkit-scrollbar { width: 4px; }
     .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -1027,13 +1107,27 @@
       <!-- ─── CHAT ─── -->
       <div class="panel" id="panel-chat">
         <div class="chat-layout">
+
+          <!-- Barra de exámenes cargados -->
+          <div class="chat-exam-bar" id="chat-exam-bar">
+            <span class="chat-exam-label" id="chat-exam-label">Sin exámenes cargados</span>
+            <div class="chat-exam-pills" id="chat-exam-pills"></div>
+            <button class="btn-sel-exams" onclick="openExamSelector()">
+              📋 Seleccionar exámenes
+            </button>
+          </div>
+
           <div class="chat-messages" id="chat-messages">
-            <div class="empty" style="margin:auto;">
+            <div class="empty" style="margin:auto;" id="chat-empty-state">
               <div class="empty-icon">🩺</div>
               <div class="empty-title">Dr. VitalIA está listo</div>
-              <div class="empty-sub">Analiza un examen o hazme una pregunta sobre tu salud</div>
+              <div class="empty-sub" style="margin-bottom:20px;">Selecciona tus exámenes para un análisis personalizado, o hazme una consulta directamente.</div>
+              <button class="btn btn-primary" style="margin:0 auto;" onclick="openExamSelector()">
+                📋 Cargar mis exámenes
+              </button>
             </div>
           </div>
+
           <div style="padding:0 20px 8px;">
             <div class="chat-quick-actions" id="quick-actions">
               <button class="quick-btn" onclick="quickSend('¿Qué significa tener el colesterol alto?')">💊 Colesterol alto</button>
@@ -1046,6 +1140,30 @@
             <textarea class="chat-textarea" id="chat-input" placeholder="Pregúntale algo al Dr. VitalIA…" rows="1" onkeydown="chatKeydown(event)" oninput="autoResize(this)"></textarea>
             <button class="chat-send-btn" id="chat-send-btn" onclick="sendMessage()">
               <i data-lucide="send" style="width:18px;height:18px;"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── MODAL SELECTOR DE EXÁMENES ─── -->
+      <div class="exam-selector-overlay" id="exam-selector-overlay" onclick="closeExamSelectorOutside(event)">
+        <div class="exam-selector-modal">
+          <div class="esm-header">
+            <div class="esm-title">📋 Seleccionar exámenes</div>
+            <button class="esm-close" onclick="closeExamSelector()">✕</button>
+          </div>
+          <div class="esm-actions">
+            <button class="btn btn-sm btn-ghost" onclick="esmSelectAll()">☑ Seleccionar todos</button>
+            <button class="btn btn-sm btn-ghost" onclick="esmDeselectAll()">☐ Deseleccionar</button>
+          </div>
+          <div class="esm-list" id="esm-list">
+            <div class="empty" style="padding:20px;"><div class="empty-icon">📋</div><div class="empty-title">Sin exámenes</div></div>
+          </div>
+          <div class="esm-footer">
+            <div class="esm-count" id="esm-count"><strong>0</strong> seleccionado(s)</div>
+            <button class="btn btn-ghost btn-sm" onclick="closeExamSelector()">Cancelar</button>
+            <button class="btn btn-primary" id="esm-btn-consultar" onclick="iniciarConsultaMulti()" disabled>
+              🩺 Consultar al Dr. VitalIA
             </button>
           </div>
         </div>
@@ -2329,6 +2447,156 @@ async function bulkDeleteExamenes() {
     _updateBulkUI();
     loadStats(); loadExamenes(); loadEvolucion();
   } catch(e) { toast('❌ Error de red al eliminar'); }
+}
+
+// ════════════════════════════════════════════
+// EXAM SELECTOR — Dr. VitalIA
+// ════════════════════════════════════════════
+let esmSelected = new Set();
+let esmAllExams = [];
+
+async function openExamSelector() {
+  // Cargar exámenes disponibles
+  try {
+    const r = await fetch('/api/examenes');
+    const d = await r.json();
+    esmAllExams = d.examenes || [];
+  } catch { esmAllExams = []; }
+
+  renderEsmList();
+  document.getElementById('exam-selector-overlay').classList.add('open');
+}
+
+function closeExamSelector() {
+  document.getElementById('exam-selector-overlay').classList.remove('open');
+}
+
+function closeExamSelectorOutside(e) {
+  if (e.target === document.getElementById('exam-selector-overlay')) closeExamSelector();
+}
+
+function renderEsmList() {
+  const el = document.getElementById('esm-list');
+  if (!esmAllExams.length) {
+    el.innerHTML = `<div class="empty" style="padding:20px;"><div class="empty-icon">📋</div><div class="empty-title">Sin exámenes disponibles</div><div class="empty-sub">Sube tu primer examen para poder consultarlo.</div></div>`;
+    return;
+  }
+  el.innerHTML = esmAllExams.map(e => {
+    const sel = esmSelected.has(e.id);
+    const riskClass = (e.riesgo || 'normal').toLowerCase().replace('é','e').replace('í','i');
+    return `
+      <div class="esm-item ${sel ? 'selected' : ''}" onclick="esmToggle(${e.id})" data-id="${e.id}">
+        <div class="esm-checkbox">${sel ? '✓' : ''}</div>
+        <div class="esm-info">
+          <div class="esm-tipo">${e.tipo || 'Examen'}</div>
+          <div class="esm-meta">${e.fecha_examen || ''} · ${e.laboratorio || ''}</div>
+        </div>
+        <div class="esm-risk ${riskClass}">${e.riesgo || 'normal'}</div>
+      </div>`;
+  }).join('');
+  updateEsmCount();
+}
+
+function esmToggle(id) {
+  if (esmSelected.has(id)) esmSelected.delete(id);
+  else esmSelected.add(id);
+  renderEsmList();
+}
+
+function esmSelectAll() {
+  esmAllExams.forEach(e => esmSelected.add(e.id));
+  renderEsmList();
+}
+
+function esmDeselectAll() {
+  esmSelected.clear();
+  renderEsmList();
+}
+
+function updateEsmCount() {
+  const n = esmSelected.size;
+  document.getElementById('esm-count').innerHTML = `<strong>${n}</strong> seleccionado(s)`;
+  document.getElementById('esm-btn-consultar').disabled = n === 0;
+}
+
+function updateChatExamBar() {
+  const bar   = document.getElementById('chat-exam-bar');
+  const label = document.getElementById('chat-exam-label');
+  const pills = document.getElementById('chat-exam-pills');
+  if (!esmSelected.size) {
+    label.innerHTML = 'Sin exámenes cargados';
+    pills.innerHTML = '';
+    return;
+  }
+  const names = [...esmSelected].map(id => {
+    const e = esmAllExams.find(x => x.id === id);
+    return e ? e.tipo : `#${id}`;
+  });
+  label.innerHTML = `<strong>${esmSelected.size}</strong> examen(es) cargado(s):`;
+  pills.innerHTML = names.map((n, i) => {
+    const id = [...esmSelected][i];
+    return `<span class="chat-exam-pill">${n} <span class="pill-x" onclick="esmRemovePill(${id})">✕</span></span>`;
+  }).join('');
+}
+
+function esmRemovePill(id) {
+  esmSelected.delete(id);
+  updateChatExamBar();
+}
+
+async function iniciarConsultaMulti() {
+  const ids = [...esmSelected];
+  if (!ids.length) return;
+  closeExamSelector();
+  updateChatExamBar();
+
+  const msgs = document.getElementById('chat-messages');
+  const emptyState = document.getElementById('chat-empty-state');
+  if (emptyState) emptyState.remove();
+  msgs.innerHTML = '';
+  addBubble('assistant', `🩺 **Cargando ${ids.length} examen(es)...**\n\nEstoy leyendo tus resultados y tu perfil médico para darte un análisis personalizado.`);
+
+  if (!state.apiKeyOk) { openModal('modal-config'); toast('⚠️ Configura tu API Key primero'); return; }
+
+  document.getElementById('chat-send-btn').disabled = true;
+  state.chatStreaming = true;
+
+  try {
+    const r = await fetch('/api/chat/iniciar-multi', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ examen_ids: ids })
+    });
+
+    // Remover burbuja de loading y agregar la de Dr.
+    msgs.innerHTML = '';
+    const bubble = addBubble('assistant', '', true);
+    const mdContent = bubble.querySelector('.md-content');
+    let fullText = '';
+    let convId = null;
+
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value);
+      for (const line of chunk.split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const d = JSON.parse(line.slice(6));
+          if (d.text) { fullText += d.text; mdContent.innerHTML = marked.parse(fullText); scrollChat(); }
+          if (d.done) { convId = d.conv_id; }
+          if (d.error) throw new Error(d.error);
+        } catch (e) { if (e.message) throw e; }
+      }
+    }
+    if (convId) state.currentConvId = convId;
+  } catch (err) {
+    toast('❌ ' + err.message);
+  } finally {
+    state.chatStreaming = false;
+    document.getElementById('chat-send-btn').disabled = false;
+  }
 }
 
 // ════════════════════════════════════════════

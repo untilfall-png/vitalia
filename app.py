@@ -287,6 +287,20 @@ def init_db():
         ecols2 = [r[1] for r in db.execute("PRAGMA table_info(examenes)").fetchall()]
         if "descargas" not in ecols2:
             db.execute("ALTER TABLE examenes ADD COLUMN descargas INTEGER DEFAULT 0")
+        # conversaciones — paciente_id y soporte multi-examen
+        ccols = [r[1] for r in db.execute("PRAGMA table_info(conversaciones)").fetchall()]
+        for col, ddl in [
+            ("paciente_id",  "ALTER TABLE conversaciones ADD COLUMN paciente_id INTEGER DEFAULT NULL"),
+            ("examenes_ids", "ALTER TABLE conversaciones ADD COLUMN examenes_ids TEXT DEFAULT '[]'"),
+        ]:
+            if col not in ccols:
+                db.execute(ddl)
+        # Backfill paciente_id desde examen para conversaciones existentes
+        db.execute("""
+            UPDATE conversaciones SET paciente_id = (
+                SELECT e.paciente_id FROM examenes e WHERE e.id = conversaciones.examen_id
+            ) WHERE paciente_id IS NULL AND examen_id IS NOT NULL
+        """)
         # usuarios — recuperación de contraseña y control de intentos
         ucols2 = [r[1] for r in db.execute("PRAGMA table_info(usuarios)").fetchall()]
         for col, ddl in [
@@ -458,6 +472,45 @@ FORMATO DE RESPUESTAS:
 - Termina siempre con una nota de aliento o próximo paso sugerido
 
 IDIOMA: Responde siempre en español."""
+
+
+def _paciente_ctx(p):
+    """Construye el bloque de perfil del paciente para el prompt."""
+    nombre = p.get("nombre") or "No especificado"
+    edad   = f"{p.get('edad')} años" if p.get("edad") else "No especificada"
+    genero = p.get("genero") or "No especificado"
+    peso   = f"{p.get('peso')} kg" if p.get("peso") else "No especificado"
+    conds  = p.get("condiciones") or "Ninguna registrada"
+    meds   = p.get("medicamentos") or "Ninguno registrado"
+    return (
+        f"PERFIL DEL PACIENTE:\n"
+        f"Nombre: {nombre} | Edad: {edad} | Género: {genero} | Peso: {peso}\n"
+        f"Condiciones previas: {conds}\n"
+        f"Medicamentos actuales: {meds}\n"
+    )
+
+
+def _examen_ctx(e, inds):
+    """Construye el bloque de contexto para un examen."""
+    alertas = [i for i in inds if i["estado"] != "normal"]
+    normales = [i for i in inds if i["estado"] == "normal"]
+    alt_str = "\n".join(
+        f"  • {i['nombre']}: {i['valor']} {i['unidad']} [{i['estado'].upper()}]"
+        for i in alertas
+    ) or "  (ninguno)"
+    norm_str = "\n".join(
+        f"  • {i['nombre']}: {i['valor']} {i['unidad']}"
+        for i in normales
+    ) or "  (ninguno)"
+    interp = (e["interpretacion"] or "")[:400]
+    return (
+        f"\n=== {e['tipo']} — {e['fecha_examen']} ===\n"
+        f"Laboratorio: {e['laboratorio']} | Riesgo: {e['riesgo']}\n"
+        f"Indicadores alterados:\n{alt_str}\n"
+        f"Indicadores normales:\n{norm_str}\n"
+        f"Interpretación previa:\n{interp}\n"
+    )
+
 
 # ── Health check ─────────────────────────────────────────────────────────────
 @app.route("/health")
@@ -2023,6 +2076,108 @@ def get_job(job_id):
     return jsonify(job)
 
 
+# ── API: Iniciar chat multi-examen ────────────────────────────────────────────
+@app.route("/api/chat/iniciar-multi", methods=["POST"])
+@login_required
+def iniciar_chat_multi():
+    d = request.json or {}
+    examen_ids = [int(x) for x in d.get("examen_ids", []) if x]
+    paciente = get_current_paciente()
+    if not paciente:
+        return jsonify({"error": "Sesión expirada"}), 401
+
+    try:
+        cliente = get_client()
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+    with get_db() as db:
+        # Validar que todos los exámenes pertenecen al usuario
+        valid_ids = []
+        for eid in examen_ids:
+            e = db.execute("SELECT id FROM examenes WHERE id=? AND paciente_id=?",
+                           (eid, paciente["id"])).fetchone()
+            if e:
+                valid_ids.append(eid)
+        if not valid_ids:
+            return jsonify({"error": "No se encontraron exámenes válidos"}), 400
+
+        titulo = (f"Análisis integral — {len(valid_ids)} examen(es)"
+                  if len(valid_ids) > 1 else "Análisis de examen")
+        cur = db.execute(
+            "INSERT INTO conversaciones (examen_id, paciente_id, examenes_ids, titulo) VALUES (?,?,?,?)",
+            (valid_ids[0] if len(valid_ids) == 1 else None,
+             paciente["id"], json.dumps(valid_ids), titulo)
+        )
+        db.commit()
+        conv_id = cur.lastrowid
+
+        # Cargar contexto de exámenes
+        ctx_exams = ""
+        for eid in valid_ids:
+            e = db.execute("SELECT * FROM examenes WHERE id=?", (eid,)).fetchone()
+            if e:
+                inds = db.execute("SELECT * FROM indicadores WHERE examen_id=?", (eid,)).fetchall()
+                ctx_exams += _examen_ctx(e, inds)
+
+    ctx_pac = _paciente_ctx(paciente)
+    n = len(valid_ids)
+    system = (SYSTEM_DOCTOR + "\n\n" + ctx_pac +
+              "\n\nEXÁMENES DISPONIBLES PARA ANÁLISIS:\n" + ctx_exams)
+    prompt_inicial = (
+        f"Hola Dr. VitalIA. Acabo de cargar {n} examen(es) para que los analices. "
+        "Por favor, entrega un análisis integral de mi estado de salud considerando "
+        "todos los exámenes disponibles y mi perfil médico personal. "
+        "Destaca los hallazgos más importantes, tendencias entre exámenes (si hay más de uno) "
+        "y recomendaciones personalizadas."
+    )
+
+    def generate():
+        respuesta_completa = ""
+        try:
+            gc = _gemini_client(cliente)
+            contents = [
+                genai_types.Content(role="user",
+                    parts=[genai_types.Part(text=system)]),
+                genai_types.Content(role="model",
+                    parts=[genai_types.Part(text="Entendido. Analizaré todos los exámenes con tu perfil médico.")]),
+                genai_types.Content(role="user",
+                    parts=[genai_types.Part(text=prompt_inicial)]),
+            ]
+            fallback_models = [m for m in _GEMINI_CANDIDATES if m != GEMINI_MODEL]
+            models_to_try = [GEMINI_MODEL] + fallback_models
+            last_err = None
+            for model_try in models_to_try:
+                try:
+                    for chunk in gc.models.generate_content_stream(
+                            model=model_try, contents=contents):
+                        if chunk.text:
+                            respuesta_completa += chunk.text
+                            yield f"data: {json.dumps({'text': chunk.text})}\n\n"
+                    last_err = None
+                    break
+                except Exception as e:
+                    msg = str(e)
+                    if "UNAVAILABLE" in msg or "503" in msg or "high demand" in msg:
+                        last_err = e; continue
+                    raise
+            if last_err:
+                raise last_err
+            with get_db() as db:
+                db.execute("INSERT INTO mensajes (conversacion_id, rol, contenido) VALUES (?,?,?)",
+                           (conv_id, "user", prompt_inicial))
+                db.execute("INSERT INTO mensajes (conversacion_id, rol, contenido) VALUES (?,?,?)",
+                           (conv_id, "assistant", respuesta_completa))
+                db.commit()
+            yield f"data: {json.dumps({'done': True, 'conv_id': conv_id})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return Response(stream_with_context(generate()),
+                    mimetype="text/event-stream",
+                    headers={"X-Accel-Buffering": "no"})
+
+
 # ── API: Chat con Dr. VitalIA ─────────────────────────────────────────────────
 @app.route("/api/chat", methods=["POST"])
 @login_required
@@ -2042,40 +2197,32 @@ def chat():
     if not paciente:
         return jsonify({"error": "Sesión expirada. Por favor vuelve a iniciar sesión."}), 401
     with get_db() as db:
-        # Verificar que la conversación pertenece al usuario
-        conv = db.execute("""
-            SELECT c.* FROM conversaciones c
-            JOIN examenes e ON e.id = c.examen_id
-            WHERE c.id=? AND e.paciente_id=?
-        """, (conv_id, paciente["id"])).fetchone()
+        # Verificar pertenencia por paciente_id (soporta conversaciones generales y multi-examen)
+        conv = db.execute(
+            "SELECT * FROM conversaciones WHERE id=? AND paciente_id=?",
+            (conv_id, paciente["id"])
+        ).fetchone()
+        # Fallback para conversaciones antiguas sin paciente_id (JOIN clásico)
         if not conv:
-            return jsonify({"error":"Conversación no encontrada"}), 404
+            conv = db.execute("""
+                SELECT c.* FROM conversaciones c
+                JOIN examenes e ON e.id = c.examen_id
+                WHERE c.id=? AND e.paciente_id=?
+            """, (conv_id, paciente["id"])).fetchone()
+        if not conv:
+            return jsonify({"error": "Conversación no encontrada"}), 404
 
+        # Construir contexto de exámenes (multi o single)
         contexto_examen = ""
-        if conv["examen_id"]:
-            e = db.execute("SELECT * FROM examenes WHERE id=?", (conv["examen_id"],)).fetchone()
-            inds = db.execute("SELECT * FROM indicadores WHERE examen_id=?", (conv["examen_id"],)).fetchall()
+        eids = json.loads(conv["examenes_ids"] or "[]") if "examenes_ids" in conv.keys() else []
+        if not eids and conv["examen_id"]:
+            eids = [conv["examen_id"]]
+        for eid in eids:
+            e = db.execute("SELECT * FROM examenes WHERE id=? AND paciente_id=?",
+                           (eid, paciente["id"])).fetchone()
             if e:
-                alertas_str = "\n".join([f"- {i['nombre']}: {i['valor']} {i['unidad']} [{i['estado'].upper()}]"
-                                          for i in inds if i["estado"] != "normal"])
-                normales_str = "\n".join([f"- {i['nombre']}: {i['valor']} {i['unidad']}"
-                                           for i in inds if i["estado"] == "normal"])
-                contexto_examen = f"""
-CONTEXTO DEL EXAMEN DEL PACIENTE:
-Tipo: {e['tipo']}
-Fecha: {e['fecha_examen']}
-Laboratorio: {e['laboratorio']}
-Riesgo general: {e['riesgo']}
-
-INDICADORES ALTERADOS:
-{alertas_str or '(ninguno)'}
-
-INDICADORES NORMALES:
-{normales_str or '(ninguno)'}
-
-INTERPRETACIÓN PREVIA:
-{e['interpretacion'][:500] if e['interpretacion'] else ''}
-"""
+                inds = db.execute("SELECT * FROM indicadores WHERE examen_id=?", (eid,)).fetchall()
+                contexto_examen += _examen_ctx(e, inds)
 
         historial = db.execute(
             "SELECT rol, contenido FROM mensajes WHERE conversacion_id=? ORDER BY id DESC LIMIT 20",
@@ -2087,9 +2234,9 @@ INTERPRETACIÓN PREVIA:
                    (conv_id, "user", mensaje))
         db.commit()
 
-    system = SYSTEM_DOCTOR
+    system = SYSTEM_DOCTOR + "\n\n" + _paciente_ctx(paciente)
     if contexto_examen:
-        system += f"\n\n{contexto_examen}"
+        system += "\n\nEXÁMENES DEL PACIENTE:\n" + contexto_examen
 
     # Convertir historial al formato Gemini (user / model, sin repetir mismo rol)
     gemini_history = []
@@ -2170,12 +2317,17 @@ INTERPRETACIÓN PREVIA:
 def get_mensajes(cid):
     paciente = get_current_paciente()
     with get_db() as db:
-        # Verificar pertenencia
-        conv = db.execute("""
-            SELECT c.id FROM conversaciones c
-            JOIN examenes e ON e.id = c.examen_id
-            WHERE c.id=? AND e.paciente_id=?
-        """, (cid, paciente["id"])).fetchone()
+        conv = db.execute(
+            "SELECT id FROM conversaciones WHERE id=? AND paciente_id=?",
+            (cid, paciente["id"])
+        ).fetchone()
+        if not conv:
+            # Fallback conversaciones antiguas
+            conv = db.execute("""
+                SELECT c.id FROM conversaciones c
+                JOIN examenes e ON e.id = c.examen_id
+                WHERE c.id=? AND e.paciente_id=?
+            """, (cid, paciente["id"])).fetchone()
         if not conv:
             return jsonify({"error": "No encontrado"}), 404
         msgs = db.execute(
@@ -2198,8 +2350,10 @@ def nueva_conversacion():
             if not e:
                 return jsonify({"error": "Examen no encontrado"}), 404
         cur = db.execute(
-            "INSERT INTO conversaciones (examen_id, titulo) VALUES (?,?)",
-            (d.get("examen_id"), d.get("titulo", "Nueva consulta"))
+            "INSERT INTO conversaciones (examen_id, paciente_id, examenes_ids, titulo) VALUES (?,?,?,?)",
+            (d.get("examen_id"), paciente["id"],
+             json.dumps(d.get("examenes_ids", [])),
+             d.get("titulo", "Nueva consulta"))
         )
         db.commit()
         return jsonify({"ok": True, "id": cur.lastrowid})
