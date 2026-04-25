@@ -233,6 +233,61 @@
     .ind-alto   { background: rgba(239,68,68,0.15);  color: #ef4444; }
     .ind-bajo   { background: rgba(245,158,11,0.15); color: #f59e0b; }
 
+    /* ── PRICING ── */
+    #precios { background: var(--dark); }
+    .pricing-wrapper { max-width: 1000px; margin: 0 auto; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 60px; }
+    .pricing-card {
+      background: var(--glass); border: 1px solid var(--border);
+      border-radius: 24px; padding: 40px 36px;
+      backdrop-filter: blur(12px); position: relative; overflow: hidden;
+      transition: all .3s;
+    }
+    .pricing-card.featured {
+      border-color: var(--primary);
+      background: linear-gradient(145deg, rgba(14,165,233,0.10), rgba(139,92,246,0.08));
+      box-shadow: 0 0 60px rgba(14,165,233,0.18);
+    }
+    .pricing-card:hover { transform: translateY(-4px); }
+    .pricing-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff; border-radius: 20px; padding: 5px 14px;
+      font-size: 12px; font-weight: 700; margin-bottom: 24px;
+    }
+    .pricing-plan { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .pricing-price {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 52px; font-weight: 900; line-height: 1;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .pricing-price sup { font-size: 24px; vertical-align: super; }
+    .pricing-period { font-size: 14px; color: var(--text2); margin-bottom: 28px; }
+    .pricing-divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+    .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px; }
+    .pricing-features li { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--text2); }
+    .pricing-features li .check { color: var(--secondary); font-size: 16px; flex-shrink: 0; }
+    .pricing-features li strong { color: var(--text); }
+    .pricing-btn {
+      display: block; width: 100%; text-align: center;
+      padding: 14px 24px; border-radius: 50px; font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px; font-weight: 700; text-decoration: none; transition: all .2s;
+    }
+    .pricing-btn.primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-d));
+      color: #fff; box-shadow: 0 0 24px rgba(14,165,233,0.35);
+    }
+    .pricing-btn.primary:hover { box-shadow: 0 0 40px rgba(14,165,233,0.55); transform: translateY(-1px); }
+    .pricing-btn.ghost {
+      background: var(--glass); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .pricing-btn.ghost:hover { border-color: rgba(255,255,255,0.3); }
+    .pricing-note { text-align: center; margin-top: 40px; font-size: 13px; color: var(--text2); }
+
     /* ── PRICING / CTA ── */
     .cta-section {
       text-align: center; padding: 120px 40px;
@@ -302,6 +357,7 @@
     <li><a href="#features">Funciones</a></li>
     <li><a href="#como-funciona">Cómo funciona</a></li>
     <li><a href="#dr-digital">Dr. Digital</a></li>
+    <li><a href="#precios">Precios</a></li>
   </ul>
   <a href="/login" class="nav-cta" style="margin-right:8px;background:transparent;border:1px solid rgba(255,255,255,0.2);box-shadow:none;">Iniciar sesión</a>
   <a href="/register" class="nav-cta">Crear cuenta →</a>
@@ -315,6 +371,7 @@
   <a href="#features" style="display:block;padding:14px 0;color:#94a3b8;text-decoration:none;font-size:16px;border-bottom:1px solid rgba(255,255,255,0.08);" onclick="toggleMenu()">Funciones</a>
   <a href="#como-funciona" style="display:block;padding:14px 0;color:#94a3b8;text-decoration:none;font-size:16px;border-bottom:1px solid rgba(255,255,255,0.08);" onclick="toggleMenu()">Cómo funciona</a>
   <a href="#dr-digital" style="display:block;padding:14px 0;color:#94a3b8;text-decoration:none;font-size:16px;border-bottom:1px solid rgba(255,255,255,0.08);" onclick="toggleMenu()">Dr. Digital</a>
+  <a href="#precios" style="display:block;padding:14px 0;color:#94a3b8;text-decoration:none;font-size:16px;border-bottom:1px solid rgba(255,255,255,0.08);" onclick="toggleMenu()">Precios</a>
   <a href="/register" style="display:block;margin-top:20px;text-align:center;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;padding:14px;border-radius:24px;font-weight:700;text-decoration:none;">Crear cuenta →</a>
 </div>
 
@@ -499,13 +556,73 @@
   </div>
 </section>
 
+<!-- PRICING -->
+<section id="precios">
+  <div class="pricing-wrapper">
+    <div style="text-align:center;max-width:560px;margin:0 auto;">
+      <div class="section-tag">Precios</div>
+      <h2 class="section-title">Simple y transparente</h2>
+      <p class="section-sub" style="margin:0 auto;">Un solo plan que incluye todo. Sin sorpresas, sin cobros por examen.</p>
+    </div>
+
+    <div class="pricing-grid">
+
+      <!-- Plan Gratuito -->
+      <div class="pricing-card">
+        <div class="pricing-plan">Exploración</div>
+        <div class="pricing-price"><sup>$</sup>0</div>
+        <div class="pricing-period">Siempre gratis · Sin tarjeta</div>
+        <hr class="pricing-divider"/>
+        <ul class="pricing-features">
+          <li><span class="check">✅</span> Crea tu cuenta</li>
+          <li><span class="check">✅</span> Acceso al panel de salud</li>
+          <li><span class="check">✅</span> Consulta con Dr. VitalIA (chat)</li>
+          <li><span class="check">✅</span> <strong>1 análisis de examen</strong> incluido</li>
+          <li><span class="check">✅</span> Diagnóstico visual de síntomas</li>
+          <li><span style="color:var(--text2);">—</span> Exámenes ilimitados</li>
+          <li><span style="color:var(--text2);">—</span> Cargas familiares</li>
+          <li><span style="color:var(--text2);">—</span> Plan de acción personalizado</li>
+        </ul>
+        <a href="/register" class="pricing-btn ghost">Comenzar gratis</a>
+      </div>
+
+      <!-- Plan Mensual (destacado) -->
+      <div class="pricing-card featured">
+        <div class="pricing-badge">⭐ Más popular</div>
+        <div class="pricing-plan">Suscripción Mensual</div>
+        <div class="pricing-price"><sup>$</sup>3</div>
+        <div class="pricing-period">USD / mes · Activo por 31 días desde el pago</div>
+        <hr class="pricing-divider"/>
+        <ul class="pricing-features">
+          <li><span class="check">✅</span> <strong>Exámenes ilimitados</strong></li>
+          <li><span class="check">✅</span> Análisis con IA (sangre, orina, hormonas, imagen y más)</li>
+          <li><span class="check">✅</span> Plan nutricional y de ejercicio personalizado</li>
+          <li><span class="check">✅</span> Predicciones de evolución de biomarcadores</li>
+          <li><span class="check">✅</span> Dr. VitalIA sin límites</li>
+          <li><span class="check">✅</span> <strong>Cargas familiares</strong> (hijos, padres, cónyuge)</li>
+          <li><span class="check">✅</span> Diagnóstico visual de síntomas y heridas</li>
+          <li><span class="check">✅</span> Evolución médica histórica</li>
+        </ul>
+        <a href="/register" class="pricing-btn primary">Activar suscripción →</a>
+      </div>
+
+    </div>
+
+    <p class="pricing-note">
+      🔒 Pagos procesados de forma segura por <strong>Stripe</strong> &nbsp;·&nbsp;
+      La suscripción no se renueva automáticamente &nbsp;·&nbsp;
+      Puedes reactivarla cuando quieras
+    </p>
+  </div>
+</section>
+
 <!-- CTA -->
 <section class="cta-section">
   <div class="cta-content">
     <h2>Conoce tu salud hoy.<br>No esperes más.</h2>
-    <p>Gratis, sin registro, sin esperas. Solo sube tu examen y obtén un análisis completo.</p>
+    <p>Crea tu cuenta gratis y activa tu suscripción mensual por solo $3 USD.</p>
     <a href="/register" class="btn-hero-primary" style="font-size:18px;padding:18px 44px;">
-      🩺 Comenzar gratis ahora
+      🩺 Comenzar ahora
     </a>
     <div class="disclaimer">
       ⚠️ <strong>Aviso importante:</strong> VitalIA es una herramienta de orientación informativa. No reemplaza la consulta médica presencial. Ante cualquier duda sobre tu salud, consulta siempre con tu médico.
