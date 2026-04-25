@@ -93,7 +93,7 @@ MAX_MB = 20
 STRIPE_SECRET_KEY      = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
 STRIPE_WEBHOOK_SECRET  = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
-EXAM_PRICE_CENTS       = 300  # $3.00 USD
+SUB_PRICE_CENTS        = 300  # $3.00 USD / mes (suscripción mensual)
 
 # Admin
 ADMIN_EMAIL    = os.environ.get("ADMIN_EMAIL", "admin@vitalia.app")
@@ -230,6 +230,31 @@ def init_db():
             FOREIGN KEY (examen_id) REFERENCES examenes(id)
         );
 
+        -- ── Cargas (familiares dependientes) ─────────────────────────────────
+        CREATE TABLE IF NOT EXISTS cargas (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id  INTEGER NOT NULL,
+            nombre      TEXT NOT NULL,
+            fecha_nac   TEXT DEFAULT '',
+            relacion    TEXT DEFAULT 'hijo/a',
+            notas       TEXT DEFAULT '',
+            creado_en   TEXT DEFAULT (datetime('now','localtime')),
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        );
+
+        -- ── Suscripciones ─────────────────────────────────────────────────────
+        CREATE TABLE IF NOT EXISTS suscripciones (
+            id                       INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id               INTEGER NOT NULL UNIQUE,
+            stripe_payment_intent_id TEXT NOT NULL,
+            monto                    INTEGER NOT NULL DEFAULT 300,
+            estado                   TEXT DEFAULT 'pendiente',
+            inicio                   TEXT DEFAULT NULL,
+            fin                      TEXT DEFAULT NULL,
+            creado_en                TEXT DEFAULT (datetime('now','localtime')),
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        );
+
         -- ── Consentimientos ───────────────────────────────────────────────────
         CREATE TABLE IF NOT EXISTS consentimientos (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -310,6 +335,41 @@ def init_db():
         ]:
             if col not in ucols2:
                 db.execute(ddl)
+        # cargas — tabla nueva para familiares dependientes
+        tables = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+        if "cargas" not in tables:
+            db.execute("""
+                CREATE TABLE cargas (
+                    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                    usuario_id  INTEGER NOT NULL,
+                    nombre      TEXT NOT NULL,
+                    fecha_nac   TEXT DEFAULT '',
+                    relacion    TEXT DEFAULT 'hijo/a',
+                    notas       TEXT DEFAULT '',
+                    creado_en   TEXT DEFAULT (datetime('now','localtime')),
+                    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+                )
+            """)
+        # examenes.carga_id — asocia examen a una carga (NULL = del propio paciente)
+        ecols3 = [r[1] for r in db.execute("PRAGMA table_info(examenes)").fetchall()]
+        if "carga_id" not in ecols3:
+            db.execute("ALTER TABLE examenes ADD COLUMN carga_id INTEGER DEFAULT NULL")
+        # suscripciones — tabla nueva para modelo de suscripción mensual
+        tables = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+        if "suscripciones" not in tables:
+            db.execute("""
+                CREATE TABLE suscripciones (
+                    id                       INTEGER PRIMARY KEY AUTOINCREMENT,
+                    usuario_id               INTEGER NOT NULL UNIQUE,
+                    stripe_payment_intent_id TEXT NOT NULL,
+                    monto                    INTEGER NOT NULL DEFAULT 300,
+                    estado                   TEXT DEFAULT 'pendiente',
+                    inicio                   TEXT DEFAULT NULL,
+                    fin                      TEXT DEFAULT NULL,
+                    creado_en                TEXT DEFAULT (datetime('now','localtime')),
+                    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+                )
+            """)
         db.commit()
 
     # ── Superusuario admin ────────────────────────────────────────────────────
@@ -345,6 +405,47 @@ def _ensure_admin():
             db.commit()
 
 init_db()
+
+# ── Helpers de suscripción ────────────────────────────────────────────────────
+def _get_active_subscription(uid):
+    """Retorna la fila de suscripción activa del usuario, o None si no tiene."""
+    with get_db() as db:
+        return db.execute(
+            """SELECT * FROM suscripciones
+               WHERE usuario_id=? AND estado='activa'
+               AND fin >= datetime('now','localtime')""",
+            (uid,)
+        ).fetchone()
+
+def _activate_subscription(pi_id):
+    """Marca la suscripción como activa y calcula inicio/fin (31 días)."""
+    from datetime import datetime, timedelta
+    now = datetime.now()
+    fin = now + timedelta(days=31)
+    with get_db() as db:
+        db.execute(
+            """UPDATE suscripciones
+               SET estado='activa',
+                   inicio=datetime('now','localtime'),
+                   fin=?
+               WHERE stripe_payment_intent_id=?""",
+            (fin.strftime("%Y-%m-%d %H:%M:%S"), pi_id)
+        )
+        db.commit()
+
+# ── Helper: tipo de examen requiere recomendaciones de estilo de vida ─────────
+_IMAGING_KEYWORDS = {
+    "rayos", "radiografia", "radiografía", "rx", "imagen", "ecografia", "ecografía",
+    "tomografia", "tomografía", "tac", "resonancia", "mri", "scanner", "scan",
+    "mamografia", "mamografía", "biopsia", "histologia", "histología",
+    "colonoscopia", "colonoscopía", "endoscopia", "endoscopía",
+}
+
+def _is_lifestyle_exam(tipo_examen: str) -> bool:
+    """Retorna True si el tipo de examen justifica recomendaciones de nutrición/ejercicio/hábitos."""
+    t = tipo_examen.lower()
+    return not any(kw in t for kw in _IMAGING_KEYWORDS)
+
 
 # ── Helpers de autenticación ──────────────────────────────────────────────────
 def login_required(f):
@@ -1304,6 +1405,9 @@ def app_main():
             WHERE e.paciente_id = ?
             GROUP BY e.id ORDER BY e.creado_en DESC LIMIT 20
         """, (paciente["id"],)).fetchall()
+    uid = session["usuario_id"]
+    sub = None if is_admin() else _get_active_subscription(uid)
+    sub_dict = dict(sub) if sub else None
     return render_template("app.html",
                            examenes=[dict(e) for e in examenes],
                            paciente=dict(paciente) if paciente else {},
@@ -1311,7 +1415,8 @@ def app_main():
                            stripe_pk=STRIPE_PUBLISHABLE_KEY,
                            stripe_configured=bool(STRIPE_SECRET_KEY),
                            usuario_nombre=session.get("usuario_nombre",""),
-                           exam_price=EXAM_PRICE_CENTS,
+                           sub_price=SUB_PRICE_CENTS,
+                           suscripcion=sub_dict,
                            es_admin=is_admin())
 
 
@@ -1508,105 +1613,127 @@ def bulk_delete_examenes():
     return jsonify({"ok": True, "deleted": len(valid_ids)})
 
 
-# ── API: Pagos con Stripe ──────────────────────────────────────────────────────
-@app.route("/api/crear-pago", methods=["POST"])
+# ── API: Suscripción mensual ───────────────────────────────────────────────────
+@app.route("/api/suscribir", methods=["POST"])
 @login_required
-def crear_pago():
-    """Crea un PaymentIntent de Stripe por $3 USD y retorna el client_secret."""
+def crear_suscripcion():
+    """Crea un PaymentIntent de Stripe por $3 USD para suscripción mensual."""
+    uid = session["usuario_id"]
+
+    # Verificar si ya tiene suscripción activa
+    if _get_active_subscription(uid):
+        return jsonify({"error": "Ya tienes una suscripción activa"}), 400
+
     if not STRIPE_SECRET_KEY:
-        # Modo desarrollo: simular pago exitoso
+        # Modo desarrollo: activar suscripción automáticamente
         dev_pi_id = f"pi_dev_{uuid.uuid4().hex}"
-        uid = session["usuario_id"]
+        from datetime import datetime, timedelta
+        ahora = datetime.now()
+        fin = ahora + timedelta(days=31)
         with get_db() as db:
-            db.execute("""INSERT INTO pagos (usuario_id, stripe_payment_intent_id, monto, estado)
-                          VALUES (?,?,?,'completado')""",
-                       (uid, dev_pi_id, EXAM_PRICE_CENTS))
+            db.execute("DELETE FROM suscripciones WHERE usuario_id=?", (uid,))
+            db.execute(
+                """INSERT INTO suscripciones
+                   (usuario_id, stripe_payment_intent_id, monto, estado, inicio, fin)
+                   VALUES (?,?,?,'activa',datetime('now','localtime'),?)""",
+                (uid, dev_pi_id, SUB_PRICE_CENTS, fin.strftime("%Y-%m-%d %H:%M:%S"))
+            )
             db.commit()
         return jsonify({
             "dev_mode": True,
             "payment_intent_id": dev_pi_id,
-            "message": "Modo desarrollo: Stripe no configurado. Pago simulado."
+            "message": "Modo desarrollo: suscripción activada automáticamente."
         })
 
     try:
-        uid = session["usuario_id"]
-        email = session.get("usuario_email","")
-        idempotency_key = f"vitalia-{uid}-{uuid.uuid4().hex}"
+        email = session.get("usuario_email", "")
+        idempotency_key = f"vitalia-sub-{uid}-{uuid.uuid4().hex}"
 
         intent = stripe.PaymentIntent.create(
-            amount=EXAM_PRICE_CENTS,
+            amount=SUB_PRICE_CENTS,
             currency="usd",
             receipt_email=email or None,
             metadata={
                 "usuario_id": str(uid),
                 "app": "vitalia",
-                "descripcion": "Análisis de examen médico VitalIA"
+                "tipo": "suscripcion_mensual",
+                "descripcion": "Suscripción mensual VitalIA — acceso total 31 días"
             },
             idempotency_key=idempotency_key,
         )
 
         with get_db() as db:
-            db.execute("""INSERT INTO pagos (usuario_id, stripe_payment_intent_id, monto, estado)
-                          VALUES (?,?,?,'pendiente')""",
-                       (uid, intent.id, EXAM_PRICE_CENTS))
+            db.execute("DELETE FROM suscripciones WHERE usuario_id=?", (uid,))
+            db.execute(
+                """INSERT INTO suscripciones
+                   (usuario_id, stripe_payment_intent_id, monto, estado)
+                   VALUES (?,?,?,'pendiente')""",
+                (uid, intent.id, SUB_PRICE_CENTS)
+            )
             db.commit()
 
         return jsonify({
             "client_secret": intent.client_secret,
             "payment_intent_id": intent.id,
-            "amount": EXAM_PRICE_CENTS,
+            "amount": SUB_PRICE_CENTS,
         })
     except stripe.error.StripeError as e:
         return jsonify({"error": str(e.user_message or e)}), 400
 
 
-@app.route("/api/verificar-pago/<pi_id>", methods=["GET"])
+@app.route("/api/verificar-suscripcion/<pi_id>", methods=["GET"])
 @login_required
-def verificar_pago(pi_id):
-    """Verifica el estado de un PaymentIntent antes de procesar el examen."""
+def verificar_suscripcion(pi_id):
+    """Verifica el pago y activa la suscripción mensual."""
     uid = session["usuario_id"]
 
     with get_db() as db:
-        pago = db.execute(
-            "SELECT * FROM pagos WHERE stripe_payment_intent_id=? AND usuario_id=?",
+        sub = db.execute(
+            "SELECT * FROM suscripciones WHERE stripe_payment_intent_id=? AND usuario_id=?",
             (pi_id, uid)
         ).fetchone()
 
-    if not pago:
-        return jsonify({"error": "Pago no encontrado"}), 404
+    if not sub:
+        return jsonify({"error": "Suscripción no encontrada"}), 404
 
-    # En modo dev, ya está marcado como completado
+    # Modo dev: ya está activa
     if pi_id.startswith("pi_dev_"):
-        return jsonify({"estado": "completado", "ok": True})
+        sub2 = _get_active_subscription(uid)
+        return jsonify({"estado": "activa", "ok": True, "fin": sub2["fin"] if sub2 else None})
 
-    # Verificar con Stripe
     if not STRIPE_SECRET_KEY:
         return jsonify({"error": "Stripe no configurado"}), 400
 
     try:
         intent = stripe.PaymentIntent.retrieve(pi_id)
-        estado_stripe = "completado" if intent.status == "succeeded" else intent.status
-
         if intent.status == "succeeded":
-            with get_db() as db:
-                db.execute(
-                    "UPDATE pagos SET estado='completado' WHERE stripe_payment_intent_id=?",
-                    (pi_id,)
-                )
-                db.commit()
-            return jsonify({"estado": "completado", "ok": True})
-
-        return jsonify({"estado": estado_stripe, "ok": False})
+            _activate_subscription(pi_id)
+            sub2 = _get_active_subscription(uid)
+            return jsonify({"estado": "activa", "ok": True, "fin": sub2["fin"] if sub2 else None})
+        return jsonify({"estado": intent.status, "ok": False})
     except stripe.error.StripeError as e:
         return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/estado-suscripcion", methods=["GET"])
+@login_required
+def estado_suscripcion():
+    """Retorna el estado de la suscripción del usuario actual."""
+    uid = session["usuario_id"]
+    if is_admin():
+        return jsonify({"activa": True, "es_admin": True})
+    sub = _get_active_subscription(uid)
+    if sub:
+        return jsonify({"activa": True, "fin": sub["fin"], "inicio": sub["inicio"]})
+    return jsonify({"activa": False})
 
 
 # ── Webhook Stripe ────────────────────────────────────────────────────────────
 @app.route("/stripe/webhook", methods=["POST"])
 def stripe_webhook():
-    """Webhook de Stripe para confirmar pagos de forma asíncrona."""
+    """Webhook de Stripe para confirmar suscripciones de forma asíncrona."""
     payload = request.get_data()
-    sig_header = request.headers.get("Stripe-Signature","")
+    sig_header = request.headers.get("Stripe-Signature", "")
 
     try:
         if STRIPE_WEBHOOK_SECRET:
@@ -1618,23 +1745,39 @@ def stripe_webhook():
 
     if event["type"] == "payment_intent.succeeded":
         pi = event["data"]["object"]
+        pi_id = pi["id"]
+        # Activar suscripción si corresponde a una suscripción pendiente
         with get_db() as db:
-            db.execute(
-                "UPDATE pagos SET estado='completado' WHERE stripe_payment_intent_id=?",
-                (pi["id"],)
-            )
-            db.commit()
-        print(f"[VitalIA] Pago confirmado: {pi['id']}")
+            sub = db.execute(
+                "SELECT * FROM suscripciones WHERE stripe_payment_intent_id=? AND estado='pendiente'",
+                (pi_id,)
+            ).fetchone()
+        if sub:
+            _activate_subscription(pi_id)
+            print(f"[VitalIA] Suscripción activada vía webhook: {pi_id}")
+        else:
+            # Compatibilidad con pagos legacy de la tabla pagos
+            with get_db() as db:
+                db.execute(
+                    "UPDATE pagos SET estado='completado' WHERE stripe_payment_intent_id=?",
+                    (pi_id,)
+                )
+                db.commit()
 
     elif event["type"] == "payment_intent.payment_failed":
         pi = event["data"]["object"]
+        pi_id = pi["id"]
         with get_db() as db:
             db.execute(
+                "UPDATE suscripciones SET estado='fallido' WHERE stripe_payment_intent_id=?",
+                (pi_id,)
+            )
+            db.execute(
                 "UPDATE pagos SET estado='fallido' WHERE stripe_payment_intent_id=?",
-                (pi["id"],)
+                (pi_id,)
             )
             db.commit()
-        print(f"[VitalIA] Pago fallido: {pi['id']}")
+        print(f"[VitalIA] Pago fallido: {pi_id}")
 
     return jsonify({"received": True})
 
@@ -1644,7 +1787,7 @@ def _sse(data: dict) -> str:
     return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-def _run_analisis(job_id, ruta, ext, titulo, tipo, api_key, paciente_id):
+def _run_analisis(job_id, ruta, ext, titulo, tipo, api_key, paciente_id, carga_id=None):
     """Corre el análisis completo en background y guarda resultado en _jobs."""
     def update(status, **kw):
         with _jobs_lock:
@@ -1654,10 +1797,34 @@ def _run_analisis(job_id, ruta, ext, titulo, tipo, api_key, paciente_id):
         update("pending", msg="Leyendo archivo...", progress=5)
         gc = _gemini_client(api_key)
 
-        # ── Cargar perfil clínico del paciente ───────────────────────────────
+        # ── Cargar perfil clínico (paciente titular o carga) ──────────────────
         with get_db() as db:
-            pac_row = db.execute("SELECT * FROM pacientes WHERE id=?", (paciente_id,)).fetchone()
-        paciente_dict = dict(pac_row) if pac_row else {}
+            if carga_id:
+                carga_row = db.execute("SELECT * FROM cargas WHERE id=?", (carga_id,)).fetchone()
+                carga_dict = dict(carga_row) if carga_row else {}
+                # Construir perfil simplificado para la carga
+                nombre = carga_dict.get("nombre", "Paciente")
+                fecha_nac = carga_dict.get("fecha_nac", "")
+                edad = None
+                if fecha_nac:
+                    try:
+                        from datetime import date
+                        dn = date.fromisoformat(fecha_nac)
+                        edad = (date.today() - dn).days // 365
+                    except Exception:
+                        pass
+                paciente_dict = {
+                    "nombre": nombre,
+                    "edad": edad,
+                    "genero": "",
+                    "peso": None,
+                    "condiciones": carga_dict.get("notas", ""),
+                    "medicamentos": "",
+                    "sintomas": "",
+                }
+            else:
+                pac_row = db.execute("SELECT * FROM pacientes WHERE id=?", (paciente_id,)).fetchone()
+                paciente_dict = dict(pac_row) if pac_row else {}
         patient_ctx = _build_patient_ctx(paciente_dict)
 
         # ── Preparar contenido según tipo de archivo ──────────────────────────
@@ -1769,10 +1936,10 @@ Genera UNICAMENTE este JSON (sin markdown):
         update("pending", msg="Guardando resultados...", progress=85)
         with get_db() as db:
             cur = db.execute("""INSERT INTO examenes
-                (paciente_id,titulo,tipo,fecha_examen,laboratorio,imagen_path,
+                (paciente_id,carga_id,titulo,tipo,fecha_examen,laboratorio,imagen_path,
                  texto_extraido,interpretacion,resumen,estado,riesgo,preguntas_doctor)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (paciente_id, titulo, ocr_data.get("tipo_examen",tipo), ocr_data.get("fecha",""),
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (paciente_id, carga_id, titulo, ocr_data.get("tipo_examen",tipo), ocr_data.get("fecha",""),
                  ocr_data.get("laboratorio",""), ruta.name, "",
                  interp_data.get("interpretacion",""), interp_data.get("resumen",""), "analizado", riesgo,
                  json.dumps(preguntas_doctor, ensure_ascii=False)))
@@ -1816,9 +1983,10 @@ He analizado tu **{ocr_data.get('tipo_examen', titulo)}** y tengo los resultados
                        (conv_id, "assistant", saludo))
             db.commit()
 
-        # ── Generar plan de acción personalizado (solo si hay anomalías) ─────
+        # ── Generar plan de acción (solo si hay anomalías Y el tipo lo justifica) ─
         tiene_plan = False
-        if alertas:
+        tipo_real = ocr_data.get("tipo_examen", tipo)
+        if alertas and _is_lifestyle_exam(tipo_real):
             update("pending", msg="Creando tu plan de acción personalizado...", progress=92)
             plan_result = _generate_and_save_plan(
                 gc, eid, patient_ctx, indicadores, alertas, interp_data, ocr_data, tipo)
@@ -1961,32 +2129,16 @@ def analizar_examen():
     uid = session["usuario_id"]
     admin_mode = is_admin()
 
-    # Admin: sin cobro, pago ficticio interno
-    if admin_mode:
-        payment_intent_id = f"pi_admin_{uuid.uuid4().hex}"
-    else:
-        # Verificar pago
-        payment_intent_id = request.form.get("payment_intent_id","").strip()
-        if not payment_intent_id:
-            return jsonify({"error": "Se requiere pago previo para analizar un examen"}), 402
+    # Verificar suscripción activa (admins tienen acceso siempre)
+    if not admin_mode:
+        sub_activa = _get_active_subscription(uid)
+        if not sub_activa:
+            return jsonify({
+                "error": "Se requiere suscripción activa para analizar exámenes. "
+                         "Activa tu suscripción mensual por $3 USD."
+            }), 402
 
-        with get_db() as db:
-            pago = db.execute(
-                "SELECT * FROM pagos WHERE stripe_payment_intent_id=? AND usuario_id=? AND estado='completado'",
-                (payment_intent_id, uid)
-            ).fetchone()
-
-        if not pago:
-            if payment_intent_id.startswith("pi_dev_"):
-                with get_db() as db:
-                    pago = db.execute(
-                        "SELECT * FROM pagos WHERE stripe_payment_intent_id=? AND usuario_id=?",
-                        (payment_intent_id, uid)
-                    ).fetchone()
-                if not pago:
-                    return jsonify({"error": "Pago no encontrado"}), 402
-            else:
-                return jsonify({"error": "Pago no verificado o ya utilizado"}), 402
+    payment_intent_id = f"pi_admin_{uuid.uuid4().hex}" if admin_mode else "pi_sub_ok"
 
     try:
         api_key = (os.environ.get("GOOGLE_API_KEY","") or
@@ -2000,8 +2152,10 @@ def analizar_examen():
         return jsonify({"error": "No se recibió imagen"}), 400
 
     f = request.files["imagen"]
-    titulo = request.form.get("titulo", "Examen médico").strip() or "Examen médico"
-    tipo   = request.form.get("tipo", "sangre")
+    titulo   = request.form.get("titulo", "Examen médico").strip() or "Examen médico"
+    tipo     = request.form.get("tipo", "sangre")
+    carga_id_str = request.form.get("carga_id", "").strip()
+    carga_id = int(carga_id_str) if carga_id_str.isdigit() else None
     ext = Path(f.filename).suffix.lower() if f.filename else ".jpg"
     if not ext: ext = ".jpg"
     if ext not in ALLOWED_EXT:
@@ -2033,7 +2187,7 @@ def analizar_examen():
 
     t = threading.Thread(
         target=_run_analisis_with_payment,
-        args=(job_id, ruta, ext, titulo, tipo, api_key, paciente["id"], payment_intent_id, admin_mode),
+        args=(job_id, ruta, ext, titulo, tipo, api_key, paciente["id"], payment_intent_id, admin_mode, carga_id),
         daemon=True
     )
     t.start()
@@ -2041,9 +2195,9 @@ def analizar_examen():
     return jsonify({"job_id": job_id})
 
 
-def _run_analisis_with_payment(job_id, ruta, ext, titulo, tipo, api_key, paciente_id, payment_intent_id, admin_mode=False):
+def _run_analisis_with_payment(job_id, ruta, ext, titulo, tipo, api_key, paciente_id, payment_intent_id, admin_mode=False, carga_id=None):
     """Wrapper que actualiza el pago al terminar el análisis."""
-    _run_analisis(job_id, ruta, ext, titulo, tipo, api_key, paciente_id)
+    _run_analisis(job_id, ruta, ext, titulo, tipo, api_key, paciente_id, carga_id=carga_id)
     if admin_mode:
         return  # Admin no tiene registro en pagos
     # Vincular pago al examen creado
@@ -2470,6 +2624,66 @@ def get_evolucion():
     })
 
 
+# ── API: Cargas (familiares dependientes) ─────────────────────────────────────
+@app.route("/api/cargas", methods=["GET", "POST"])
+@login_required
+def cargas_endpoint():
+    uid = session["usuario_id"]
+    with get_db() as db:
+        if request.method == "GET":
+            rows = db.execute(
+                "SELECT * FROM cargas WHERE usuario_id=? ORDER BY nombre", (uid,)
+            ).fetchall()
+            return jsonify([dict(r) for r in rows])
+
+        d = request.json or {}
+        nombre = (d.get("nombre") or "").strip()
+        if not nombre:
+            return jsonify({"error": "El nombre es requerido"}), 400
+        cur = db.execute(
+            "INSERT INTO cargas (usuario_id, nombre, fecha_nac, relacion, notas) VALUES (?,?,?,?,?)",
+            (uid, nombre, d.get("fecha_nac",""), d.get("relacion","hijo/a"), d.get("notas",""))
+        )
+        db.commit()
+        nueva = db.execute("SELECT * FROM cargas WHERE id=?", (cur.lastrowid,)).fetchone()
+        return jsonify(dict(nueva)), 201
+
+
+@app.route("/api/cargas/<int:carga_id>", methods=["DELETE"])
+@login_required
+def delete_carga(carga_id):
+    uid = session["usuario_id"]
+    with get_db() as db:
+        carga = db.execute("SELECT id FROM cargas WHERE id=? AND usuario_id=?", (carga_id, uid)).fetchone()
+        if not carga:
+            return jsonify({"error": "No encontrada"}), 404
+        db.execute("DELETE FROM cargas WHERE id=?", (carga_id,))
+        db.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/cargas/<int:carga_id>/examenes", methods=["GET"])
+@login_required
+def cargas_examenes(carga_id):
+    uid = session["usuario_id"]
+    with get_db() as db:
+        carga = db.execute("SELECT id, nombre FROM cargas WHERE id=? AND usuario_id=?", (carga_id, uid)).fetchone()
+        if not carga:
+            return jsonify({"error": "No encontrada"}), 404
+        pac = db.execute("SELECT id FROM pacientes WHERE usuario_id=?", (uid,)).fetchone()
+        if not pac:
+            return jsonify([])
+        rows = db.execute("""
+            SELECT e.*, COUNT(i.id) as num_indicadores,
+                   SUM(CASE WHEN i.estado != 'normal' THEN 1 ELSE 0 END) as alertas
+            FROM examenes e
+            LEFT JOIN indicadores i ON i.examen_id = e.id
+            WHERE e.paciente_id=? AND e.carga_id=?
+            GROUP BY e.id ORDER BY e.creado_en DESC
+        """, (pac["id"], carga_id)).fetchall()
+        return jsonify([dict(r) for r in rows])
+
+
 # ── API: Stats ────────────────────────────────────────────────────────────────
 @app.route("/api/stats")
 @login_required
@@ -2529,6 +2743,93 @@ def serve_upload(filename):
     return send_from_directory(user_dir, filename)
 
 
+# ── API: Diagnóstico Visual ───────────────────────────────────────────────────
+@app.route("/api/diagnostico-visual", methods=["POST"])
+@login_required
+def diagnostico_visual():
+    """Analiza visualmente una foto de síntoma/herida/lesión con IA."""
+    if not admin_or_subscribed():
+        return jsonify({"error": "Se requiere suscripción activa"}), 402
+
+    try:
+        api_key = (os.environ.get("GOOGLE_API_KEY","") or
+                   os.environ.get("GEMINI_API_KEY","") or
+                   request.headers.get("X-API-Key",""))
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY no configurada")
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+    if "imagen" not in request.files:
+        return jsonify({"error": "No se recibió imagen"}), 400
+
+    f = request.files["imagen"]
+    zona = request.form.get("zona", "").strip()
+    duracion = request.form.get("duracion", "").strip()
+    descripcion = request.form.get("descripcion", "").strip()
+
+    ext = Path(f.filename).suffix.lower() if f.filename else ".jpg"
+    if ext not in {".jpg", ".jpeg", ".png", ".webp"}:
+        return jsonify({"error": "Solo imágenes JPG/PNG/WEBP"}), 400
+
+    try:
+        img = PIL.Image.open(f.stream)
+        import io
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=85)
+        img_bytes = buf.getvalue()
+        img_b64 = base64.b64encode(img_bytes).decode()
+    except Exception as e:
+        return jsonify({"error": f"No se pudo leer la imagen: {e}"}), 400
+
+    contexto_extra = ""
+    if zona: contexto_extra += f"\nZona afectada: {zona}"
+    if duracion: contexto_extra += f"\nTiempo de evolución: {duracion}"
+    if descripcion: contexto_extra += f"\nDescripción del paciente: {descripcion}"
+
+    prompt = f"""Eres un médico clínico experto en dermatología, traumatología y medicina general.
+Analiza esta imagen de una lesión, síntoma o afección cutánea/corporal.{contexto_extra}
+
+INSTRUCCIONES:
+- Describe detalladamente lo que observas en la imagen
+- Proporciona diagnósticos diferenciales ordenados por probabilidad (de mayor a menor)
+- Indica señales de alarma que requieran atención urgente
+- Sugiere primeras medidas de cuidado en casa si aplica
+- Recomienda el tipo de especialista a consultar
+- Usa lenguaje claro y empático, en español
+
+IMPORTANTE: Aclara siempre que este análisis es orientativo y NO reemplaza la evaluación médica presencial.
+
+Responde en formato markdown con estas secciones:
+## 🔍 Lo que observo
+## 🩺 Posibles diagnósticos
+## ⚠️ Señales de alarma
+## 💊 Cuidados iniciales
+## 👨‍⚕️ ¿A quién consultar?
+## ⚠️ Aviso importante"""
+
+    try:
+        gc = _gemini_client(api_key)
+        file_part = genai_types.Part.from_bytes(
+            data=img_bytes,
+            mime_type="image/jpeg"
+        )
+        resp = _generate(gc, [prompt, file_part])
+        return jsonify({"ok": True, "analisis": resp.text.strip()})
+    except Exception as e:
+        return jsonify({"error": f"Error al analizar la imagen: {e}"}), 500
+
+
+def admin_or_subscribed():
+    """Retorna True si el usuario es admin o tiene suscripción activa."""
+    if is_admin():
+        return True
+    uid = session.get("usuario_id")
+    if not uid:
+        return False
+    return bool(_get_active_subscription(uid))
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import threading, webbrowser, sys
@@ -2544,8 +2845,9 @@ if __name__ == "__main__":
     print(f"  Clave   : {ADMIN_PASSWORD}")
     print("  (sin cobros · acceso demo completo)")
     print(sep)
+    print(f"  Suscripción mensual: ${SUB_PRICE_CENTS/100:.2f} USD / 31 días")
     if not STRIPE_SECRET_KEY:
-        print("  ⚠️  STRIPE_SECRET_KEY no configurada — pagos en modo demo")
+        print("  ⚠️  STRIPE_SECRET_KEY no configurada — suscripciones en modo demo")
         print(sep)
     print("  Ctrl+C para detener")
     print(sep)

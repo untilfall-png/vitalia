@@ -873,11 +873,19 @@
       <a class="nav-item" onclick="showPanel('chat')" id="nav-chat">
         <i data-lucide="message-circle"></i> Dr. VitalIA
       </a>
+      <a class="nav-item" onclick="showPanel('visual')" id="nav-visual">
+        <i data-lucide="scan-eye"></i> Síntoma visual
+      </a>
 
       <div class="nav-section">Historial</div>
       <a class="nav-item" onclick="showPanel('history')" id="nav-history">
         <i data-lucide="folder-open"></i> Mis exámenes
       </a>
+      {% if not es_admin %}
+      <a class="nav-item" onclick="showPanel('cargas')" id="nav-cargas">
+        <i data-lucide="users"></i> Mis cargas
+      </a>
+      {% endif %}
 
       <div class="nav-section">Mi perfil</div>
       <a class="nav-item" onclick="openModal('modal-perfil')" id="nav-perfil">
@@ -1011,6 +1019,35 @@
 
       <!-- ─── UPLOAD / ANALIZAR ─── -->
       <div class="panel" id="panel-upload">
+        {% if not es_admin %}
+        <div id="sub-banner" style="
+          display:flex;align-items:center;gap:12px;padding:14px 20px;margin-bottom:16px;
+          border-radius:var(--r-sm);border:1px solid;
+          {% if suscripcion %}
+          background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.25);color:var(--secondary);
+          {% else %}
+          background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.25);color:var(--warning);
+          {% endif %}
+        ">
+          {% if suscripcion %}
+          <i data-lucide="check-circle" style="width:18px;height:18px;flex-shrink:0;"></i>
+          <div style="flex:1;">
+            <span style="font-weight:600;">Suscripción activa</span>
+            <span style="color:var(--text2);font-size:13px;margin-left:8px;">Vence <strong id="sub-fin-display">{{ suscripcion.fin[:10] }}</strong> — <span id="sub-countdown" style="font-weight:600;"></span></span>
+          </div>
+          {% else %}
+          <i data-lucide="alert-circle" style="width:18px;height:18px;flex-shrink:0;"></i>
+          <div style="flex:1;">
+            <span style="font-weight:600;">Sin suscripción activa</span>
+            <span style="color:var(--text2);font-size:13px;margin-left:8px;">Activa tu plan mensual por $3.00 USD para analizar exámenes ilimitados.</span>
+          </div>
+          <button onclick="startSubscriptionFlow()" style="
+            background:var(--warning);color:#000;border:none;border-radius:8px;
+            padding:7px 16px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;
+          ">Suscribirse</button>
+          {% endif %}
+        </div>
+        {% endif %}
         <div class="card">
           <div class="card-header">
             <span class="card-title"><i data-lucide="scan-line"></i> Analizar nuevo examen</span>
@@ -1038,6 +1075,15 @@
               </div>
             </div>
 
+            {% if not es_admin %}
+            <div class="form-group" id="carga-selector-wrap" style="display:none;">
+              <label class="form-label">¿Para quién es este examen?</label>
+              <select class="form-control" id="exam-carga-id">
+                <option value="">Para mí</option>
+              </select>
+            </div>
+            {% endif %}
+
             <div class="form-group">
               <label class="form-label">Foto del examen</label>
               <img id="upload-preview" alt="Vista previa"/>
@@ -1059,10 +1105,17 @@
               Analizar con Dr. VitalIA (Admin · Sin cobro)
             </button>
             {% else %}
-            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="startPaymentFlow()" disabled style="padding:14px;">
+            {% if suscripcion %}
+            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="analyzeExamSub()" disabled style="padding:14px;">
               <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
-              Analizar con Dr. VitalIA — $3.00 USD
+              Analizar con Dr. VitalIA
             </button>
+            {% else %}
+            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="startSubscriptionFlow()" disabled style="padding:14px;">
+              <i data-lucide="star" style="width:16px;height:16px;"></i>
+              Suscribirse para analizar — $3.00/mes
+            </button>
+            {% endif %}
             {% endif %}
             <div id="analyze-loading" style="display:none;">
               <div class="ocr-progress-wrap">
@@ -1258,48 +1311,146 @@
       </div>
       {% endif %}
 
+      <!-- ════ PANEL: Mis Cargas ════ -->
+      {% if not es_admin %}
+      <div class="panel" id="panel-cargas">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <span class="card-title"><i data-lucide="users"></i> Mis cargas familiares</span>
+            <button class="btn btn-primary" onclick="openModal('modal-add-carga')" style="padding:8px 16px;font-size:13px;">
+              <i data-lucide="user-plus" style="width:14px;height:14px;"></i> Agregar carga
+            </button>
+          </div>
+          <div class="card-body">
+            <p style="color:var(--text2);font-size:13px;margin-bottom:16px;">
+              Agrega a tus hijos u otros dependientes para llevar un historial médico separado por persona.
+            </p>
+            <div id="cargas-list">
+              <div style="text-align:center;color:var(--text2);padding:32px;">Cargando...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="carga-examenes-card" style="display:none;">
+          <div class="card-header" style="justify-content:space-between;gap:10px;flex-wrap:wrap;">
+            <span class="card-title"><i data-lucide="folder-open"></i> Exámenes de <span id="carga-nombre-titulo"></span></span>
+            <button class="btn btn-primary" onclick="uploadForCarga()" style="padding:8px 16px;font-size:13px;">
+              <i data-lucide="scan-line" style="width:14px;height:14px;"></i> Analizar examen
+            </button>
+          </div>
+          <div class="card-body">
+            <div id="carga-examenes-list">
+              <div style="text-align:center;color:var(--text2);padding:32px;">Selecciona una carga para ver sus exámenes</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ════ PANEL: Síntoma Visual ════ -->
+      <div class="panel" id="panel-visual">
+        <div class="card" style="max-width:680px;margin:0 auto;">
+          <div class="card-header">
+            <span class="card-title"><i data-lucide="scan-eye"></i> Diagnóstico visual con IA</span>
+          </div>
+          <div class="card-body">
+            <p style="color:var(--text2);font-size:13px;margin-bottom:20px;">
+              Sube una foto de tu herida, lesión, erupción u otro síntoma visible. La IA analizará la imagen y te orientará sobre posibles causas.
+              <strong style="color:var(--warning);">No reemplaza la consulta médica presencial.</strong>
+            </p>
+
+            <div class="form-row" style="gap:12px;flex-wrap:wrap;">
+              <div class="form-group" style="flex:1;min-width:180px;">
+                <label class="form-label">Zona del cuerpo afectada</label>
+                <input class="form-control" id="vis-zona" placeholder="Ej: antebrazo izquierdo"/>
+              </div>
+              <div class="form-group" style="flex:1;min-width:180px;">
+                <label class="form-label">Tiempo de evolución</label>
+                <input class="form-control" id="vis-duracion" placeholder="Ej: 3 días"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Descripción adicional (opcional)</label>
+              <textarea class="form-control" id="vis-descripcion" rows="2" placeholder="Ej: pica mucho, apareció después de contacto con plantas..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Foto del síntoma</label>
+              <img id="vis-preview" style="display:none;max-height:220px;border-radius:10px;margin-bottom:10px;object-fit:contain;width:100%;" alt="Vista previa"/>
+              <div class="upload-zone" onclick="document.getElementById('vis-input').click()">
+                <div class="upload-zone-icon">📷</div>
+                <div class="upload-zone-text">Sube la foto del síntoma</div>
+                <div class="upload-zone-sub">JPG · PNG · WEBP — Arrastra o toca para seleccionar</div>
+              </div>
+              <input type="file" id="vis-input" accept="image/*" onchange="handleVisualUpload(event)" style="display:none;"/>
+            </div>
+
+            <button class="btn btn-primary btn-block" id="vis-btn" onclick="analyzeVisual()" disabled style="padding:14px;">
+              <i data-lucide="scan-eye" style="width:16px;height:16px;"></i>
+              Analizar síntoma con IA
+            </button>
+
+            <div id="vis-loading" style="display:none;text-align:center;padding:24px;color:var(--text2);">
+              <div style="display:inline-block;width:28px;height:28px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px;"></div>
+              <div>Analizando imagen con IA...</div>
+            </div>
+
+            <div id="vis-resultado" style="display:none;margin-top:20px;padding:20px;background:var(--glass);border-radius:var(--r-sm);border:1px solid var(--border);">
+              <div class="vis-resultado-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app-layout -->
 
-<!-- ═══ MODAL: Pago ═══ -->
+<!-- ═══ MODAL: Suscripción ═══ -->
 <div class="modal-overlay" id="modal-pago">
   <div class="modal">
     <div class="modal-drag"></div>
-    <div class="modal-title">💳 Pago seguro</div>
+    <div class="modal-title">⭐ Suscripción mensual</div>
 
     <div class="payment-badge">🔒 Pago procesado por Stripe · SSL</div>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding:14px 16px;background:var(--glass);border-radius:12px;border:1px solid var(--border);">
       <div>
-        <div style="font-size:13px;color:var(--text2);">Análisis de examen médico con IA</div>
-        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;margin-top:2px;">$3.00 USD</div>
+        <div style="font-size:13px;color:var(--text2);">Acceso total · 31 días · Exámenes ilimitados</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;margin-top:2px;">$3.00 <span style="font-size:13px;font-weight:400;color:var(--text2);">USD / mes</span></div>
       </div>
       <div style="font-size:32px;">🩺</div>
     </div>
 
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
+      <div style="padding:10px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);">✅ Exámenes ilimitados</div>
+      <div style="padding:10px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);">✅ Análisis con IA</div>
+      <div style="padding:10px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);">✅ Chat médico IA</div>
+      <div style="padding:10px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);">✅ Reportes PDF</div>
+    </div>
+
     <!-- Dev mode notice -->
     <div class="dev-mode-box" id="dev-mode-notice" style="display:none;">
-      ⚠️ <strong>Modo desarrollo:</strong> Stripe no configurado. El pago será simulado automáticamente. Configura <code>STRIPE_SECRET_KEY</code> y <code>STRIPE_PUBLISHABLE_KEY</code> para pagos reales.
+      ⚠️ <strong>Modo desarrollo:</strong> Stripe no configurado. La suscripción será activada automáticamente. Configura <code>STRIPE_SECRET_KEY</code> para pagos reales.
     </div>
 
     <!-- Stripe card element -->
     <div id="stripe-card-container" style="display:none;">
       <div class="form-group">
-        <label class="form-label">Número de tarjeta</label>
+        <label class="form-label">Datos de tarjeta</label>
         <div class="stripe-element-wrap" id="stripe-card-element"></div>
       </div>
       <div class="pay-error" id="pay-error"></div>
     </div>
 
-    <button class="pay-btn" id="pay-btn" onclick="confirmPayment()">
-      <i data-lucide="lock" style="width:15px;height:15px;"></i>
-      Pagar $3.00 y analizar examen
+    <button class="pay-btn" id="pay-btn" onclick="confirmSubscription()">
+      <i data-lucide="star" style="width:15px;height:15px;"></i>
+      Activar suscripción — $3.00 USD
     </button>
 
     <div class="pay-info">
       <i data-lucide="shield-check" style="width:13px;height:13px;flex-shrink:0;"></i>
-      Tus datos de pago son procesados directamente por Stripe. VitalIA nunca almacena tu tarjeta.
+      Tus datos de pago son procesados directamente por Stripe. VitalIA nunca almacena tu tarjeta. La suscripción dura exactamente 31 días desde la activación.
     </div>
 
     <button class="btn btn-ghost btn-block" style="margin-top:14px;" onclick="closeModal('modal-pago')">Cancelar</button>
@@ -1368,6 +1519,41 @@
   </div>
 </div>
 
+<!-- ═══ MODAL: Agregar Carga ═══ -->
+<div class="modal-overlay" id="modal-add-carga">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-drag"></div>
+    <div class="modal-title">👶 Agregar carga familiar</div>
+    <div class="form-group">
+      <label class="form-label">Nombre completo *</label>
+      <input class="form-control" id="carga-nombre" placeholder="Ej: María García"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Relación</label>
+      <select class="form-control" id="carga-relacion">
+        <option value="hijo/a">Hijo/a</option>
+        <option value="madre">Madre</option>
+        <option value="padre">Padre</option>
+        <option value="cónyuge">Cónyuge</option>
+        <option value="otro">Otro</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fecha de nacimiento</label>
+      <input class="form-control" id="carga-fechanac" type="date"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas médicas (opcional)</label>
+      <textarea class="form-control" id="carga-notas" rows="2" placeholder="Condiciones conocidas, alergias..."></textarea>
+    </div>
+    <div id="carga-error" style="display:none;color:var(--danger);font-size:13px;margin-bottom:12px;"></div>
+    <button class="btn btn-primary btn-block" onclick="addCarga()" style="padding:12px;">
+      <i data-lucide="user-plus" style="width:15px;height:15px;"></i> Guardar carga
+    </button>
+    <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="closeModal('modal-add-carga')">Cancelar</button>
+  </div>
+</div>
+
 <!-- ═══ MODAL: Config ═══ -->
 <div class="modal-overlay" id="modal-config">
   <div class="modal">
@@ -1396,7 +1582,9 @@ let state = {
   chatStreaming: false,
   stripeConfigured: {{ 'true' if stripe_configured else 'false' }},
   stripePK: '{{ stripe_pk }}',
-  examPrice: {{ exam_price }},
+  subPrice: {{ sub_price }},
+  suscripcionActiva: {{ 'true' if suscripcion else 'false' }},
+  subFin: '{{ suscripcion.fin if suscripcion else "" }}',
   pendingPaymentIntentId: null,
   stripeInstance: null,
   stripeElements: null,
@@ -1411,6 +1599,13 @@ document.addEventListener('DOMContentLoaded', () => {
   loadPerfil();
   loadEvolucion();
   initStripe();
+  if (state.suscripcionActiva && state.subFin) {
+    updateSubCountdown();
+    setInterval(updateSubCountdown, 60000);
+  }
+  {% if not es_admin %}
+  loadCargaSelector();
+  {% endif %}
 });
 
 // ════════════════════════════════════════════
@@ -1422,6 +1617,8 @@ const PANEL_TITLES = {
   chat: 'Dr. VitalIA',
   history: 'Mis exámenes',
   resultado: 'Resultado del examen',
+  cargas: 'Mis cargas familiares',
+  visual: 'Síntoma visual — Diagnóstico con IA',
   admin: 'Panel de Administración'
 };
 
@@ -1437,6 +1634,7 @@ function showPanel(id) {
   closeSidebar();
   lucide.createIcons();
   if (id === 'admin') loadAdminStats();
+  if (id === 'cargas') loadCargas();
 }
 
 function openSidebar()  { document.getElementById('sidebar').classList.add('open'); }
@@ -1710,18 +1908,31 @@ function handleUpload(e) {
   document.getElementById('analyze-btn').disabled = false;
 }
 
-// ── Paso 1: iniciar flujo de pago ──────────────────────────────────────────
-async function startPaymentFlow() {
-  if (!selectedFile) return;
+// ── Contador de suscripción ────────────────────────────────────────────────
+function updateSubCountdown() {
+  const el = document.getElementById('sub-countdown');
+  if (!el || !state.subFin) return;
+  const fin = new Date(state.subFin.replace(' ', 'T'));
+  const now = new Date();
+  const diff = fin - now;
+  if (diff <= 0) { el.textContent = 'Vencida'; return; }
+  const days  = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins  = Math.floor((diff % 3600000) / 60000);
+  if (days > 0) el.textContent = `${days}d ${hours}h restantes`;
+  else if (hours > 0) el.textContent = `${hours}h ${mins}m restantes`;
+  else el.textContent = `${mins}m restantes`;
+}
+// ── Paso 1: iniciar flujo de suscripción ────────────────────────────────────
+async function startSubscriptionFlow() {
   if (!state.apiKeyOk) { openModal('modal-config'); toast('⚠️ Configura tu API Key primero'); return; }
 
-  // Crear PaymentIntent en el servidor
   const payBtn = document.getElementById('pay-btn');
   payBtn.disabled = true;
-  payBtn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;"></span>Preparando pago...';
+  payBtn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;"></span>Preparando suscripción...';
 
   try {
-    const res = await fetch('/api/crear-pago', { method: 'POST', headers: {'Content-Type':'application/json'} });
+    const res = await fetch('/api/suscribir', { method: 'POST', headers: {'Content-Type':'application/json'} });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
@@ -1731,12 +1942,10 @@ async function startPaymentFlow() {
     const cardContainer = document.getElementById('stripe-card-container');
 
     if (data.dev_mode) {
-      // Modo desarrollo: sin tarjeta real
       devNotice.style.display = 'block';
       cardContainer.style.display = 'none';
-      payBtn.innerHTML = '<i data-lucide="zap" style="width:15px;height:15px;"></i> Simular pago y analizar';
+      payBtn.innerHTML = '<i data-lucide="zap" style="width:15px;height:15px;"></i> Simular pago y activar';
     } else {
-      // Modo producción: montar Stripe Elements
       devNotice.style.display = 'none';
       cardContainer.style.display = 'block';
 
@@ -1744,12 +1953,9 @@ async function startPaymentFlow() {
         const appearance = {
           theme: 'night',
           variables: {
-            colorPrimary: '#0ea5e9',
-            colorBackground: '#1e293b',
-            colorText: '#f1f5f9',
-            colorDanger: '#ef4444',
-            fontFamily: 'Inter, sans-serif',
-            borderRadius: '8px',
+            colorPrimary: '#0ea5e9', colorBackground: '#1e293b',
+            colorText: '#f1f5f9', colorDanger: '#ef4444',
+            fontFamily: 'Inter, sans-serif', borderRadius: '8px',
           }
         };
         state.stripeElements = state.stripeInstance.elements({ clientSecret: data.client_secret, appearance });
@@ -1757,7 +1963,7 @@ async function startPaymentFlow() {
         state.stripeCardElement.mount('#stripe-card-element');
         state.stripeCardElement._clientSecret = data.client_secret;
       }
-      payBtn.innerHTML = '<i data-lucide="lock" style="width:15px;height:15px;"></i> Pagar $3.00 y analizar examen';
+      payBtn.innerHTML = '<i data-lucide="lock" style="width:15px;height:15px;"></i> Pagar $3.00 y activar suscripción';
     }
 
     payBtn.disabled = false;
@@ -1766,13 +1972,13 @@ async function startPaymentFlow() {
 
   } catch (err) {
     payBtn.disabled = false;
-    payBtn.innerHTML = '<i data-lucide="lock" style="width:15px;height:15px;"></i> Pagar $3.00 y analizar examen';
+    payBtn.innerHTML = 'Activar suscripción — $3.00 USD';
     toast('❌ ' + err.message);
   }
 }
 
-// ── Paso 2: confirmar pago ─────────────────────────────────────────────────
-async function confirmPayment() {
+// ── Paso 2: confirmar suscripción ──────────────────────────────────────────
+async function confirmSubscription() {
   const payBtn = document.getElementById('pay-btn');
   const payErr = document.getElementById('pay-error');
   payErr.style.display = 'none';
@@ -1784,13 +1990,11 @@ async function confirmPayment() {
     const isDevMode = devNotice.style.display !== 'none';
 
     if (!isDevMode && state.stripeInstance && state.stripeCardElement) {
-      // Confirmar pago con Stripe
       const { error } = await state.stripeInstance.confirmPayment({
         elements: state.stripeElements,
         confirmParams: { return_url: window.location.href },
         redirect: 'if_required'
       });
-
       if (error) {
         payErr.textContent = error.message;
         payErr.style.display = 'block';
@@ -1801,22 +2005,18 @@ async function confirmPayment() {
       }
     }
 
-    // Verificar pago en servidor
-    const verRes = await fetch(`/api/verificar-pago/${state.pendingPaymentIntentId}`);
+    const verRes = await fetch(`/api/verificar-suscripcion/${state.pendingPaymentIntentId}`);
     const verData = await verRes.json();
-    if (!verData.ok) throw new Error('El pago no pudo ser verificado. Intenta de nuevo.');
+    if (!verData.ok) throw new Error('La suscripción no pudo ser verificada. Intenta de nuevo.');
 
-    // Cerrar modal de pago
     closeModal('modal-pago');
-    toast('✅ Pago confirmado — iniciando análisis...');
-
-    // Limpiar card element para próximo uso
     state.stripeCardElement = null;
     state.stripeElements = null;
-
-    // Ejecutar análisis
-    await analyzeExam(state.pendingPaymentIntentId);
     state.pendingPaymentIntentId = null;
+
+    // Actualizar estado local y recargar para reflejar suscripción
+    toast('✅ Suscripción activada — acceso completo por 31 días');
+    setTimeout(() => location.reload(), 1500);
 
   } catch (err) {
     payErr.textContent = err.message;
@@ -1825,6 +2025,14 @@ async function confirmPayment() {
     payBtn.innerHTML = '<i data-lucide="lock" style="width:15px;height:15px;"></i> Reintentar';
     lucide.createIcons();
   }
+}
+
+// ── Analizar con suscripción activa ────────────────────────────────────────
+async function analyzeExamSub() {
+  if (!selectedFile) return;
+  if (!state.apiKeyOk) { openModal('modal-config'); toast('⚠️ Configura tu API Key primero'); return; }
+  if (!state.suscripcionActiva) { startSubscriptionFlow(); return; }
+  await analyzeExam('pi_sub_ok');
 }
 
 // ── Paso 3: ejecutar análisis con pago verificado ──────────────────────────
@@ -1879,10 +2087,9 @@ async function analyzeExam(paymentIntentId) {
   fd.append('imagen', selectedFile);
   fd.append('titulo', title);
   fd.append('tipo', tipo);
-  // Admin no necesita enviar payment_intent_id; el servidor lo detecta por sesión
-  if (paymentIntentId && paymentIntentId !== '__admin__') {
-    fd.append('payment_intent_id', paymentIntentId);
-  }
+  const cargaSel = document.getElementById('exam-carga-id');
+  if (cargaSel && cargaSel.value) fd.append('carga_id', cargaSel.value);
+  // El servidor valida la suscripción activa (o sesión admin) directamente
 
   try {
     // 1. Iniciar job
@@ -2967,6 +3174,222 @@ function toggleAppTheme() {
     document.documentElement.setAttribute('data-theme', saved);
   }
 })();
+
+// ════════════════════════════════════════════
+// CARGAS FAMILIARES
+// ════════════════════════════════════════════
+let _cargas = [];
+
+async function loadCargas() {
+  const listEl = document.getElementById('cargas-list');
+  if (!listEl) return;
+  try {
+    const r = await fetch('/api/cargas');
+    _cargas = await r.json();
+    renderCargasList();
+    renderCargaExamenesCard(null);
+  } catch {
+    listEl.innerHTML = '<div style="color:var(--danger);padding:16px;">Error cargando cargas.</div>';
+  }
+}
+
+function renderCargasList() {
+  const listEl = document.getElementById('cargas-list');
+  if (!listEl) return;
+  if (!_cargas.length) {
+    listEl.innerHTML = `<div style="text-align:center;color:var(--text2);padding:32px;">
+      <div style="font-size:32px;margin-bottom:8px;">👨‍👩‍👧</div>
+      <div style="font-weight:600;margin-bottom:6px;">Aún no tienes cargas registradas</div>
+      <div style="font-size:13px;">Agrega a tus hijos u otros dependientes para llevar su historial médico.</div>
+    </div>`;
+    return;
+  }
+  listEl.innerHTML = _cargas.map(c => {
+    const edad = c.fecha_nac ? calcEdad(c.fecha_nac) : null;
+    return `<div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);" onclick="selectCarga(${c.id})" style="cursor:pointer;">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--primary-s);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;cursor:pointer;"
+           onclick="selectCarga(${c.id})">
+        👤
+      </div>
+      <div style="flex:1;min-width:0;cursor:pointer;" onclick="selectCarga(${c.id})">
+        <div style="font-weight:600;font-size:15px;">${escHtml(c.nombre)}</div>
+        <div style="color:var(--text2);font-size:13px;">${escHtml(c.relacion)}${edad !== null ? ' · ' + edad + ' años' : ''}</div>
+        ${c.notas ? `<div style="color:var(--text2);font-size:12px;margin-top:2px;">${escHtml(c.notas)}</div>` : ''}
+      </div>
+      <button onclick="event.stopPropagation();deleteCarga(${c.id})" style="background:var(--danger-s);border:none;border-radius:8px;padding:6px 10px;color:var(--danger);cursor:pointer;font-size:12px;">Eliminar</button>
+    </div>`;
+  }).join('');
+}
+
+function renderCargaExamenesCard(carga) {
+  const card = document.getElementById('carga-examenes-card');
+  if (!card) return;
+  if (!carga) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  document.getElementById('carga-nombre-titulo').textContent = carga.nombre;
+  card.dataset.cargaId = carga.id;
+  loadCargaExamenes(carga.id);
+}
+
+async function selectCarga(cargaId) {
+  const carga = _cargas.find(c => c.id === cargaId);
+  if (!carga) return;
+  renderCargaExamenesCard(carga);
+}
+
+async function loadCargaExamenes(cargaId) {
+  const el = document.getElementById('carga-examenes-list');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;color:var(--text2);padding:16px;">Cargando...</div>';
+  try {
+    const r = await fetch(`/api/cargas/${cargaId}/examenes`);
+    const examenes = await r.json();
+    if (!examenes.length) {
+      el.innerHTML = '<div style="text-align:center;color:var(--text2);padding:24px;">Sin exámenes registrados para esta carga.</div>';
+      return;
+    }
+    el.innerHTML = examenes.map(e => {
+      const riesgoColor = e.riesgo === 'critico' ? 'var(--danger)' : e.riesgo === 'alto' ? '#f97316' : e.riesgo === 'medio' ? 'var(--warning)' : 'var(--secondary)';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="showExamenResultado(${e.id})">
+        <div style="width:8px;height:8px;border-radius:50%;background:${riesgoColor};flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:14px;">${escHtml(e.titulo)}</div>
+          <div style="color:var(--text2);font-size:12px;">${escHtml(e.tipo)} · ${(e.creado_en||'').slice(0,10)}</div>
+        </div>
+        <div style="font-size:12px;color:${riesgoColor};font-weight:600;">${e.riesgo||'normal'}</div>
+      </div>`;
+    }).join('');
+  } catch {
+    el.innerHTML = '<div style="color:var(--danger);padding:12px;">Error al cargar exámenes.</div>';
+  }
+}
+
+async function addCarga() {
+  const nombre  = document.getElementById('carga-nombre').value.trim();
+  const relacion = document.getElementById('carga-relacion').value;
+  const fechaNac = document.getElementById('carga-fechanac').value;
+  const notas   = document.getElementById('carga-notas').value.trim();
+  const errEl   = document.getElementById('carga-error');
+  errEl.style.display = 'none';
+
+  if (!nombre) { errEl.textContent = 'El nombre es requerido.'; errEl.style.display = 'block'; return; }
+
+  try {
+    const r = await fetch('/api/cargas', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ nombre, relacion, fecha_nac: fechaNac, notas })
+    });
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    closeModal('modal-add-carga');
+    document.getElementById('carga-nombre').value = '';
+    document.getElementById('carga-notas').value = '';
+    document.getElementById('carga-fechanac').value = '';
+    toast('✅ Carga agregada correctamente');
+    await loadCargas();
+    await loadCargaSelector();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+async function deleteCarga(id) {
+  if (!confirm('¿Eliminar esta carga? Se eliminarán también todos sus exámenes.')) return;
+  await fetch(`/api/cargas/${id}`, { method: 'DELETE' });
+  toast('🗑️ Carga eliminada');
+  loadCargas();
+  loadCargaSelector();
+}
+
+async function loadCargaSelector() {
+  const sel = document.getElementById('exam-carga-id');
+  const wrap = document.getElementById('carga-selector-wrap');
+  if (!sel || !wrap) return;
+  try {
+    const r = await fetch('/api/cargas');
+    _cargas = await r.json();
+    sel.innerHTML = '<option value="">Para mí</option>' +
+      _cargas.map(c => `<option value="${c.id}">${escHtml(c.nombre)}</option>`).join('');
+    wrap.style.display = _cargas.length ? '' : 'none';
+  } catch {}
+}
+
+function uploadForCarga() {
+  const card = document.getElementById('carga-examenes-card');
+  const cargaId = card ? card.dataset.cargaId : '';
+  if (cargaId && document.getElementById('exam-carga-id')) {
+    document.getElementById('exam-carga-id').value = cargaId;
+  }
+  showPanel('upload');
+}
+
+function calcEdad(fechaNac) {
+  try {
+    const hoy = new Date();
+    const dn = new Date(fechaNac);
+    let edad = hoy.getFullYear() - dn.getFullYear();
+    const m = hoy.getMonth() - dn.getMonth();
+    if (m < 0 || (m === 0 && hoy.getDate() < dn.getDate())) edad--;
+    return edad;
+  } catch { return null; }
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════════
+// SÍNTOMA VISUAL
+// ════════════════════════════════════════════
+let _visFile = null;
+
+function handleVisualUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  _visFile = file;
+  const prev = document.getElementById('vis-preview');
+  prev.src = URL.createObjectURL(file);
+  prev.style.display = 'block';
+  document.getElementById('vis-btn').disabled = false;
+}
+
+async function analyzeVisual() {
+  if (!_visFile) return;
+  const btn    = document.getElementById('vis-btn');
+  const loading = document.getElementById('vis-loading');
+  const result  = document.getElementById('vis-resultado');
+  const resultContent = result.querySelector('.vis-resultado-content');
+
+  btn.style.display = 'none';
+  loading.style.display = 'block';
+  result.style.display = 'none';
+
+  const fd = new FormData();
+  fd.append('imagen', _visFile);
+  fd.append('zona',      document.getElementById('vis-zona').value.trim());
+  fd.append('duracion',  document.getElementById('vis-duracion').value.trim());
+  fd.append('descripcion', document.getElementById('vis-descripcion').value.trim());
+
+  try {
+    const r = await fetch('/api/diagnostico-visual', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+
+    resultContent.innerHTML = typeof marked !== 'undefined'
+      ? marked.parse(data.analisis)
+      : data.analisis.replace(/\n/g, '<br>');
+    result.style.display = 'block';
+  } catch(e) {
+    resultContent.innerHTML = `<div style="color:var(--danger);">❌ ${e.message}</div>`;
+    result.style.display = 'block';
+  } finally {
+    loading.style.display = 'none';
+    btn.style.display = '';
+    btn.disabled = false;
+  }
+}
 </script>
 </body>
 </html>
