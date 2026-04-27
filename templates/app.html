@@ -834,19 +834,80 @@
 
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
-      .sidebar { position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; transform: translateX(-100%); }
+      /* Sidebar: drawer deslizante */
+      .sidebar {
+        position: fixed; top: 0; left: 0; bottom: 0; z-index: 300;
+        transform: translateX(-100%); box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+      }
       .sidebar.open { transform: translateX(0); }
-      .sidebar-close { display: block; }
-      .menu-btn { display: flex; }
-      .content { padding: 16px; }
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .sidebar-close { display: flex !important; align-items: center; justify-content: center; width: 32px; height: 32px; }
+
+      /* Overlay al abrir sidebar */
+      .sidebar-overlay {
+        display: none; position: fixed; inset: 0; z-index: 299;
+        background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+      }
+      .sidebar-overlay.show { display: block; }
+
+      /* Menu button siempre visible en mobile */
+      .menu-btn {
+        display: flex !important; align-items: center; justify-content: center;
+        width: 40px; height: 40px; border-radius: 10px;
+        background: var(--glass-b); border: 1px solid var(--border);
+        color: var(--text); flex-shrink: 0;
+      }
+      .menu-btn:active { background: var(--primary-s); }
+
+      /* Topbar mobile */
+      .topbar { padding: 0 12px; gap: 10px; height: 54px; }
+      .topbar-title { font-size: 15px; }
+      .topbar-actions { gap: 8px; }
       .topbar-actions .btn-label { display: none; }
+      .btn-top { width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 10px; }
+
+      /* Content */
+      .content { padding: 12px; }
+
+      /* Stats grid 2 cols */
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .stat-card { padding: 14px; }
+      .stat-card-val { font-size: 22px; }
+
+      /* Cards */
+      .card { border-radius: 14px; }
+      .card-body { padding: 14px; }
+
+      /* Upload zone más grande en móvil */
+      .upload-zone { padding: 28px 16px; }
+      .upload-zone-icon { font-size: 40px; }
+      .upload-zone-text { font-size: 16px; }
+
+      /* Botones full width en mobile */
+      .btn-block { min-height: 52px; font-size: 15px; }
+
+      /* Form */
+      .form-control { height: 46px; font-size: 15px; }
+      .form-row { flex-direction: column; gap: 12px; }
+
+      /* Chat */
       .chat-bubble { max-width: 95%; }
+      .chat-input-row { padding: 10px 12px; gap: 8px; }
+
+      /* Panel cargas */
+      .cargas-list { gap: 8px; }
     }
+
+    /* Overlay (insertado por JS) */
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; z-index: 299;
+      background: rgba(0,0,0,0.5);
+    }
+    .sidebar-overlay.show { display: block; }
   </style>
 </head>
 <body>
 <div id="toast"></div>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
 <div class="app-layout">
 
@@ -1053,27 +1114,29 @@
             <span class="card-title"><i data-lucide="scan-line"></i> Analizar nuevo examen</span>
           </div>
           <div class="card-body">
-            <div class="form-row">
-              <div class="form-group" style="flex:2;">
-                <label class="form-label">Título del examen</label>
-                <input class="form-control" id="exam-title" placeholder="Ej: Hemograma completo" autocomplete="off"/>
-              </div>
-              <div class="form-group" style="flex:1;">
-                <label class="form-label">Tipo</label>
-                <select class="form-control" id="exam-tipo">
-                  <option value="sangre">Sangre / Hemograma</option>
-                  <option value="bioquimico">Perfil bioquímico</option>
-                  <option value="orina">Orina</option>
-                  <option value="hormonal">Hormonal</option>
-                  <option value="lipidos">Perfil lipídico</option>
-                  <option value="hepatico">Perfil hepático</option>
-                  <option value="renal">Función renal</option>
-                  <option value="tiroides">Tiroides</option>
-                  <option value="imagen">Imagen (radiografía, eco)</option>
-                  <option value="otro">Otro</option>
-                </select>
-              </div>
+
+            {% if es_admin %}
+            <div class="admin-no-pay">
+              <i data-lucide="shield-check" style="width:15px;height:15px;flex-shrink:0;"></i>
+              Cuenta admin — análisis sin costo
             </div>
+            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="analyzeExamAdmin()" disabled style="padding:14px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);margin-bottom:16px;">
+              <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
+              Analizar con Dr. VitalIA (Admin · Sin cobro)
+            </button>
+            {% else %}
+            {% if suscripcion %}
+            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="analyzeExamSub()" disabled style="padding:14px;margin-bottom:16px;">
+              <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
+              Analizar con Dr. VitalIA
+            </button>
+            {% else %}
+            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="startSubscriptionFlow()" disabled style="padding:14px;margin-bottom:16px;">
+              <i data-lucide="star" style="width:16px;height:16px;"></i>
+              Suscribirse para analizar — $3.00/mes
+            </button>
+            {% endif %}
+            {% endif %}
 
             {% if not es_admin %}
             <div class="form-group" id="carga-selector-wrap" style="display:none;">
@@ -1084,8 +1147,7 @@
             </div>
             {% endif %}
 
-            <div class="form-group">
-              <label class="form-label">Foto del examen</label>
+            <div class="form-group" style="margin-bottom:0;">
               <img id="upload-preview" alt="Vista previa"/>
               <div class="upload-zone" onclick="document.getElementById('upload-input').click()">
                 <div class="upload-zone-icon">🔬</div>
@@ -1094,29 +1156,6 @@
               </div>
               <input type="file" id="upload-input" accept="image/*,application/pdf" onchange="handleUpload(event)"/>
             </div>
-
-            {% if es_admin %}
-            <div class="admin-no-pay">
-              <i data-lucide="shield-check" style="width:15px;height:15px;flex-shrink:0;"></i>
-              Cuenta admin — análisis sin costo
-            </div>
-            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="analyzeExamAdmin()" disabled style="padding:14px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
-              <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
-              Analizar con Dr. VitalIA (Admin · Sin cobro)
-            </button>
-            {% else %}
-            {% if suscripcion %}
-            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="analyzeExamSub()" disabled style="padding:14px;">
-              <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
-              Analizar con Dr. VitalIA
-            </button>
-            {% else %}
-            <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="startSubscriptionFlow()" disabled style="padding:14px;">
-              <i data-lucide="star" style="width:16px;height:16px;"></i>
-              Suscribirse para analizar — $3.00/mes
-            </button>
-            {% endif %}
-            {% endif %}
             <div id="analyze-loading" style="display:none;">
               <div class="ocr-progress-wrap">
                 <div class="ocr-progress-title">Procesando tu examen</div>
@@ -1637,8 +1676,16 @@ function showPanel(id) {
   if (id === 'cargas') loadCargas();
 }
 
-function openSidebar()  { document.getElementById('sidebar').classList.add('open'); }
-function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); }
+function openSidebar()  {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebar-overlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
 
 // ════════════════════════════════════════════
 // MODALS
@@ -2039,8 +2086,8 @@ async function analyzeExamSub() {
 async function analyzeExam(paymentIntentId) {
   if (!selectedFile) return;
 
-  const title = document.getElementById('exam-title').value.trim() || 'Examen médico';
-  const tipo  = document.getElementById('exam-tipo').value;
+  const title = (selectedFile?.name || 'Examen médico').replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ') || 'Examen médico';
+  const tipo  = 'general';
   const loadingEl = document.getElementById('analyze-loading');
   const btnEl = document.getElementById('analyze-btn');
 
