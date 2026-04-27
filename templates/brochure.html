@@ -211,85 +211,72 @@
     }
     .nav-cta:hover { transform: translateY(-1px); box-shadow: var(--glow-p-lg); }
 
-    /* ═══════════════ HERO ═══════════════ */
+    /* ═══════════════ HERO 3D ═══════════════ */
     .hero {
       min-height: 100vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 100px 24px 60px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 80px 60px 60px;
       position: relative; overflow: hidden;
-      text-align: center;
+      gap: 40px;
     }
 
-    /* Background animated orbs */
-    .hero-orbs { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-    .orb {
-      position: absolute; border-radius: 50%; filter: blur(80px);
-      animation: orbFloat 12s ease-in-out infinite;
+    /* Background grid */
+    .hero-bg-grid {
+      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(14,165,233,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14,165,233,0.035) 1px, transparent 1px);
+      background-size: 60px 60px;
+      -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 75%);
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 75%);
     }
-    .orb-1 {
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(14,165,233,0.18) 0%, transparent 70%);
-      top: -150px; left: -100px;
-      animation-duration: 14s;
-    }
-    .orb-2 {
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
-      bottom: -100px; right: -80px;
-      animation-duration: 18s; animation-delay: -6s;
-    }
-    .orb-3 {
-      width: 350px; height: 350px;
-      background: radial-gradient(circle, rgba(16,185,129,0.10) 0%, transparent 70%);
-      top: 40%; left: 60%;
-      animation-duration: 22s; animation-delay: -10s;
-    }
-    [data-theme="light"] .orb-1 {
-      background: radial-gradient(circle, rgba(2,132,199,0.10) 0%, transparent 70%);
-    }
-    [data-theme="light"] .orb-2 {
-      background: radial-gradient(circle, rgba(79,70,229,0.08) 0%, transparent 70%);
-    }
-    [data-theme="light"] .orb-3 {
-      background: radial-gradient(circle, rgba(5,150,105,0.07) 0%, transparent 70%);
-    }
-    @keyframes orbFloat {
-      0%,100% { transform: translate(0,0) scale(1); }
-      33%      { transform: translate(40px,-50px) scale(1.06); }
-      66%      { transform: translate(-30px,30px) scale(0.96); }
+    [data-theme="light"] .hero-bg-grid {
+      background-image:
+        linear-gradient(rgba(2,132,199,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(2,132,199,0.05) 1px, transparent 1px);
     }
 
-    /* EKG SVG */
-    .hero-ekg {
-      position: absolute; bottom: 80px; left: 0; right: 0; z-index: 0;
-      width: 100%; height: 80px; pointer-events: none; opacity: 0.15;
-    }
-    [data-theme="light"] .hero-ekg { opacity: 0.08; }
-    .ekg-path {
-      fill: none; stroke: var(--primary); stroke-width: 2;
-      stroke-dasharray: 1200; stroke-dashoffset: 1200;
-      animation: ekgDraw 3s ease forwards 0.5s, ekgPulse 4s ease-in-out infinite 3.5s;
-    }
-    @keyframes ekgDraw {
-      to { stroke-dashoffset: 0; }
-    }
-    @keyframes ekgPulse {
-      0%,100% { opacity: 1; }
-      50%      { opacity: 0.4; }
+    /* Canvas DNA background */
+    #dnaCanvas {
+      position: absolute; inset: 0; z-index: 0;
+      pointer-events: none; opacity: 0.55;
     }
 
-    /* Hero inner */
-    .hero-inner { position: relative; z-index: 1; max-width: 780px; }
+    /* Ambient orbs */
+    .hero-orb-a {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      width: 700px; height: 700px; filter: blur(120px);
+      background: radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 60%);
+      top: -200px; left: -100px; animation: orbDrift 18s ease-in-out infinite;
+    }
+    .hero-orb-b {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      width: 500px; height: 500px; filter: blur(100px);
+      background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 60%);
+      bottom: -150px; right: 0px; animation: orbDrift 24s ease-in-out infinite reverse;
+    }
+    @keyframes orbDrift {
+      0%,100% { transform: translate(0,0); }
+      33%      { transform: translate(30px,-40px); }
+      66%      { transform: translate(-20px,25px); }
+    }
 
-    /* Live badge */
+    /* ── LEFT: text column ── */
+    .hero-left {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column; align-items: flex-start;
+      gap: 0;
+    }
+
     .hero-badge {
       display: inline-flex; align-items: center; gap: 8px;
-      padding: 6px 18px; border-radius: 30px; margin-bottom: 36px;
+      padding: 6px 16px; border-radius: 30px; margin-bottom: 28px;
       background: var(--p-10); border: 1px solid var(--p-25);
       font-size: 11px; font-weight: 700; color: var(--primary);
       letter-spacing: 1px; text-transform: uppercase;
-      animation: fadeInUp .6s ease both;
+      animation: fadeInLeft .7s ease both;
     }
     .badge-dot {
       width: 6px; height: 6px; border-radius: 50%;
@@ -297,60 +284,21 @@
     }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-    /* Logo icon */
-    .hero-logo-wrap {
-      position: relative; display: inline-block;
-      margin-bottom: 32px;
-      animation: fadeInUp .6s ease .1s both;
-    }
-    .hero-logo-icon {
-      width: 96px; height: 96px; border-radius: 26px;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 50px; margin: 0 auto;
-      box-shadow: var(--glow-p), var(--glow-a), 0 0 80px rgba(14,165,233,0.2);
-      animation: logoFloat 4s ease-in-out infinite;
-      position: relative; z-index: 2;
-    }
-    [data-theme="light"] .hero-logo-icon {
-      box-shadow: var(--glow-p), 0 8px 32px rgba(2,132,199,0.25);
-    }
-    @keyframes logoFloat {
-      0%,100% { transform: translateY(0); }
-      50%      { transform: translateY(-10px); }
-    }
-    .pulse-ring {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%,-50%);
-      width: 96px; height: 96px; border-radius: 26px;
-      border: 2px solid var(--primary);
-      animation: pulseRing 2.5s ease-out infinite;
-    }
-    .pulse-ring-2 {
-      animation-delay: .8s;
-      border-color: var(--accent);
-    }
-    @keyframes pulseRing {
-      0%   { transform: translate(-50%,-50%) scale(1); opacity: .7; }
-      100% { transform: translate(-50%,-50%) scale(2.0); opacity: 0; }
-    }
-
-    /* Hero title */
     .hero-title {
       font-family: 'Plus Jakarta Sans', sans-serif;
       margin-bottom: 20px;
-      animation: fadeInUp .65s ease .2s both;
+      animation: fadeInLeft .7s ease .1s both;
     }
     .hero-title-vitalia {
       display: block;
-      font-size: clamp(72px, 14vw, 130px);
-      font-weight: 900; line-height: .95;
-      letter-spacing: -4px;
-      background: linear-gradient(135deg, var(--primary-l) 0%, var(--primary) 35%, var(--accent) 65%, var(--primary-l) 100%);
+      font-size: clamp(56px, 8vw, 96px);
+      font-weight: 900; line-height: .92;
+      letter-spacing: -3px;
+      background: linear-gradient(135deg, var(--primary-l) 0%, var(--primary) 35%, var(--accent) 70%, var(--primary-l) 100%);
       background-size: 300% 100%;
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
-      animation: fadeInUp .65s ease .2s both, shimmer 4s linear 1.5s infinite;
+      animation: fadeInLeft .7s ease .1s both, shimmer 5s linear 1.5s infinite;
     }
     @keyframes shimmer {
       0%   { background-position: 200% center; }
@@ -358,68 +306,42 @@
     }
     .hero-title-sub {
       display: block;
-      font-size: clamp(20px, 3.5vw, 32px);
-      font-weight: 700;
-      color: var(--text2); letter-spacing: -.3px;
-      line-height: 1.3; margin-top: 8px;
-      font-style: normal;
+      font-size: clamp(18px, 2.5vw, 26px);
+      font-weight: 700; color: var(--text2);
+      letter-spacing: -.2px; line-height: 1.3; margin-top: 10px;
     }
 
-    /* Description */
     .hero-desc {
-      font-size: clamp(15px, 2vw, 18px);
+      font-size: clamp(14px, 1.5vw, 17px);
       color: var(--text2); line-height: 1.8;
-      max-width: 580px; margin: 0 auto 36px;
-      animation: fadeInUp .65s ease .35s both;
+      max-width: 500px; margin-bottom: 32px;
+      animation: fadeInLeft .7s ease .25s both;
     }
     .hero-desc strong { color: var(--text); font-weight: 600; }
 
-    /* Stats */
-    .hero-stats {
-      display: flex; align-items: center; justify-content: center;
-      gap: 0; margin-bottom: 40px;
-      background: var(--glass2); border: 1px solid var(--border2);
-      border-radius: 16px; padding: 18px 28px;
-      box-shadow: var(--shadow-md);
-      flex-wrap: wrap;
-      animation: fadeInUp .65s ease .45s both;
-    }
-    .hero-stat { text-align: center; padding: 0 24px; }
-    .hero-stat-val {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 28px; font-weight: 900; color: var(--primary);
-      display: block; line-height: 1;
-    }
-    .hero-stat-lbl {
-      font-size: 11px; color: var(--text3); font-weight: 500;
-      text-transform: uppercase; letter-spacing: .6px; margin-top: 4px; display: block;
-    }
-    .hero-stat-div {
-      width: 1px; height: 36px; background: var(--border2); flex-shrink: 0;
-    }
-
-    /* CTAs */
     .hero-cta-row {
-      display: flex; gap: 12px; justify-content: center;
-      flex-wrap: wrap; margin-bottom: 28px;
-      animation: fadeInUp .65s ease .55s both;
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px;
+      animation: fadeInLeft .7s ease .35s both;
     }
     .btn-hero-primary {
-      padding: 15px 36px; border-radius: 12px;
-      font-size: 16px; font-weight: 800;
+      padding: 14px 32px; border-radius: 12px;
+      font-size: 15px; font-weight: 800;
       text-decoration: none; color: #fff;
       background: linear-gradient(135deg, var(--primary), var(--accent));
       box-shadow: var(--glow-p), 0 8px 32px rgba(14,165,233,0.25);
       font-family: 'Plus Jakarta Sans', sans-serif; transition: all .25s;
-      letter-spacing: -.2px;
+      letter-spacing: -.2px; position: relative; overflow: hidden;
     }
-    .btn-hero-primary:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: var(--glow-p-lg), 0 16px 48px rgba(14,165,233,0.35);
+    .btn-hero-primary::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+      opacity: 0; transition: opacity .25s;
     }
+    .btn-hero-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: var(--glow-p-lg), 0 16px 48px rgba(14,165,233,0.4); }
+    .btn-hero-primary:hover::before { opacity: 1; }
     .btn-hero-ghost {
-      padding: 15px 36px; border-radius: 12px;
-      font-size: 16px; font-weight: 700;
+      padding: 14px 32px; border-radius: 12px;
+      font-size: 15px; font-weight: 700;
       text-decoration: none; color: var(--text);
       border: 1px solid var(--border2); background: var(--glass2);
       font-family: 'Plus Jakarta Sans', sans-serif; transition: var(--trans);
@@ -429,24 +351,145 @@
       transform: translateY(-2px);
     }
 
-    /* Trust row */
     .hero-trust {
-      display: flex; align-items: center; justify-content: center;
-      gap: 16px; flex-wrap: wrap;
-      font-size: 12px; color: var(--text3); font-weight: 500;
-      animation: fadeInUp .65s ease .65s both;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      font-size: 11px; color: var(--text3); font-weight: 500;
+      animation: fadeInLeft .7s ease .45s both;
     }
     .hero-trust-item {
-      display: flex; align-items: center; gap: 5px;
-      padding: 4px 12px; border-radius: 20px;
+      display: flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 20px;
       background: var(--glass2); border: 1px solid var(--border);
     }
+
+    /* ── RIGHT: 3D visual column ── */
+    .hero-right {
+      position: relative; z-index: 2;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .hero-3d-scene {
+      position: relative;
+      width: 400px; height: 400px;
+      perspective: 1400px;
+      animation: sceneEnter .9s cubic-bezier(0.34,1.56,0.64,1) .2s both;
+    }
+    @keyframes sceneEnter {
+      from { opacity: 0; transform: scale(0.8) translateY(30px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .hero-3d-card {
+      width: 100%; height: 100%;
+      border-radius: 28px;
+      background: linear-gradient(145deg,
+        rgba(14,165,233,0.10) 0%,
+        rgba(8,13,26,0.85) 40%,
+        rgba(99,102,241,0.08) 100%);
+      border: 1px solid rgba(14,165,233,0.22);
+      display: flex; align-items: center; justify-content: center;
+      transform-style: preserve-3d;
+      transition: transform 0.08s linear;
+      box-shadow:
+        0 0 0 1px rgba(14,165,233,0.10),
+        0 40px 100px rgba(0,0,0,0.7),
+        0 0 60px rgba(14,165,233,0.12),
+        0 0 120px rgba(99,102,241,0.08),
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        inset 0 -1px 0 rgba(14,165,233,0.05);
+      cursor: pointer; overflow: hidden;
+    }
+    .hero-3d-card::before {
+      content: ''; position: absolute;
+      top: 0; left: -60%; width: 40%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+      transform: skewX(-20deg);
+      animation: cardSheen 6s ease-in-out infinite 2s;
+    }
+    @keyframes cardSheen {
+      0%,70%,100% { left: -60%; }
+      40% { left: 160%; }
+    }
+
+    .hero-3d-logo {
+      width: 82%; filter: drop-shadow(0 0 40px rgba(14,165,233,0.45));
+      animation: logoFloat3d 5s ease-in-out infinite; position: relative; z-index: 1;
+    }
+    @keyframes logoFloat3d {
+      0%,100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 40px rgba(14,165,233,0.45)); }
+      50%      { transform: translateY(-12px) scale(1.02); filter: drop-shadow(0 0 60px rgba(14,165,233,0.65)); }
+    }
+
+    /* Corner glows on card */
+    .card-glow-tl {
+      position: absolute; top: -30px; left: -30px;
+      width: 160px; height: 160px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(14,165,233,0.2) 0%, transparent 70%);
+      filter: blur(20px); pointer-events: none;
+    }
+    .card-glow-br {
+      position: absolute; bottom: -30px; right: -30px;
+      width: 140px; height: 140px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
+      filter: blur(20px); pointer-events: none;
+    }
+
+    /* Floating stat pills */
+    .stat-pill {
+      position: absolute;
+      background: rgba(8,13,26,0.92);
+      border: 1px solid rgba(14,165,233,0.28);
+      border-radius: 14px; padding: 10px 16px;
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      white-space: nowrap; z-index: 4;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(14,165,233,0.08);
+    }
+    .stat-pill-val {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 18px; font-weight: 900; color: var(--primary);
+      display: block; line-height: 1;
+    }
+    .stat-pill-lbl {
+      font-size: 10px; color: var(--text3);
+      text-transform: uppercase; letter-spacing: .5px; margin-top: 2px;
+    }
+    .sp1 { top: -18px; left: -40px; animation: pillDrift 5s ease-in-out infinite; }
+    .sp2 { bottom: -14px; right: -30px; animation: pillDrift 6s ease-in-out infinite 1.5s; }
+    .sp3 { top: 50%; right: -50px; transform: translateY(-50%); animation: pillDrift2 7s ease-in-out infinite 0.8s; }
+    @keyframes pillDrift {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+    @keyframes pillDrift2 {
+      0%,100% { transform: translateY(-50%); }
+      50%      { transform: translateY(calc(-50% - 8px)); }
+    }
+
+    /* Bottom stats bar (mobile) */
+    .hero-stats-bar {
+      display: none; align-items: center; justify-content: center;
+      gap: 0; background: var(--glass2); border: 1px solid var(--border2);
+      border-radius: 16px; padding: 16px 24px;
+      box-shadow: var(--shadow-md); flex-wrap: wrap;
+      grid-column: 1 / -1;
+    }
+    .hero-stat { text-align: center; padding: 0 20px; }
+    .hero-stat-val {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 24px; font-weight: 900; color: var(--primary);
+      display: block; line-height: 1;
+    }
+    .hero-stat-lbl {
+      font-size: 10px; color: var(--text3); font-weight: 500;
+      text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; display: block;
+    }
+    .hero-stat-div { width: 1px; height: 32px; background: var(--border2); flex-shrink: 0; }
 
     /* Scroll indicator */
     .hero-scroll {
       position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
       display: flex; flex-direction: column; align-items: center; gap: 6px;
-      z-index: 1; animation: fadeInUp .65s ease .9s both;
+      z-index: 3; animation: fadeInUp .65s ease 1.2s both;
     }
     .scroll-text { font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
     .scroll-line {
@@ -459,9 +502,27 @@
       50%      { opacity: .3; transform: scaleY(.7); }
     }
 
+    /* Animations */
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(24px); }
       to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInLeft {
+      from { opacity: 0; transform: translateX(-30px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr; padding: 90px 24px 60px;
+        text-align: center; gap: 48px;
+      }
+      .hero-left { align-items: center; }
+      .hero-desc { text-align: center; }
+      .hero-3d-scene { width: 300px; height: 300px; }
+      .sp1, .sp2, .sp3 { display: none; }
+      .hero-stats-bar { display: flex; }
     }
 
     /* ═══════════════ SHARED SECTIONS ═══════════════ */
@@ -784,37 +845,25 @@
     </div>
   </nav>
 
-  <!-- ═══ HERO ═══ -->
+  <!-- ═══ HERO 3D ═══ -->
   <section class="hero">
 
-    <!-- Orbs animados -->
-    <div class="hero-orbs">
-      <div class="orb orb-1"></div>
-      <div class="orb orb-2"></div>
-      <div class="orb orb-3"></div>
-    </div>
+    <!-- Canvas DNA helix -->
+    <canvas id="dnaCanvas"></canvas>
 
-    <!-- Línea EKG / heartbeat -->
-    <svg class="hero-ekg" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true">
-      <path class="ekg-path" d="M0,40 L180,40 L210,40 L225,8 L240,72 L255,8 L268,40 L300,40 L320,40 L340,40 L355,20 L368,58 L380,40 L420,40 L600,40 L615,40 L630,10 L645,68 L658,10 L670,40 L700,40 L900,40 L915,25 L928,55 L940,40 L960,40 L1200,40 L1215,32 L1228,48 L1240,40 L1440,40"/>
-    </svg>
+    <!-- Background layers -->
+    <div class="hero-bg-grid"></div>
+    <div class="hero-orb-a"></div>
+    <div class="hero-orb-b"></div>
 
-    <div class="hero-inner">
+    <!-- LEFT: Texto -->
+    <div class="hero-left">
 
-      <!-- Badge animado -->
       <div class="hero-badge">
         <span class="badge-dot"></span>
         Plataforma clínica · Disponible ahora
       </div>
 
-      <!-- Logo grande con anillos de pulso -->
-      <div class="hero-logo-wrap">
-        <div class="pulse-ring"></div>
-        <div class="pulse-ring pulse-ring-2"></div>
-        <div class="hero-logo-icon">🩺</div>
-      </div>
-
-      <!-- Título principal -->
       <h1 class="hero-title">
         <span class="hero-title-vitalia">VITALIA</span>
         <span class="hero-title-sub">
@@ -822,49 +871,67 @@
         </span>
       </h1>
 
-      <!-- Descripción -->
       <p class="hero-desc">
-        Una plataforma clínica que transforma tus exámenes médicos en información
-        <strong>clara, personalizada y accionable</strong> — en segundos.
+        Sube tus exámenes médicos y recibe una interpretación
+        <strong>clara, personalizada y accionable</strong> en menos de 30 segundos — para ti y toda tu familia.
       </p>
 
-      <!-- Stats -->
-      <div class="hero-stats">
-        <div class="hero-stat">
-          <span class="hero-stat-val">&lt; 30s</span>
-          <span class="hero-stat-lbl">Análisis completo</span>
-        </div>
-        <div class="hero-stat-div"></div>
-        <div class="hero-stat">
-          <span class="hero-stat-val">$3</span>
-          <span class="hero-stat-lbl">USD / mes</span>
-        </div>
-        <div class="hero-stat-div"></div>
-        <div class="hero-stat">
-          <span class="hero-stat-val">24/7</span>
-          <span class="hero-stat-lbl">Siempre disponible</span>
-        </div>
-        <div class="hero-stat-div"></div>
-        <div class="hero-stat">
-          <span class="hero-stat-val">IA</span>
-          <span class="hero-stat-lbl">Médica especializada</span>
-        </div>
-      </div>
-
-      <!-- CTAs -->
       <div class="hero-cta-row">
         <a href="/register" class="btn-hero-primary">Comenzar gratis →</a>
         <a href="/login" class="btn-hero-ghost">Ya tengo cuenta</a>
       </div>
 
-      <!-- Trust -->
       <div class="hero-trust">
-        <span class="hero-trust-item">🔒 Stripe SSL</span>
+        <span class="hero-trust-item">🔒 SSL seguro</span>
         <span class="hero-trust-item">🤖 IA Médica</span>
         <span class="hero-trust-item">⚖️ Ley 19.628</span>
         <span class="hero-trust-item">🌐 GDPR</span>
       </div>
 
+    </div>
+
+    <!-- RIGHT: 3D visual -->
+    <div class="hero-right">
+      <div class="hero-3d-scene" id="scene3d">
+        <div class="hero-3d-card" id="card3d">
+          <div class="card-glow-tl"></div>
+          <div class="card-glow-br"></div>
+          <img
+            src="/static/images/vitalia-logo.png"
+            alt="VitalIA"
+            class="hero-3d-logo"
+            onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'"
+          />
+          <div id="logoFallback" style="display:none;flex-direction:column;align-items:center;gap:12px;">
+            <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:42px;">🧬</div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:32px;font-weight:900;background:linear-gradient(135deg,var(--primary-l),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">VITALIA</div>
+            <div style="font-size:12px;color:var(--text3);">vitalia.work</div>
+          </div>
+        </div>
+
+        <!-- Floating stat pills -->
+        <div class="stat-pill sp1">
+          <span class="stat-pill-val">&lt;30s</span>
+          <span class="stat-pill-lbl">Análisis completo</span>
+        </div>
+        <div class="stat-pill sp2">
+          <span class="stat-pill-val">$3</span>
+          <span class="stat-pill-lbl">USD / mes</span>
+        </div>
+        <div class="stat-pill sp3">
+          <span class="stat-pill-val">24/7</span>
+          <span class="stat-pill-lbl">Siempre disponible</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats bar (mobile only) -->
+    <div class="hero-stats-bar">
+      <div class="hero-stat"><span class="hero-stat-val">&lt;30s</span><span class="hero-stat-lbl">Análisis</span></div>
+      <div class="hero-stat-div"></div>
+      <div class="hero-stat"><span class="hero-stat-val">$3</span><span class="hero-stat-lbl">USD/mes</span></div>
+      <div class="hero-stat-div"></div>
+      <div class="hero-stat"><span class="hero-stat-val">24/7</span><span class="hero-stat-lbl">Disponible</span></div>
     </div>
 
     <!-- Scroll indicator -->
@@ -1272,6 +1339,135 @@
   </footer>
 
   <script>
+    /* ── DNA Helix Canvas ── */
+    (function() {
+      const canvas = document.getElementById('dnaCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let W, H, raf;
+
+      function resize() {
+        W = canvas.width  = canvas.offsetWidth  || window.innerWidth;
+        H = canvas.height = canvas.offsetHeight || window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      let t = 0;
+      const TURNS   = 3;
+      const STEPS   = 180;
+      const RUNGS   = 22;
+      const FOV     = 700;
+
+      function drawHelix() {
+        ctx.clearRect(0, 0, W, H);
+
+        const cx = W * 0.72;  // center x — right side
+        const cy = H * 0.5;
+        const helixH = Math.min(H * 0.82, 560);
+        const radius = Math.min(W * 0.06, 70);
+
+        const pts1 = [], pts2 = [];
+        for (let i = 0; i <= STEPS; i++) {
+          const p = i / STEPS;
+          const angle = p * Math.PI * 2 * TURNS + t;
+          const y = p * helixH - helixH / 2;
+          const x1 = Math.cos(angle) * radius;
+          const z1 = Math.sin(angle) * radius;
+          const x2 = Math.cos(angle + Math.PI) * radius;
+          const z2 = Math.sin(angle + Math.PI) * radius;
+          const s1 = FOV / (FOV + z1);
+          const s2 = FOV / (FOV + z2);
+          const d1 = (z1 + radius) / (2 * radius);
+          const d2 = (z2 + radius) / (2 * radius);
+          pts1.push({ x: cx + x1 * s1, y: cy + y, z: z1, d: d1, s: s1 });
+          pts2.push({ x: cx + x2 * s2, y: cy + y, z: z2, d: d2, s: s2 });
+        }
+
+        // Rungs
+        const rungStep = Math.floor(STEPS / RUNGS);
+        for (let i = 0; i <= STEPS; i += rungStep) {
+          const p1 = pts1[i], p2 = pts2[i];
+          if (!p1 || !p2) continue;
+          const avgD = (p1.d + p2.d) / 2;
+          const g = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
+          g.addColorStop(0,   `rgba(14,165,233,${0.12 + avgD * 0.45})`);
+          g.addColorStop(0.5, `rgba(99,102,241,${0.15 + avgD * 0.38})`);
+          g.addColorStop(1,   `rgba(16,185,129,${0.12 + avgD * 0.45})`);
+          ctx.strokeStyle = g;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+          // End dots
+          ctx.beginPath();
+          ctx.arc(p1.x, p1.y, 3.5 * p1.s, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(14,165,233,${0.35 + p1.d * 0.55})`;
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(p2.x, p2.y, 3.5 * p2.s, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(99,102,241,${0.35 + p2.d * 0.55})`;
+          ctx.fill();
+        }
+
+        // Strand 1 (segment-by-segment for depth shading)
+        for (let i = 0; i < pts1.length - 1; i++) {
+          const p = pts1[i], q = pts1[i + 1];
+          ctx.strokeStyle = `rgba(14,165,233,${0.08 + p.d * 0.42})`;
+          ctx.lineWidth = 2.2 * p.s;
+          ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+        }
+        // Strand 2
+        for (let i = 0; i < pts2.length - 1; i++) {
+          const p = pts2[i], q = pts2[i + 1];
+          ctx.strokeStyle = `rgba(99,102,241,${0.08 + p.d * 0.42})`;
+          ctx.lineWidth = 2.2 * p.s;
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+        }
+      }
+
+      function loop() {
+        t += 0.008;
+        drawHelix();
+        raf = requestAnimationFrame(loop);
+      }
+      loop();
+    })();
+
+    /* ── 3D Card Mouse Parallax ── */
+    (function() {
+      const card  = document.getElementById('card3d');
+      const scene = document.getElementById('scene3d');
+      if (!card || !scene) return;
+
+      let targetRx = 5, targetRy = -10;
+      let currentRx = 5, currentRy = -10;
+
+      document.addEventListener('mousemove', e => {
+        const rect = scene.getBoundingClientRect();
+        const cx = rect.left + rect.width  / 2;
+        const cy = rect.top  + rect.height / 2;
+        const dx = (e.clientX - cx) / (window.innerWidth  / 2);
+        const dy = (e.clientY - cy) / (window.innerHeight / 2);
+        targetRx = -dy * 18;
+        targetRy =  dx * 18;
+      });
+
+      document.addEventListener('mouseleave', () => {
+        targetRx = 5; targetRy = -10;
+      });
+
+      function animate() {
+        currentRx += (targetRx - currentRx) * 0.07;
+        currentRy += (targetRy - currentRy) * 0.07;
+        card.style.transform = `rotateX(${currentRx}deg) rotateY(${currentRy}deg)`;
+        requestAnimationFrame(animate);
+      }
+      animate();
+    })();
+
     /* ── Theme Toggle ── */
     const html = document.documentElement;
     const KEY  = 'vitalia-theme';

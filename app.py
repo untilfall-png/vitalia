@@ -499,11 +499,90 @@ def handle_exc(e):
     import traceback; print(traceback.format_exc())
     return jsonify({"error": str(e)}), 500
 
-# ── Cache-control ─────────────────────────────────────────────────────────────
+# ── CORS + Security Headers ───────────────────────────────────────────────────
+_ALLOWED_ORIGINS = {
+    "https://www.vitalia.work",
+    "https://vitalia.work",
+    "http://localhost:5002",
+    "http://127.0.0.1:5002",
+}
+
+_CSP = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline' https://js.stripe.com https://fonts.googleapis.com; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' data: https://fonts.gstatic.com; "
+    "img-src 'self' data: blob: https:; "
+    "connect-src 'self' https://api.stripe.com https://generativelanguage.googleapis.com; "
+    "frame-src https://js.stripe.com; "
+    "object-src 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self';"
+)
+
 @app.after_request
-def no_cache(r):
-    r.headers["Cache-Control"] = "no-store"
+def security_headers(r):
+    origin = request.headers.get("Origin", "")
+    if origin in _ALLOWED_ORIGINS:
+        r.headers["Access-Control-Allow-Origin"]      = origin
+        r.headers["Access-Control-Allow-Credentials"] = "true"
+        r.headers["Access-Control-Allow-Methods"]     = "GET, POST, DELETE, OPTIONS"
+        r.headers["Access-Control-Allow-Headers"]     = "Content-Type, X-API-Key, Authorization"
+        r.headers["Vary"]                             = "Origin"
+
+    r.headers["X-Frame-Options"]           = "DENY"
+    r.headers["X-Content-Type-Options"]    = "nosniff"
+    r.headers["X-XSS-Protection"]          = "1; mode=block"
+    r.headers["Referrer-Policy"]           = "strict-origin-when-cross-origin"
+    r.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+    r.headers["Permissions-Policy"]        = "camera=(), microphone=(), geolocation=(), payment=(self)"
+    r.headers["Content-Security-Policy"]   = _CSP
+    r.headers["Cache-Control"]             = "no-store"
     return r
+
+@app.route("/api/<path:p>", methods=["OPTIONS"])
+@app.route("/<path:p>",     methods=["OPTIONS"])
+def handle_preflight(p=""):
+    r = Response()
+    origin = request.headers.get("Origin", "")
+    if origin in _ALLOWED_ORIGINS:
+        r.headers["Access-Control-Allow-Origin"]  = origin
+        r.headers["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS"
+        r.headers["Access-Control-Allow-Headers"] = "Content-Type, X-API-Key, Authorization"
+        r.headers["Access-Control-Max-Age"]       = "86400"
+    return r, 204
+
+# ── Application-level Row Level Security (RLS) ────────────────────────────────
+def _rls_examen(db, examen_id: int, usuario_id: int):
+    """Verifica que examen_id pertenezca al usuario_id (vía paciente)."""
+    row = db.execute(
+        """SELECT e.id FROM examenes e
+           JOIN pacientes p ON p.id = e.paciente_id
+           WHERE e.id = ? AND p.usuario_id = ?""",
+        (examen_id, usuario_id)
+    ).fetchone()
+    if not row:
+        raise PermissionError(f"rls:examen:{examen_id}")
+
+def _rls_paciente(db, paciente_id: int, usuario_id: int):
+    row = db.execute(
+        "SELECT id FROM pacientes WHERE id = ? AND usuario_id = ?",
+        (paciente_id, usuario_id)
+    ).fetchone()
+    if not row:
+        raise PermissionError(f"rls:paciente:{paciente_id}")
+
+def _rls_carga(db, carga_id: int, usuario_id: int):
+    row = db.execute(
+        "SELECT id FROM cargas WHERE id = ? AND usuario_id = ?",
+        (carga_id, usuario_id)
+    ).fetchone()
+    if not row:
+        raise PermissionError(f"rls:carga:{carga_id}")
+
+@app.errorhandler(PermissionError)
+def handle_permission_error(e):
+    return jsonify({"error": "Acceso denegado"}), 403
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def _google_key():
