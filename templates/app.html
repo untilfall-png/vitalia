@@ -834,80 +834,19 @@
 
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
-      /* Sidebar: drawer deslizante */
-      .sidebar {
-        position: fixed; top: 0; left: 0; bottom: 0; z-index: 300;
-        transform: translateX(-100%); box-shadow: 4px 0 24px rgba(0,0,0,0.4);
-      }
+      .sidebar { position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; transform: translateX(-100%); }
       .sidebar.open { transform: translateX(0); }
-      .sidebar-close { display: flex !important; align-items: center; justify-content: center; width: 32px; height: 32px; }
-
-      /* Overlay al abrir sidebar */
-      .sidebar-overlay {
-        display: none; position: fixed; inset: 0; z-index: 299;
-        background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
-      }
-      .sidebar-overlay.show { display: block; }
-
-      /* Menu button siempre visible en mobile */
-      .menu-btn {
-        display: flex !important; align-items: center; justify-content: center;
-        width: 40px; height: 40px; border-radius: 10px;
-        background: var(--glass-b); border: 1px solid var(--border);
-        color: var(--text); flex-shrink: 0;
-      }
-      .menu-btn:active { background: var(--primary-s); }
-
-      /* Topbar mobile */
-      .topbar { padding: 0 12px; gap: 10px; height: 54px; }
-      .topbar-title { font-size: 15px; }
-      .topbar-actions { gap: 8px; }
+      .sidebar-close { display: block; }
+      .menu-btn { display: flex; }
+      .content { padding: 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .topbar-actions .btn-label { display: none; }
-      .btn-top { width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 10px; }
-
-      /* Content */
-      .content { padding: 12px; }
-
-      /* Stats grid 2 cols */
-      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-      .stat-card { padding: 14px; }
-      .stat-card-val { font-size: 22px; }
-
-      /* Cards */
-      .card { border-radius: 14px; }
-      .card-body { padding: 14px; }
-
-      /* Upload zone más grande en móvil */
-      .upload-zone { padding: 28px 16px; }
-      .upload-zone-icon { font-size: 40px; }
-      .upload-zone-text { font-size: 16px; }
-
-      /* Botones full width en mobile */
-      .btn-block { min-height: 52px; font-size: 15px; }
-
-      /* Form */
-      .form-control { height: 46px; font-size: 15px; }
-      .form-row { flex-direction: column; gap: 12px; }
-
-      /* Chat */
       .chat-bubble { max-width: 95%; }
-      .chat-input-row { padding: 10px 12px; gap: 8px; }
-
-      /* Panel cargas */
-      .cargas-list { gap: 8px; }
     }
-
-    /* Overlay (insertado por JS) */
-    .sidebar-overlay {
-      display: none; position: fixed; inset: 0; z-index: 299;
-      background: rgba(0,0,0,0.5);
-    }
-    .sidebar-overlay.show { display: block; }
   </style>
 </head>
 <body>
 <div id="toast"></div>
-<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
 <div class="app-layout">
 
@@ -1676,16 +1615,8 @@ function showPanel(id) {
   if (id === 'cargas') loadCargas();
 }
 
-function openSidebar()  {
-  document.getElementById('sidebar').classList.add('open');
-  document.getElementById('sidebar-overlay').classList.add('show');
-  document.body.style.overflow = 'hidden';
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('show');
-  document.body.style.overflow = '';
-}
+function openSidebar()  { document.getElementById('sidebar').classList.add('open'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); }
 
 // ════════════════════════════════════════════
 // MODALS
@@ -2165,7 +2096,6 @@ async function analyzeExam(paymentIntentId) {
     selectedFile = null;
     document.getElementById('upload-input').value = '';
     document.getElementById('upload-preview').style.display = 'none';
-    document.getElementById('exam-title').value = '';
 
   } catch (err) {
     toast('❌ ' + err.message);
