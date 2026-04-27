@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
@@ -119,6 +120,7 @@
       padding: 10px 12px; border-radius: 10px; margin: 2px 8px;
       cursor: pointer; color: var(--text2); font-size: 14px; font-weight: 500;
       transition: all .15s; border: 1px solid transparent; text-decoration: none;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     }
     .nav-item:hover { background: var(--glass); color: var(--text); }
     .nav-item.active { background: var(--primary-s); color: var(--primary); border-color: rgba(14,165,233,0.2); }
@@ -217,6 +219,8 @@
       padding: 10px 18px; font-size: 14px; font-weight: 600;
       font-family: 'Plus Jakarta Sans', sans-serif;
       cursor: pointer; transition: all .2s;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      min-height: 40px;
     }
     .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-d)); color: #fff; box-shadow: 0 0 18px var(--primary-g); }
     .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 28px var(--primary-g); }
@@ -266,7 +270,7 @@
       content: ''; position: absolute; inset: 0;
       background: radial-gradient(circle at 50% 0%, rgba(14,165,233,0.08), transparent 70%);
     }
-    .upload-zone:hover { border-color: rgba(14,165,233,0.7); background: rgba(14,165,233,0.1); }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: rgba(14,165,233,0.7); background: rgba(14,165,233,0.1); transform: scale(1.01); }
     .upload-zone-icon { font-size: 52px; margin-bottom: 14px; position: relative; }
     .upload-zone-text { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; color: var(--primary); position: relative; }
     .upload-zone-sub { font-size: 13px; color: var(--text2); margin-top: 6px; position: relative; }
@@ -508,6 +512,18 @@
     /* ── SPINNER ── */
     .spinner { width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--primary-s); border-top-color: var(--primary); animation: spin .7s linear infinite; margin: 20px auto; box-shadow: 0 0 14px var(--primary-g); }
     @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* ── SKELETON LOADING ── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--glass) 25%, var(--glass-b) 50%, var(--glass) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .skeleton-text { height: 14px; margin-bottom: 8px; }
+    .skeleton-title { height: 24px; margin-bottom: 12px; }
+    .skeleton-block { height: 64px; margin-bottom: 10px; border-radius: var(--r); }
 
     /* ── OCR PROGRESS PANEL ── */
     .ocr-progress-wrap { padding: 28px 20px; text-align: center; }
@@ -838,10 +854,32 @@
       .sidebar.open { transform: translateX(0); }
       .sidebar-close { display: block; }
       .menu-btn { display: flex; }
-      .content { padding: 16px; }
+      .content { padding: 14px; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .topbar-actions .btn-label { display: none; }
       .chat-bubble { max-width: 95%; }
+      .btn { min-height: 44px; }
+      .btn-sm { min-height: 36px; }
+      .nav-item { min-height: 44px; touch-action: manipulation; }
+      .theme-btn { width: 44px; height: 44px; touch-action: manipulation; }
+      .chat-send-btn { width: 48px; height: 48px; touch-action: manipulation; }
+      .exam-item { padding: 14px 12px; }
+      .card-body { padding: 16px; }
+      .indicators-table { font-size: 12px; }
+      .indicators-table td, .indicators-table th { padding: 8px 8px; }
+      .chat-layout { height: calc(100svh - 58px - 28px); }
+      .hallazgos-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+      .plan-grid { grid-template-columns: 1fr; }
+      .adm-charts-row { grid-template-columns: 1fr; }
+      .adm-2col { grid-template-columns: 1fr; }
+      .form-row { flex-direction: column; }
+      .modal { padding: 20px 18px 32px; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .stat-card-val { font-size: 22px; }
+      .predicciones-grid { grid-template-columns: 1fr; }
+      .evol-charts-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -1633,6 +1671,7 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 async function loadStats() {
   try {
     const r = await fetch('/api/stats');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     document.getElementById('stat-examenes').textContent = d.total_examenes || 0;
     document.getElementById('stat-alertas').textContent  = d.total_alertas  || 0;
@@ -1641,7 +1680,9 @@ async function loadStats() {
       const f = new Date(d.ultimo_examen);
       document.getElementById('stat-ultimo').textContent = f.toLocaleDateString('es-CL',{day:'2-digit',month:'short'});
     }
-  } catch {}
+  } catch(e) {
+    console.warn('Stats load failed:', e.message);
+  }
 }
 
 // ════════════════════════════════════════════
@@ -1790,17 +1831,21 @@ async function loadEvolucion() {
 async function loadExamenes() {
   try {
     const r = await fetch('/api/examenes');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     const examenes = d.examenes || [];
     renderRecentExamenes(examenes.slice(0,5));
     renderAllExamenes(examenes);
-  } catch {}
+  } catch(e) {
+    const el = document.getElementById('recent-examenes');
+    if (el && el.children.length === 0) el.innerHTML = `<div style="color:var(--danger);font-size:13px;padding:12px;">No se pudo cargar los exámenes. Recarga la página.</div>`;
+  }
 }
 
 function renderRecentExamenes(list) {
   const el = document.getElementById('recent-examenes');
   if (!list.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">🩺</div><div class="empty-title">Sin exámenes aún</div><div class="empty-sub">Sube tu primer examen para comenzar</div></div>`;
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🩺</div><div class="empty-title">Sin exámenes aún</div><div class="empty-sub" style="margin-bottom:16px;">Sube tu primer examen para comenzar</div><button class="btn btn-primary" style="margin:0 auto;" onclick="showPanel('upload')">+ Analizar primer examen</button></div>`;
     return;
   }
   el.innerHTML = list.map(e => examCard(e)).join('');
@@ -1810,7 +1855,7 @@ function renderRecentExamenes(list) {
 function renderAllExamenes(list) {
   const el = document.getElementById('all-examenes');
   if (!list.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sin exámenes</div><div class="empty-sub">Sube tu primer examen</div></div>`;
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sin exámenes</div><div class="empty-sub" style="margin-bottom:16px;">Aún no has analizado ningún examen</div><button class="btn btn-primary" style="margin:0 auto;" onclick="showPanel('upload')">+ Analizar examen</button></div>`;
     // Si estábamos en modo selección y ya no hay exámenes, salir
     if (_selMode) { _selMode = false; _selIds.clear(); _updateBulkUI(); }
     return;
@@ -1879,12 +1924,30 @@ let selectedFile = null;
 
 function handleUpload(e) {
   const file = e.target.files[0]; if (!file) return;
+  _setUploadFile(file);
+}
+
+function _setUploadFile(file) {
   selectedFile = file;
   const prev = document.getElementById('upload-preview');
   if (file.type.startsWith('image/')) { prev.src = URL.createObjectURL(file); prev.style.display = 'block'; }
   else prev.style.display = 'none';
   document.getElementById('analyze-btn').disabled = false;
 }
+
+// Drag & drop on upload zone
+document.addEventListener('DOMContentLoaded', () => {
+  const zone = document.querySelector('.upload-zone');
+  if (!zone) return;
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) _setUploadFile(file);
+  });
+});
 
 // ── Contador de suscripción ────────────────────────────────────────────────
 function updateSubCountdown() {
@@ -1927,7 +1990,14 @@ async function startSubscriptionFlow() {
       devNotice.style.display = 'none';
       cardContainer.style.display = 'block';
 
-      if (state.stripeInstance && !state.stripeCardElement) {
+      if (state.stripeInstance) {
+        // Destroy any previous element to avoid double-mount
+        if (state.stripeCardElement) {
+          try { state.stripeCardElement.destroy(); } catch(e) {}
+          state.stripeCardElement = null;
+          state.stripeElements = null;
+          document.getElementById('stripe-card-element').innerHTML = '';
+        }
         const appearance = {
           theme: 'night',
           variables: {
@@ -2166,7 +2236,7 @@ function renderResultadoPositivo(inds, ex) {
   const bienHacerHtml = interp ? `
     <div class="positive-bienhacer">
       <div class="positive-bienhacer-title"><span>✨</span> Lo que estás haciendo bien</div>
-      <div class="positive-bienhacer-body">${marked.parse(interp)}</div>
+      <div class="positive-bienhacer-body">${mdParse(interp)}</div>
     </div>` : '';
 
   return `
@@ -2433,7 +2503,7 @@ async function openExamen(eid) {
             <div><span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;">Indicadores</span><div style="font-weight:600;margin-top:2px;">${inds.length} detectados</div></div>
           </div>
           ${ex.resumen ? `<div style="background:var(--primary-s);border:1px solid rgba(14,165,233,0.2);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.7;margin-bottom:16px;">${esc(ex.resumen)}</div>` : ''}
-          ${ex.interpretacion ? `<div style="font-size:13px;line-height:1.8;color:var(--text2);">${marked.parse(ex.interpretacion)}</div>` : ''}
+          ${ex.interpretacion ? `<div style="font-size:13px;line-height:1.8;color:var(--text2);">${mdParse(ex.interpretacion)}</div>` : ''}
           ${alertasInds.length ? `
           <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
             <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;">Hallazgos principales</div>
@@ -2768,7 +2838,7 @@ async function iniciarConsultaMulti() {
         if (!line.startsWith('data: ')) continue;
         try {
           const d = JSON.parse(line.slice(6));
-          if (d.text) { fullText += d.text; mdContent.innerHTML = marked.parse(fullText); scrollChat(); }
+          if (d.text) { fullText += d.text; mdContent.innerHTML = mdParse(fullText); scrollChat(); }
           if (d.done) { convId = d.conv_id; }
           if (d.error) throw new Error(d.error);
         } catch (e) { if (e.message) throw e; }
@@ -2830,7 +2900,7 @@ function addBubble(rol, contenido, streaming = false) {
         <div class="dr-avatar-chat">🩺</div>
         <div class="dr-name-chat">Dr. VitalIA</div>
       </div>
-      <div class="md-content">${streaming ? '' : marked.parse(contenido)}</div>`;
+      <div class="md-content">${streaming ? '' : mdParse(contenido)}</div>`;
   }
   if (streaming) div.id = 'streaming-bubble';
   msgs.appendChild(div);
@@ -2886,7 +2956,7 @@ async function sendMessage() {
         if (!line.startsWith('data: ')) continue;
         try {
           const d = JSON.parse(line.slice(6));
-          if (d.text) { fullText += d.text; mdContent.innerHTML = marked.parse(fullText); scrollChat(); }
+          if (d.text) { fullText += d.text; mdContent.innerHTML = mdParse(fullText); scrollChat(); }
           if (d.done) break;
           if (d.error) throw new Error(d.error);
         } catch (e) { if (e.message) throw e; }
@@ -2907,7 +2977,7 @@ function quickSend(text) {
 }
 
 function chatKeydown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  if (e.key === 'Enter' && !e.shiftKey && !state.chatStreaming) { e.preventDefault(); sendMessage(); }
 }
 
 function autoResize(el) {
@@ -3005,6 +3075,11 @@ async function saveConfig() {
 function esc(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function mdParse(text) {
+  const raw = marked.parse(String(text || ''));
+  return typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(raw) : raw;
 }
 
 function toast(msg, dur = 3000) {
@@ -3176,19 +3251,20 @@ function renderCargasList() {
   if (!_cargas.length) {
     listEl.innerHTML = `<div style="text-align:center;color:var(--text2);padding:32px;">
       <div style="font-size:32px;margin-bottom:8px;">👨‍👩‍👧</div>
-      <div style="font-weight:600;margin-bottom:6px;">Aún no tienes cargas registradas</div>
-      <div style="font-size:13px;">Agrega a tus hijos u otros dependientes para llevar su historial médico.</div>
+      <div style="font-weight:600;margin-bottom:6px;color:var(--text);">Aún no tienes cargas registradas</div>
+      <div style="font-size:13px;margin-bottom:16px;">Agrega a tus hijos u otros dependientes para llevar su historial médico.</div>
+      <button class="btn btn-primary" style="margin:0 auto;" onclick="openModal('modal-add-carga')"><i data-lucide="user-plus" style="width:14px;height:14px;"></i> Agregar carga familiar</button>
     </div>`;
+    lucide.createIcons();
     return;
   }
   listEl.innerHTML = _cargas.map(c => {
     const edad = c.fecha_nac ? calcEdad(c.fecha_nac) : null;
-    return `<div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);" onclick="selectCarga(${c.id})" style="cursor:pointer;">
-      <div style="width:44px;height:44px;border-radius:50%;background:var(--primary-s);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;cursor:pointer;"
-           onclick="selectCarga(${c.id})">
+    return `<div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="selectCarga(${c.id})">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--primary-s);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
         👤
       </div>
-      <div style="flex:1;min-width:0;cursor:pointer;" onclick="selectCarga(${c.id})">
+      <div style="flex:1;min-width:0;">
         <div style="font-weight:600;font-size:15px;">${escHtml(c.nombre)}</div>
         <div style="color:var(--text2);font-size:13px;">${escHtml(c.relacion)}${edad !== null ? ' · ' + edad + ' años' : ''}</div>
         ${c.notas ? `<div style="color:var(--text2);font-size:12px;margin-top:2px;">${escHtml(c.notas)}</div>` : ''}
@@ -3293,6 +3369,8 @@ async function loadCargaSelector() {
   } catch {}
 }
 
+function showExamenResultado(eid) { openExamen(eid); }
+
 function uploadForCarga() {
   const card = document.getElementById('carga-examenes-card');
   const cargaId = card ? card.dataset.cargaId : '';
@@ -3355,7 +3433,7 @@ async function analyzeVisual() {
     if (data.error) throw new Error(data.error);
 
     resultContent.innerHTML = typeof marked !== 'undefined'
-      ? marked.parse(data.analisis)
+      ? mdParse(data.analisis)
       : data.analisis.replace(/\n/g, '<br>');
     result.style.display = 'block';
   } catch(e) {

@@ -9,9 +9,25 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from functools import wraps
 
-# ── In-memory job store ───────────────────────────────────────────────────────
-_jobs: dict = {}   # job_id → {"status": "pending|done|error", "result": {...}}
+# ── In-memory job store (TTL: 30 min) ────────────────────────────────────────
+_jobs: dict = {}   # job_id → {"status": "pending|done|error", "ts": float, ...}
 _jobs_lock = threading.Lock()
+
+def _jobs_cleanup():
+    """Remove jobs older than 30 minutes to prevent unbounded memory growth."""
+    import time
+    cutoff = time.time() - 1800
+    with _jobs_lock:
+        stale = [k for k, v in _jobs.items() if v.get("ts", 0) < cutoff]
+        for k in stale:
+            del _jobs[k]
+
+def _jobs_set(job_id, **kw):
+    import time
+    with _jobs_lock:
+        _jobs[job_id] = {"ts": time.time(), **kw}
+    if len(_jobs) % 50 == 0:   # cleanup every 50 new jobs
+        threading.Thread(target=_jobs_cleanup, daemon=True).start()
 
 from flask import (Flask, render_template, request, jsonify,
                    Response, stream_with_context, redirect, url_for, session)
@@ -277,6 +293,16 @@ def init_db():
             creado_en   TEXT DEFAULT (datetime('now','localtime')),
             FOREIGN KEY (examen_id) REFERENCES examenes(id) ON DELETE CASCADE
         );
+
+        -- ── Índices de performance ────────────────────────────────────────────
+        CREATE INDEX IF NOT EXISTS idx_pacientes_usuario    ON pacientes(usuario_id);
+        CREATE INDEX IF NOT EXISTS idx_examenes_paciente    ON examenes(paciente_id);
+        CREATE INDEX IF NOT EXISTS idx_indicadores_examen   ON indicadores(examen_id);
+        CREATE INDEX IF NOT EXISTS idx_mensajes_conv        ON mensajes(conversacion_id);
+        CREATE INDEX IF NOT EXISTS idx_pagos_usuario        ON pagos(usuario_id);
+        CREATE INDEX IF NOT EXISTS idx_suscripciones_usuario ON suscripciones(usuario_id);
+        CREATE INDEX IF NOT EXISTS idx_cargas_usuario       ON cargas(usuario_id);
+        CREATE INDEX IF NOT EXISTS idx_recomendaciones_examen ON recomendaciones(examen_id);
         """)
         db.commit()
 
@@ -509,11 +535,11 @@ _ALLOWED_ORIGINS = {
 
 _CSP = (
     "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' https://js.stripe.com https://fonts.googleapis.com; "
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "script-src 'self' 'unsafe-inline' https://js.stripe.com https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
     "font-src 'self' data: https://fonts.gstatic.com; "
     "img-src 'self' data: blob: https:; "
-    "connect-src 'self' https://api.stripe.com https://generativelanguage.googleapis.com; "
+    "connect-src 'self' https://api.stripe.com https://generativelanguage.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
     "frame-src https://js.stripe.com; "
     "object-src 'none'; "
     "base-uri 'self'; "
@@ -617,11 +643,17 @@ def _generate(gc, contents):
 
 def estado_indicador(valor_str, rango_min, rango_max):
     try:
-        v = float(re.sub(r"[^\d.\-]", "", str(valor_str)))
+        raw = str(valor_str).strip().replace(",", ".")
+        # Extract first numeric token (handles "~12.5", "<7", ">3.5", "12.5 H")
+        m = re.search(r"-?\d+(?:\.\d+)?", raw)
+        if not m:
+            return "normal"
+        v = float(m.group())
         if rango_min is not None and v < rango_min: return "bajo"
         if rango_max is not None and v > rango_max: return "alto"
         return "normal"
-    except: return "normal"
+    except:
+        return "normal"
 
 SYSTEM_DOCTOR = """Eres VitalIA, un asistente médico digital altamente capacitado y empático.
 Tu misión es interpretar exámenes médicos, explicar indicadores de salud y orientar al paciente.
@@ -1869,8 +1901,7 @@ def _sse(data: dict) -> str:
 def _run_analisis(job_id, ruta, ext, titulo, tipo, api_key, paciente_id, carga_id=None):
     """Corre el análisis completo en background y guarda resultado en _jobs."""
     def update(status, **kw):
-        with _jobs_lock:
-            _jobs[job_id] = {"status": status, **kw}
+        _jobs_set(job_id, status=status, **kw)
 
     try:
         update("pending", msg="Leyendo archivo...", progress=5)
@@ -2252,8 +2283,7 @@ def analizar_examen():
     f.save(str(ruta))
 
     job_id = uuid.uuid4().hex
-    with _jobs_lock:
-        _jobs[job_id] = {"status": "pending", "msg": "Iniciando análisis..."}
+    _jobs_set(job_id, status="pending", msg="Iniciando análisis...", progress=0)
 
     # Marcar pago como en proceso usando campo estado (evita FK constraint)
     if not admin_mode:
