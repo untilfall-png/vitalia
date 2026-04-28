@@ -8,267 +8,690 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-/* ── RESET & TOKENS ─────────────────────────────── */
+/* ── RESET ──────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ── TOKENS — 5-COLOR CORPORATE PALETTE ────────────── */
 :root{
-  --bg:       #0A0F1E;
-  --bg2:      #0D1528;
-  --bg3:      #121B35;
-  --bg4:      #172040;
-  --teal:     #00C9A7;
-  --teal-d:   #00A88B;
-  --danger:   #FF4B6E;
-  --text:     #F0F4FF;
-  --text2:    #9BA3B4;
-  --text3:    #818BA3;
-  --border:   rgba(255,255,255,0.07);
-  --border-t: rgba(0,201,167,0.2);
-  --glass:    rgba(255,255,255,0.03);
-  --glass2:   rgba(255,255,255,0.06);
-  --r:        16px;
-  --r-lg:     24px;
-  --r-xl:     32px;
-  --z-sticky: 10;
+  --bg:       #FFFFFF;
+  --bg-soft:  #E9F1FA;
+  --primary:  #00ABE4;
+  --cta:      #2272FF;
+  --text:     #1D1D1D;
+
+  /* Derived — opacity only, no new hues */
+  --text-2:   rgba(29,29,29,.62);
+  --text-3:   rgba(29,29,29,.42);
+  --p-08:     rgba(0,171,228,.08);
+  --p-15:     rgba(0,171,228,.15);
+  --p-25:     rgba(0,171,228,.25);
+  --p-40:     rgba(0,171,228,.40);
+  --c-08:     rgba(34,114,255,.08);
+  --c-15:     rgba(34,114,255,.15);
+  --c-25:     rgba(34,114,255,.25);
+  --c-40:     rgba(34,114,255,.40);
+  --b-06:     rgba(29,29,29,.06);
+  --b-12:     rgba(29,29,29,.12);
+
+  --r:        12px;
+  --r-lg:     20px;
+  --r-xl:     28px;
   --z-nav:    50;
+  --z-sticky: 10;
+  --shadow-sm: 0 2px 8px rgba(29,29,29,.08);
+  --shadow-md: 0 8px 32px rgba(29,29,29,.10);
+  --shadow-lg: 0 20px 60px rgba(29,29,29,.12);
 }
+
+/* ── BASE ────────────────────────────────────────────── */
 html{scroll-behavior:smooth;font-size:16px}
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.6}
-:focus-visible{outline:2px solid var(--teal);outline-offset:3px;border-radius:4px}
-h1,h2,h3,h4{font-family:'Syne',sans-serif;line-height:1.15;letter-spacing:-0.02em}
+body{
+  font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  overflow-x:hidden;line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+:focus-visible{outline:3px solid var(--cta);outline-offset:3px;border-radius:4px}
+h1,h2,h3,h4{font-family:'Syne',sans-serif;line-height:1.15;letter-spacing:-.02em;color:var(--text)}
 .container{max-width:1100px;margin:0 auto;padding:0 24px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.grad{background:linear-gradient(135deg,var(--teal) 0%,#5DE0C5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
-/* ── BUTTONS ─────────────────────────────────────── */
-.btn-primary{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:50px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#0A0F1E;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 0 24px rgba(0,201,167,.35);min-height:48px}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 44px rgba(0,201,167,.6)}
-.btn-ghost{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:50px;background:var(--glass2);color:var(--text);border:1px solid var(--border-t);font-family:'Syne',sans-serif;font-size:15px;font-weight:600;text-decoration:none;cursor:pointer;transition:all .2s;backdrop-filter:blur(12px);min-height:48px}
-.btn-ghost:hover{background:rgba(0,201,167,.08);border-color:var(--teal)}
-@media(prefers-reduced-motion:no-preference){
-  @keyframes btn-pulse{0%,100%{box-shadow:0 0 24px rgba(0,201,167,.35)}50%{box-shadow:0 0 52px rgba(0,201,167,.7),0 0 80px rgba(0,201,167,.2)}}
-  .btn-primary.pulse{animation:btn-pulse 2.4s ease-in-out infinite}
+/* ── BUTTONS ──────────────────────────────────────────── */
+.btn-primary{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:15px 32px;border-radius:50px;
+  background:var(--cta);color:#fff;
+  font-family:'Syne',sans-serif;font-size:15px;font-weight:700;
+  text-decoration:none;border:none;cursor:pointer;
+  transition:transform .2s,box-shadow .2s;
+  box-shadow:0 4px 24px var(--c-40);min-height:52px;
 }
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 40px var(--c-40)}
+.btn-primary:active{transform:translateY(0)}
+.btn-ghost{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:15px 28px;border-radius:50px;
+  background:var(--bg);color:var(--cta);
+  border:2px solid var(--cta);
+  font-family:'Syne',sans-serif;font-size:15px;font-weight:700;
+  text-decoration:none;cursor:pointer;
+  transition:all .2s;min-height:52px;
+}
+.btn-ghost:hover{background:var(--c-08);transform:translateY(-1px)}
 
-/* ── NAV ─────────────────────────────────────────── */
-nav{position:fixed;top:0;left:0;right:0;z-index:var(--z-nav);display:flex;align-items:center;justify-content:space-between;padding:16px 40px;background:rgba(10,15,30,.88);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--border)}
+/* ── NAV ─────────────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:var(--z-nav);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;height:68px;
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:1px solid var(--b-06);
+  box-shadow:0 1px 0 var(--b-06);
+}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
-.logo-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--teal),var(--teal-d));display:flex;align-items:center;justify-content:center;font-size:22px}
-@media(prefers-reduced-motion:no-preference){
-  @keyframes heartbeat{0%{transform:scale(1)}14%{transform:scale(1.18)}28%{transform:scale(1)}42%{transform:scale(1.1)}70%{transform:scale(1)}}
-  .nav-logo:hover .logo-icon{animation:heartbeat .65s ease-in-out}
+.logo-icon{
+  width:40px;height:40px;border-radius:12px;
+  background:linear-gradient(135deg,var(--primary),var(--cta));
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  flex-shrink:0;
 }
-.logo-text{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--teal),#5DE0C5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.nav-links{display:flex;gap:32px;list-style:none}
-.nav-links a{color:var(--text2);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s;padding:6px 2px}
-.nav-links a:hover{color:var(--text)}
+.logo-text{
+  font-family:'Syne',sans-serif;font-size:22px;font-weight:800;
+  background:linear-gradient(135deg,var(--primary),var(--cta));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.nav-links{display:flex;gap:6px;list-style:none}
+.nav-links a{
+  color:var(--text-2);text-decoration:none;font-size:14px;font-weight:600;
+  transition:color .2s;padding:8px 14px;border-radius:8px;
+}
+.nav-links a:hover{color:var(--text);background:var(--b-06)}
 .nav-actions{display:flex;align-items:center;gap:10px}
-.nav-login{color:var(--text2);text-decoration:none;font-size:14px;font-weight:600;padding:8px 16px;border-radius:24px;border:1px solid var(--border);transition:all .2s;min-height:44px;display:flex;align-items:center}
-.nav-login:hover{color:var(--text);border-color:rgba(255,255,255,.2)}
-.nav-cta{padding:9px 20px;border-radius:24px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#0A0F1E;font-size:14px;font-weight:700;text-decoration:none;transition:all .2s;box-shadow:0 0 16px rgba(0,201,167,.3);min-height:44px;display:flex;align-items:center}
-.nav-cta:hover{transform:translateY(-1px);box-shadow:0 0 30px rgba(0,201,167,.55)}
-.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:8px;min-width:44px;min-height:44px;align-items:center;justify-content:center}
+.nav-login{
+  color:var(--text-2);text-decoration:none;font-size:14px;font-weight:700;
+  padding:9px 18px;border-radius:24px;
+  border:1px solid var(--b-12);transition:all .2s;min-height:44px;
+  display:flex;align-items:center;
+}
+.nav-login:hover{color:var(--cta);border-color:var(--c-25)}
+.nav-cta{
+  padding:10px 22px;border-radius:24px;
+  background:var(--cta);color:#fff;
+  font-size:14px;font-weight:700;text-decoration:none;
+  transition:all .2s;box-shadow:0 2px 16px var(--c-25);
+  min-height:44px;display:flex;align-items:center;
+}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 28px var(--c-40)}
+.hamburger{
+  display:none;flex-direction:column;gap:5px;cursor:pointer;
+  background:none;border:none;padding:8px;
+  min-width:44px;min-height:44px;align-items:center;justify-content:center;
+}
 .hamburger span{width:22px;height:2px;background:var(--text);border-radius:2px;transition:all .3s;display:block}
 
-/* ── MOBILE MENU ──────────────────────────────────── */
-#mobile-menu{display:none;position:fixed;top:72px;left:0;right:0;z-index:calc(var(--z-nav) - 1);background:rgba(10,15,30,.97);backdrop-filter:blur(24px);border-bottom:1px solid var(--border-t);padding:20px 24px 28px}
-#mobile-menu a{display:flex;align-items:center;padding:14px 0;color:var(--text2);text-decoration:none;font-size:16px;font-weight:500;border-bottom:1px solid var(--border);transition:color .2s}
+/* ── MOBILE MENU ─────────────────────────────────────── */
+#mobile-menu{
+  display:none;position:fixed;top:68px;left:0;right:0;
+  z-index:calc(var(--z-nav) - 1);
+  background:rgba(255,255,255,.98);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-bottom:2px solid var(--p-25);
+  padding:16px 24px 24px;
+  box-shadow:0 16px 48px rgba(29,29,29,.12);
+}
+#mobile-menu a{
+  display:flex;align-items:center;padding:14px 0;
+  color:var(--text-2);text-decoration:none;
+  font-size:16px;font-weight:600;
+  border-bottom:1px solid var(--b-06);transition:color .2s;
+}
 #mobile-menu a:last-of-type{border-bottom:none}
-#mobile-menu a:hover{color:var(--text)}
+#mobile-menu a:hover{color:var(--cta)}
 .mobile-cta-wrap{margin-top:20px}
 
-/* ── HERO ─────────────────────────────────────────── */
-.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:130px 24px 110px;position:relative;overflow:hidden;text-align:center}
-.hero-bg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,201,167,.11) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 90% 85%,rgba(0,168,139,.06) 0%,transparent 50%),radial-gradient(ellipse 40% 30% at 5% 60%,rgba(93,224,197,.04) 0%,transparent 50%)}
-.hero-grid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,201,167,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,201,167,.04) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent)}
-.ecg-wrap{position:absolute;bottom:0;left:0;right:0;height:80px;overflow:hidden;pointer-events:none}
-.ecg-svg{width:100%;height:100%}
-.ecg-path{fill:none;stroke:var(--teal);stroke-width:1.5;stroke-dasharray:1700;stroke-dashoffset:1700;opacity:.45}
-@media(prefers-reduced-motion:no-preference){
-  @keyframes ecg{0%{stroke-dashoffset:1700;opacity:0}15%{opacity:.45}65%{stroke-dashoffset:0;opacity:.45}85%{stroke-dashoffset:0;opacity:.45}100%{stroke-dashoffset:-1700;opacity:0}}
-  .ecg-path{animation:ecg 4s ease-in-out infinite}
+/* ── HERO ────────────────────────────────────────────── */
+.hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:130px 24px 100px;position:relative;overflow:hidden;
+  text-align:center;background:var(--bg);
+}
+.hero-blob{
+  position:absolute;inset:0;pointer-events:none;overflow:hidden;
+}
+.hero-blob::before{
+  content:'';position:absolute;
+  width:900px;height:600px;
+  top:-100px;left:50%;transform:translateX(-50%);
+  background:radial-gradient(ellipse,var(--bg-soft) 0%,transparent 68%);
+  border-radius:50%;
+}
+.hero-blob::after{
+  content:'';position:absolute;
+  width:500px;height:500px;
+  bottom:-80px;right:-80px;
+  background:radial-gradient(ellipse,rgba(34,114,255,.06) 0%,transparent 65%);
+  border-radius:50%;
 }
 .hero-inner{position:relative;max-width:820px}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.25);border-radius:50px;padding:8px 18px;margin-bottom:32px;font-size:13px;font-weight:600;color:var(--teal)}
-.badge-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0}
-@media(prefers-reduced-motion:no-preference){
-  @keyframes dot-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(1.6)}}
-  .badge-dot{animation:dot-pulse 2s ease-in-out infinite}
+
+/* Heartbeat badge */
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--p-08);border:1px solid var(--p-25);border-radius:50px;
+  padding:8px 20px;margin-bottom:36px;
+  font-size:13px;font-weight:700;color:var(--primary);
+  letter-spacing:.3px;
 }
-.hero h1{font-size:clamp(40px,7vw,76px);font-weight:800;line-height:1.08;margin-bottom:24px}
-.hero-desc{font-size:clamp(16px,2.2vw,19px);color:var(--text2);max-width:580px;margin:0 auto 44px;line-height:1.78}
+.badge-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--primary);flex-shrink:0;
+}
+
+/* Logo icon with #00ABE4 pulse */
+.hero-logo-wrap{
+  position:relative;display:inline-block;margin-bottom:32px;
+}
+.hero-logo-icon{
+  width:88px;height:88px;border-radius:24px;
+  background:linear-gradient(135deg,var(--primary),var(--cta));
+  display:flex;align-items:center;justify-content:center;
+  font-size:46px;margin:0 auto;position:relative;z-index:2;
+  box-shadow:0 8px 40px var(--p-40),0 0 0 0 var(--p-40);
+}
+.pulse-ring{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:88px;height:88px;border-radius:24px;
+  border:2px solid var(--primary);
+  pointer-events:none;
+}
+.pulse-ring-2{border-color:var(--cta)}
+
+.hero h1{
+  font-size:clamp(38px,7vw,72px);font-weight:800;
+  line-height:1.06;margin-bottom:24px;color:var(--text);
+}
+.accent{color:var(--primary)}
+.accent-cta{color:var(--cta)}
+.hero-desc{
+  font-size:clamp(16px,2.2vw,19px);color:var(--text-2);
+  max-width:560px;margin:0 auto 44px;line-height:1.78;
+}
 .hero-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:56px}
+
+/* Stat cards */
 .hero-stats{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-.stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(0,201,167,.15);border-radius:var(--r);padding:16px 22px;backdrop-filter:blur(16px);text-align:center;min-width:110px}
-.stat-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--teal);line-height:1}
-.stat-lbl{font-size:11px;color:var(--text2);margin-top:5px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
-
-/* ── TRUST BAR ────────────────────────────────────── */
-.trust-bar{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:18px 24px;display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap;background:var(--bg2)}
-.trust-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
-
-/* ── SECTION HEADERS ──────────────────────────────── */
-.section-header{text-align:center;max-width:680px;margin:0 auto}
-.section-tag{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:14px}
-.section-title{font-size:clamp(28px,4vw,44px);font-weight:800;margin-bottom:16px}
-.section-sub{font-size:17px;color:var(--text2);line-height:1.78}
-
-/* ── PROBLEMA ─────────────────────────────────────── */
-#problema{padding:100px 24px}
-.problema-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;max-width:1100px;margin:56px auto 0}
-.problema-card{background:var(--glass);border:1px solid rgba(255,75,110,.15);border-radius:var(--r-lg);padding:28px;position:relative;overflow:hidden;transition:transform .3s,border-color .3s}
-.problema-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,75,110,.4),transparent)}
-.problema-card:hover{transform:translateY(-3px);border-color:rgba(255,75,110,.3)}
-.problema-icon{width:52px;height:52px;border-radius:14px;margin-bottom:18px;display:flex;align-items:center;justify-content:center;background:rgba(255,75,110,.1);box-shadow:0 0 20px rgba(255,75,110,.15)}
-.problema-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:8px}
-.problema-desc{font-size:14px;color:var(--text2);line-height:1.75}
-
-/* ── FEATURES ─────────────────────────────────────── */
-#features{padding:100px 24px;background:var(--bg2)}
-.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;max-width:1100px;margin:56px auto 0}
-.feature-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-lg);padding:32px;transition:border-color .3s,box-shadow .3s,transform .3s}
-@media(prefers-reduced-motion:no-preference){
-  .feature-card{opacity:0;transform:translateY(28px);transition:opacity .5s ease,transform .5s ease,border-color .3s,box-shadow .3s}
-  .feature-card.visible{opacity:1;transform:translateY(0)}
+.stat-card{
+  background:var(--bg);border:1px solid var(--b-12);
+  border-radius:var(--r);padding:18px 24px;
+  text-align:center;min-width:110px;
+  box-shadow:var(--shadow-sm);
+  transition:transform .2s,box-shadow .2s;
 }
-.feature-card:hover{border-color:var(--border-t);transform:translateY(-4px);box-shadow:0 20px 50px rgba(0,0,0,.4),0 0 0 1px rgba(0,201,167,.1)}
-.feat-icon{width:52px;height:52px;border-radius:14px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;background:rgba(0,201,167,.1);border:1px solid rgba(0,201,167,.2);color:var(--teal)}
-.feat-icon.violet{background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.2);color:#a78bfa}
-.feat-icon.amber{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.2);color:#fbbf24}
-.feat-icon.rose{background:rgba(244,63,94,.1);border-color:rgba(244,63,94,.2);color:#fb7185}
-.feat-icon.sky{background:rgba(14,165,233,.1);border-color:rgba(14,165,233,.2);color:#38bdf8}
-.feat-icon.emerald{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.2);color:#34d399}
-.feat-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:10px}
-.feat-desc{font-size:14px;color:var(--text2);line-height:1.78}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.stat-val{
+  font-family:'Syne',sans-serif;font-size:26px;font-weight:800;
+  color:var(--primary);line-height:1;
+}
+.stat-lbl{
+  font-size:11px;color:var(--text-3);margin-top:6px;
+  font-weight:600;text-transform:uppercase;letter-spacing:.6px;
+}
 
-/* ── HOW IT WORKS ──────────────────────────────────── */
-#como-funciona{padding:100px 24px}
-.steps-wrap{max-width:860px;margin:60px auto 0;position:relative}
-.steps-line{position:absolute;left:25px;top:0;bottom:0;width:2px;background:var(--border)}
-.steps-progress{position:absolute;left:25px;top:0;width:2px;background:linear-gradient(180deg,var(--teal),transparent);height:0}
-@media(prefers-reduced-motion:no-preference){.steps-progress{transition:height 1.2s ease}}
-.steps-progress.animate{height:100%}
+/* ── TRUST BAR ───────────────────────────────────────── */
+.trust-bar{
+  background:var(--bg-soft);
+  border-top:1px solid var(--b-06);border-bottom:1px solid var(--b-06);
+  padding:18px 24px;
+  display:flex;align-items:center;justify-content:center;
+  gap:36px;flex-wrap:wrap;
+}
+.trust-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:var(--text-2);
+  font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+}
+.trust-item svg{color:var(--primary);flex-shrink:0}
+
+/* ── SECTION SHARED ──────────────────────────────────── */
+section{position:relative}
+.section-header{text-align:center;max-width:680px;margin:0 auto}
+.section-tag{
+  font-size:12px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:var(--primary);margin-bottom:14px;
+}
+.section-title{
+  font-size:clamp(28px,4vw,44px);font-weight:800;
+  margin-bottom:16px;color:var(--text);
+}
+.section-sub{
+  font-size:17px;color:var(--text-2);line-height:1.78;
+}
+.pad{padding:96px 24px}
+.pad-sm{padding:72px 24px}
+.bg-soft{background:var(--bg-soft)}
+.bg-white{background:var(--bg)}
+
+/* ── EL PROBLEMA ─────────────────────────────────────── */
+.problema-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:20px;max-width:1100px;margin:56px auto 0;
+}
+.problema-card{
+  background:var(--bg);border:1px solid var(--b-12);
+  border-radius:var(--r-lg);padding:28px 26px;
+  box-shadow:var(--shadow-sm);
+  transition:transform .25s,box-shadow .25s,border-color .25s;
+  position:relative;overflow:hidden;
+}
+.problema-card::after{
+  content:'';position:absolute;
+  bottom:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--primary),var(--cta));
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .3s ease;
+}
+.problema-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--p-25)}
+.problema-card:hover::after{transform:scaleX(1)}
+.problema-icon{
+  width:52px;height:52px;border-radius:14px;margin-bottom:18px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--c-08);border:1px solid var(--c-15);
+  transition:background .25s;
+}
+.problema-card:hover .problema-icon{background:var(--c-15)}
+.problema-icon svg{color:var(--cta)}
+.problema-title{
+  font-family:'Syne',sans-serif;font-size:17px;font-weight:700;
+  margin-bottom:8px;color:var(--text);
+}
+.problema-desc{font-size:14px;color:var(--text-2);line-height:1.75}
+
+/* ── FEATURES ────────────────────────────────────────── */
+.features-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:20px;max-width:1100px;margin:56px auto 0;
+}
+.feature-card{
+  background:var(--bg);border:1px solid var(--b-12);
+  border-radius:var(--r-lg);padding:32px;
+  border-left:4px solid var(--primary);
+  box-shadow:var(--shadow-sm);
+  transition:transform .25s,box-shadow .25s,border-left-color .25s;
+}
+.feature-card:hover{
+  transform:translateY(-4px);box-shadow:var(--shadow-md);
+  border-left-color:var(--cta);
+}
+.feat-icon{
+  width:52px;height:52px;border-radius:14px;margin-bottom:20px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--p-08);border:1px solid var(--p-15);color:var(--primary);
+  transition:background .25s;
+}
+.feature-card:hover .feat-icon{background:var(--p-15)}
+.feat-title{
+  font-family:'Syne',sans-serif;font-size:18px;font-weight:700;
+  margin-bottom:10px;color:var(--text);
+}
+.feat-desc{font-size:14px;color:var(--text-2);line-height:1.78}
+
+/* ── HOW IT WORKS ────────────────────────────────────── */
+.steps-wrap{max-width:800px;margin:60px auto 0;position:relative}
+.steps-line{
+  position:absolute;left:25px;top:0;bottom:0;width:2px;
+  background:var(--b-12);border-radius:2px;
+}
+.steps-progress{
+  position:absolute;left:25px;top:0;width:2px;
+  background:linear-gradient(180deg,var(--cta),var(--primary));
+  height:0;border-radius:2px;
+}
 .step{display:flex;gap:28px;align-items:flex-start;margin-bottom:52px;position:relative}
 .step:last-child{margin-bottom:0}
-.step-num{width:52px;height:52px;border-radius:50%;flex-shrink:0;background:var(--bg3);border:2px solid var(--border-t);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--teal);position:relative;z-index:1;transition:background .4s,box-shadow .4s,color .4s,border-color .4s}
-.step.active .step-num{background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#0A0F1E;box-shadow:0 0 24px rgba(0,201,167,.4);border-color:transparent}
-.step-body h3{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px}
-.step-body p{font-size:15px;color:var(--text2);line-height:1.78;max-width:580px}
-.step-tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:12px;background:rgba(0,201,167,.1);color:var(--teal);border:1px solid rgba(0,201,167,.2)}
-
-/* ── DR. DIGITAL ───────────────────────────────────── */
-#dr-digital{padding:100px 24px;background:var(--bg2)}
-.dr-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;max-width:1100px;margin:0 auto}
-.dr-feature-list{list-style:none;display:flex;flex-direction:column;gap:16px;margin:28px 0 36px}
-.dr-feature-list li{display:flex;gap:14px;align-items:flex-start}
-.dr-check{width:22px;height:22px;border-radius:50%;background:rgba(0,201,167,.15);border:1px solid rgba(0,201,167,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;color:var(--teal);font-size:11px;font-weight:700}
-.dr-feature-title{font-weight:600;font-size:15px}
-.dr-feature-desc{font-size:13px;color:var(--text2);margin-top:2px}
-.chat-ui{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-xl);padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.4)}
-.chat-topbar{display:flex;align-items:center;gap:12px;padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:20px}
-.chat-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal-d));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 0 18px rgba(0,201,167,.35)}
-.chat-name{font-family:'Syne',sans-serif;font-weight:700;font-size:15px}
-.chat-status{font-size:12px;color:var(--teal);font-weight:600}
-.chat-bubbles{display:flex;flex-direction:column;gap:12px}
-.bubble{border-radius:16px;padding:12px 16px;font-size:14px;line-height:1.65}
-.bubble-user{background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.15);margin-left:24px;color:var(--text2)}
-.bubble-dr{background:var(--bg4);border:1px solid var(--border);margin-right:10px}
-.bubble-dr strong{color:var(--teal)}
-.typing-dot{display:flex;gap:4px;padding:12px 16px;background:var(--bg4);border:1px solid var(--border);border-radius:16px;width:fit-content}
-.typing-dot span{width:7px;height:7px;border-radius:50%;background:var(--teal);opacity:.5}
-@media(prefers-reduced-motion:no-preference){
-  @keyframes dot-bounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-7px);opacity:1}}
-  .typing-dot span{animation:dot-bounce .8s infinite}
-  .typing-dot span:nth-child(2){animation-delay:.15s}
-  .typing-dot span:nth-child(3){animation-delay:.3s}
+.step-num{
+  width:52px;height:52px;border-radius:50%;flex-shrink:0;
+  background:var(--bg);border:2px solid var(--b-12);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:18px;font-weight:800;
+  color:var(--text-3);position:relative;z-index:1;
+  transition:background .4s,box-shadow .4s,color .4s,border-color .4s;
+  box-shadow:var(--shadow-sm);
+}
+.step.active .step-num{
+  background:var(--cta);color:#fff;
+  box-shadow:0 0 0 4px var(--c-15),0 4px 20px var(--c-40);
+  border-color:transparent;
+}
+.step-body{padding-top:6px}
+.step-body h3{
+  font-family:'Syne',sans-serif;font-size:22px;font-weight:700;
+  margin-bottom:8px;color:var(--text);
+}
+.step-body p{font-size:15px;color:var(--text-2);line-height:1.78;max-width:560px}
+.step-tag{
+  display:inline-block;padding:5px 14px;border-radius:20px;
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  margin-top:12px;background:var(--p-08);color:var(--primary);
+  border:1px solid var(--p-25);
 }
 
-/* ── INDICATORS ─────────────────────────────────────── */
-#indicadores{padding:80px 24px}
-.ind-section{max-width:900px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+/* ── DR. VITALIA ─────────────────────────────────────── */
+.dr-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:60px;align-items:center;max-width:1100px;margin:0 auto;
+}
+.dr-feature-list{list-style:none;display:flex;flex-direction:column;gap:16px;margin:28px 0 36px}
+.dr-feature-list li{display:flex;gap:14px;align-items:flex-start}
+.dr-check{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--p-08);border:1px solid var(--p-25);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:2px;color:var(--primary);
+  font-size:11px;font-weight:700;
+}
+.dr-feature-title{font-weight:700;font-size:15px;color:var(--text)}
+.dr-feature-desc{font-size:13px;color:var(--text-2);margin-top:2px}
+
+/* Chat UI */
+.chat-ui{
+  background:var(--bg);border:1px solid var(--b-12);
+  border-radius:var(--r-xl);padding:24px;
+  box-shadow:var(--shadow-lg);
+}
+.chat-topbar{
+  display:flex;align-items:center;gap:12px;
+  padding-bottom:18px;border-bottom:1px solid var(--b-06);margin-bottom:20px;
+}
+.chat-avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--cta));
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+  box-shadow:0 4px 16px var(--p-40);
+}
+.chat-name{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text)}
+.chat-status{font-size:12px;color:var(--primary);font-weight:700}
+.chat-bubbles{display:flex;flex-direction:column;gap:12px}
+.bubble{border-radius:16px;padding:12px 16px;font-size:14px;line-height:1.65}
+.bubble-user{
+  background:var(--bg-soft);border:1px solid var(--b-06);
+  margin-left:24px;color:var(--text-2);
+}
+.bubble-dr{
+  background:var(--bg);border:1px solid var(--b-12);
+  margin-right:10px;color:var(--text-2);
+  box-shadow:var(--shadow-sm);
+}
+.bubble-dr strong{color:var(--cta)}
+.typing-dot{
+  display:flex;gap:4px;padding:12px 16px;
+  background:var(--bg-soft);border:1px solid var(--b-06);
+  border-radius:16px;width:fit-content;
+}
+.typing-dot span{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--primary);opacity:.5;
+}
+
+/* ── INDICATORS ──────────────────────────────────────── */
+.ind-section{
+  max-width:900px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:60px;align-items:center;
+}
 .ind-list{display:flex;flex-direction:column;gap:10px}
-.ind-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);transition:border-color .2s}
-.ind-row:hover{border-color:var(--border-t)}
-.ind-name{font-size:13px;font-weight:600}
-.ind-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text2)}
-.ind-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.ind-ok{background:rgba(0,201,167,.12);color:var(--teal)}
-.ind-hi{background:rgba(255,75,110,.12);color:#ff6b8a}
-.ind-lo{background:rgba(245,158,11,.12);color:#fbbf24}
+.ind-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;border-radius:var(--r);
+  background:var(--bg);border:1px solid var(--b-12);
+  box-shadow:var(--shadow-sm);
+  transition:border-color .2s,transform .2s;
+}
+.ind-row:hover{border-color:var(--p-25);transform:translateX(3px)}
+.ind-name{font-size:13px;font-weight:700;color:var(--text)}
+.ind-val{
+  font-family:'Plus Jakarta Sans',monospace;
+  font-size:13px;font-weight:600;color:var(--text-2);
+}
+.ind-badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px}
+.ind-ok{background:var(--p-08);color:var(--primary);border:1px solid var(--p-25)}
+.ind-hi{background:var(--c-08);color:var(--cta);border:1px solid var(--c-25)}
+.ind-lo{background:var(--b-06);color:var(--text-2);border:1px solid var(--b-12)}
 
-/* ── PRICING ──────────────────────────────────────── */
-#precios{padding:100px 24px;background:var(--bg2)}
-.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;max-width:800px;margin:56px auto 0}
-.pricing-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-xl);padding:40px 32px;position:relative;transition:transform .3s}
-.pricing-card:hover{transform:translateY(-4px)}
-.pricing-card.featured{border-color:rgba(0,201,167,.35);background:linear-gradient(145deg,rgba(0,201,167,.07),rgba(0,168,139,.03));box-shadow:0 0 60px rgba(0,201,167,.12),0 0 0 1px rgba(0,201,167,.08)}
-.pricing-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#0A0F1E;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;margin-bottom:24px}
-.pricing-plan{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:10px}
-.pricing-price{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;line-height:1;margin-bottom:6px;color:var(--teal)}
+/* ── PRICING ─────────────────────────────────────────── */
+.pricing-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:24px;max-width:800px;margin:56px auto 0;
+}
+.pricing-card{
+  background:var(--bg);border:1px solid var(--b-12);
+  border-radius:var(--r-xl);padding:40px 32px;
+  position:relative;box-shadow:var(--shadow-sm);
+  transition:transform .25s,box-shadow .25s;
+}
+.pricing-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md)}
+.pricing-card.featured{
+  border-color:var(--cta);border-width:2px;
+  box-shadow:0 0 0 4px var(--c-08),var(--shadow-lg);
+}
+.pricing-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--cta);color:#fff;
+  border-radius:20px;padding:5px 16px;
+  font-size:12px;font-weight:700;margin-bottom:24px;
+  box-shadow:0 2px 12px var(--c-25);
+}
+.pricing-plan{
+  font-family:'Syne',sans-serif;font-size:20px;
+  font-weight:700;margin-bottom:10px;color:var(--text);
+}
+.pricing-price{
+  font-family:'Syne',sans-serif;font-size:54px;font-weight:800;
+  line-height:1;margin-bottom:6px;color:var(--cta);
+}
 .pricing-price sup{font-size:22px;vertical-align:super}
-.pricing-period{font-size:13px;color:var(--text2);margin-bottom:28px}
-.pricing-div{border:none;border-top:1px solid var(--border);margin:24px 0}
-.pricing-features{list-style:none;display:flex;flex-direction:column;gap:13px;margin-bottom:32px}
-.pricing-features li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--text2);line-height:1.5}
-.pricing-features li .ck{color:var(--teal);font-size:13px;font-weight:700;flex-shrink:0;margin-top:2px}
+.pricing-period{font-size:13px;color:var(--text-2);margin-bottom:28px}
+.pricing-div{border:none;border-top:1px solid var(--b-06);margin:24px 0}
+.pricing-features{
+  list-style:none;display:flex;flex-direction:column;
+  gap:13px;margin-bottom:32px;
+}
+.pricing-features li{
+  display:flex;align-items:flex-start;
+  gap:10px;font-size:14px;color:var(--text-2);line-height:1.5;
+}
+.pricing-features li .ck{
+  color:var(--primary);font-size:14px;font-weight:700;
+  flex-shrink:0;margin-top:1px;
+}
 .pricing-features li strong{color:var(--text)}
-.pricing-features li .dash{color:var(--text3);flex-shrink:0}
-.pricing-btn{display:flex;align-items:center;justify-content:center;width:100%;padding:14px 24px;border-radius:50px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;text-decoration:none;transition:all .2s;min-height:48px}
-.pricing-btn.primary{background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#0A0F1E;box-shadow:0 0 24px rgba(0,201,167,.3)}
-.pricing-btn.primary:hover{box-shadow:0 0 44px rgba(0,201,167,.6);transform:translateY(-1px)}
-.pricing-btn.ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
-.pricing-btn.ghost:hover{border-color:var(--border-t);color:var(--text)}
-.pricing-note{text-align:center;margin-top:36px;font-size:13px;color:var(--text3)}
+.pricing-features li .dash{color:var(--text-3);flex-shrink:0}
+.pricing-btn{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;padding:15px 24px;border-radius:50px;
+  font-family:'Syne',sans-serif;font-size:15px;font-weight:700;
+  text-decoration:none;transition:all .2s;min-height:52px;
+}
+.pricing-btn.primary{
+  background:var(--cta);color:#fff;
+  box-shadow:0 4px 20px var(--c-40);
+}
+.pricing-btn.primary:hover{box-shadow:0 8px 36px var(--c-40);transform:translateY(-1px)}
+.pricing-btn.ghost{
+  background:transparent;color:var(--cta);
+  border:2px solid var(--cta);
+}
+.pricing-btn.ghost:hover{background:var(--c-08)}
+.pricing-note{text-align:center;margin-top:36px;font-size:13px;color:var(--text-3)}
 
-/* ── CTA ────────────────────────────────────────────── */
-.cta-section{padding:120px 24px;text-align:center;position:relative;overflow:hidden;background:radial-gradient(ellipse 70% 100% at 50% 100%,rgba(0,201,167,.06),transparent),var(--bg)}
-.cta-glow{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(0,201,167,.07),transparent 65%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
-.cta-inner{position:relative;max-width:700px;margin:0 auto}
-.cta-section h2{font-size:clamp(32px,5vw,54px);font-weight:800;margin-bottom:18px;letter-spacing:-.03em}
-.cta-section p{font-size:17px;color:var(--text2);margin-bottom:40px}
-.disclaimer{display:inline-block;margin-top:28px;padding:12px 24px;border-radius:12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);font-size:12px;color:rgba(245,158,11,.9);max-width:560px;line-height:1.7}
+/* ── CTA SECTION ─────────────────────────────────────── */
+.cta-section{
+  padding:120px 24px;text-align:center;
+  position:relative;overflow:hidden;
+  background:var(--bg-soft);
+}
+.cta-section::before{
+  content:'';position:absolute;
+  width:700px;height:700px;border-radius:50%;
+  background:radial-gradient(circle,rgba(34,114,255,.07),transparent 65%);
+  top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;
+}
+.cta-inner{position:relative;max-width:660px;margin:0 auto}
+.cta-section h2{
+  font-size:clamp(30px,5vw,52px);font-weight:800;
+  margin-bottom:18px;letter-spacing:-.03em;color:var(--text);
+}
+.cta-section p{font-size:17px;color:var(--text-2);margin-bottom:40px;line-height:1.78}
+.disclaimer{
+  display:inline-block;margin-top:28px;padding:12px 24px;border-radius:var(--r);
+  background:var(--bg);border:1px solid var(--b-12);
+  font-size:12px;color:var(--text-2);
+  max-width:560px;line-height:1.7;
+  box-shadow:var(--shadow-sm);
+}
 
-/* ── TRUST BADGES ──────────────────────────────────── */
-.trust-badges{display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;padding:22px 24px;border-top:1px solid var(--border);background:var(--bg2)}
-.trust-badge{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;opacity:.8;transition:opacity .2s}
-.trust-badge:hover{opacity:1}
+/* ── TRUST BADGES ────────────────────────────────────── */
+.trust-badges{
+  display:flex;align-items:center;justify-content:center;
+  gap:28px;flex-wrap:wrap;padding:22px 24px;
+  border-top:1px solid var(--b-06);background:var(--bg);
+}
+.trust-badge{
+  display:flex;align-items:center;gap:7px;
+  font-size:11px;color:var(--text-3);font-weight:700;
+  letter-spacing:.5px;text-transform:uppercase;
+  transition:color .2s;
+}
+.trust-badge:hover{color:var(--text)}
 
 /* ── FOOTER ──────────────────────────────────────────── */
-footer{background:var(--bg2);padding:64px 24px 32px}
+footer{background:var(--text);padding:64px 24px 32px}
 .footer-inner{max-width:1100px;margin:0 auto}
-.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
-.footer-brand p{font-size:14px;color:var(--text2);margin-top:14px;line-height:1.78;max-width:280px}
-.footer-col h4{font-family:'Syne',sans-serif;font-weight:700;margin-bottom:18px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)}
-.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:11px}
-.footer-col a{font-size:14px;color:var(--text2);text-decoration:none;transition:color .2s}
-.footer-col a:hover{color:var(--teal)}
-.footer-bottom{border-top:1px solid var(--border);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-.footer-bottom p{font-size:13px;color:var(--text3)}
+.footer-grid{
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;
+  gap:40px;margin-bottom:48px;
+}
+.footer-brand p{
+  font-size:14px;color:rgba(255,255,255,.55);
+  margin-top:14px;line-height:1.78;max-width:280px;
+}
+.footer-logo-text{
+  font-family:'Syne',sans-serif;font-size:22px;font-weight:800;
+  color:#fff;
+}
+.footer-col h4{
+  font-family:'Syne',sans-serif;font-weight:700;margin-bottom:18px;
+  font-size:12px;text-transform:uppercase;letter-spacing:1px;
+  color:rgba(255,255,255,.35);
+}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+.footer-col a{
+  font-size:14px;color:rgba(255,255,255,.55);
+  text-decoration:none;transition:color .2s;
+}
+.footer-col a:hover{color:#fff}
+.footer-bottom{
+  border-top:1px solid rgba(255,255,255,.1);padding-top:24px;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:12px;
+}
+.footer-bottom p{font-size:13px;color:rgba(255,255,255,.35)}
 
-/* ── STICKY CTA ──────────────────────────────────────── */
-.sticky-cta{display:none;position:fixed;bottom:0;left:0;right:0;z-index:var(--z-sticky);padding:14px 20px;background:rgba(10,15,30,.96);backdrop-filter:blur(20px);border-top:1px solid rgba(0,201,167,.2)}
-.sticky-cta a{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:14px;background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#0A0F1E;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;text-decoration:none;min-height:52px}
+/* ── STICKY CTA (mobile) ─────────────────────────────── */
+.sticky-cta{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  z-index:var(--z-sticky);padding:12px 16px;
+  background:rgba(255,255,255,.97);
+  border-top:1px solid var(--b-12);
+  box-shadow:0 -4px 24px rgba(29,29,29,.1);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.sticky-cta a{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;padding:16px;border-radius:var(--r);
+  background:var(--cta);color:#fff;
+  font-family:'Syne',sans-serif;font-size:16px;font-weight:700;
+  text-decoration:none;min-height:54px;
+  box-shadow:0 4px 20px var(--c-40);
+}
+
+/* ── ANIMATIONS ──────────────────────────────────────── */
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(24px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes dotBounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-7px);opacity:1}}
+
+/* Heartbeat on logo: #00ABE4 pulse */
+@keyframes hbPulse{
+  0%,100%{box-shadow:0 8px 40px var(--p-40),0 0 0 0 var(--p-25)}
+  40%{box-shadow:0 8px 40px var(--p-40),0 0 0 14px rgba(0,171,228,0)}
+}
+@keyframes pulseRing{
+  0%{transform:translate(-50%,-50%) scale(1);opacity:.7}
+  100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}
+}
+@keyframes ecg{
+  0%{stroke-dashoffset:1700;opacity:0}
+  15%{opacity:.3}65%{stroke-dashoffset:0;opacity:.3}
+  85%{stroke-dashoffset:0;opacity:.3}100%{stroke-dashoffset:-1700;opacity:0}
+}
+
+/* Reduced-motion-safe media query */
+@media(prefers-reduced-motion:no-preference){
+  .badge-dot{animation:blink 2s ease-in-out infinite}
+  .hero-logo-icon{animation:hbPulse 2.4s ease-in-out infinite}
+  .pulse-ring{animation:pulseRing 2.6s ease-out infinite}
+  .pulse-ring-2{animation:pulseRing 2.6s ease-out infinite .9s}
+  .ecg-path{animation:ecg 4s ease-in-out infinite}
+  .typing-dot span{animation:dotBounce .8s infinite}
+  .typing-dot span:nth-child(2){animation-delay:.15s}
+  .typing-dot span:nth-child(3){animation-delay:.3s}
+  .feature-card{opacity:0;transform:translateY(28px);transition:opacity .5s ease,transform .5s ease,box-shadow .25s,border-left-color .25s}
+  .feature-card.visible{opacity:1;transform:translateY(0)}
+  .steps-progress{transition:height 1.2s ease}
+  .fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
+  .fade-in.visible{opacity:1;transform:translateY(0)}
+}
+/* Reduced motion: show everything immediately */
+@media(prefers-reduced-motion:reduce){
+  .feature-card{opacity:1;transform:none}
+  .fade-in{opacity:1;transform:none}
+}
+
+/* ECG path */
+.ecg-wrap{position:absolute;bottom:0;left:0;right:0;height:72px;overflow:hidden;pointer-events:none}
+.ecg-svg{width:100%;height:100%}
+.ecg-path{fill:none;stroke:var(--primary);stroke-width:1.5;stroke-dasharray:1700;stroke-dashoffset:1700;opacity:.3}
 
 /* ── RESPONSIVE ──────────────────────────────────────── */
 @media(max-width:768px){
-  nav{padding:14px 20px}
+  nav{padding:0 20px;height:64px}
   .nav-links,.nav-login{display:none}
   .hamburger{display:flex}
-  .hero{padding:110px 20px 90px}
+  #mobile-menu{top:64px}
+  .hero{padding:110px 20px 80px}
   .dr-grid{grid-template-columns:1fr}
   .ind-section{grid-template-columns:1fr}
   .footer-grid{grid-template-columns:1fr 1fr}
   .sticky-cta{display:block}
   body{padding-bottom:80px}
   .trust-bar{gap:20px}
-  .trust-badges{gap:20px}
+  .trust-badges{gap:18px}
+  .pad{padding:72px 20px}
 }
 @media(max-width:480px){
   .footer-grid{grid-template-columns:1fr}
   .hero-stats{gap:10px}
   .stat-card{min-width:90px;padding:14px 16px}
   .stat-val{font-size:22px}
+  .hero h1{font-size:clamp(32px,9vw,48px)}
 }
   </style>
 </head>
@@ -309,26 +732,39 @@ footer{background:var(--bg2);padding:64px 24px 32px}
 
 <!-- HERO -->
 <section class="hero" aria-label="Presentación de VitalIA">
-  <div class="hero-bg" aria-hidden="true"></div>
-  <div class="hero-grid" aria-hidden="true"></div>
+  <div class="hero-blob" aria-hidden="true"></div>
+
+  <!-- ECG de fondo -->
   <div class="ecg-wrap" aria-hidden="true">
-    <svg class="ecg-svg" viewBox="0 0 1200 80" preserveAspectRatio="none">
-      <path class="ecg-path" d="M-100,40 L200,40 L260,40 L278,8 L298,72 L318,40 L380,40 L580,40 L640,40 L658,8 L678,72 L698,40 L760,40 L960,40 L1020,40 L1038,8 L1058,72 L1078,40 L1400,40"/>
+    <svg class="ecg-svg" viewBox="0 0 1200 72" preserveAspectRatio="none">
+      <path class="ecg-path" d="M-100,36 L200,36 L260,36 L278,7 L298,65 L318,36 L380,36 L580,36 L640,36 L658,7 L678,65 L698,36 L760,36 L960,36 L1020,36 L1038,7 L1058,65 L1078,36 L1400,36"/>
     </svg>
   </div>
+
   <div class="hero-inner">
+    <!-- Live badge -->
     <div class="hero-badge" role="status">
       <span class="badge-dot" aria-hidden="true"></span>
       Inteligencia Médica · Powered by Claude AI
     </div>
-    <h1>Entiende tus exámenes<br><span class="grad">en 30 segundos</span></h1>
+
+    <!-- Logo con pulso #00ABE4 -->
+    <div class="hero-logo-wrap" aria-hidden="true">
+      <div class="pulse-ring"></div>
+      <div class="pulse-ring pulse-ring-2"></div>
+      <div class="hero-logo-icon">🩺</div>
+    </div>
+
+    <h1>Entiende tus exámenes<br><span class="accent-cta">en 30 segundos</span></h1>
+
     <p class="hero-desc">
       Sube tu examen de laboratorio y recibe una interpretación clara, en español, sin jerga médica.
-      Para ti y toda tu familia — <strong style="color:var(--text);">$4.700 CLP al mes.</strong>
+      Para ti y toda tu familia — <strong>$4.700 CLP al mes.</strong>
     </p>
+
     <div class="hero-actions">
-      <a href="/register" class="btn-primary pulse" aria-label="Analizar mi examen — crear cuenta gratis">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <a href="/register" class="btn-primary" aria-label="Analizar mi examen — crear cuenta gratis">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Analizar mi examen
       </a>
       <a href="#como-funciona" class="btn-ghost">
@@ -336,20 +772,22 @@ footer{background:var(--bg2);padding:64px 24px 32px}
         Ver cómo funciona
       </a>
     </div>
+
+    <!-- Stat cards con contadores -->
     <div class="hero-stats" role="list" aria-label="Métricas clave">
-      <div class="stat-card" role="listitem">
-        <div class="stat-val" data-count="30" data-prefix="&lt;" data-suffix="s">—</div>
+      <div class="stat-card fade-in" role="listitem" style="--d:0ms">
+        <div class="stat-val" data-count="30" data-prefix="&lt;" data-suffix="s">30s</div>
         <div class="stat-lbl">Análisis</div>
       </div>
-      <div class="stat-card" role="listitem">
+      <div class="stat-card fade-in" role="listitem" style="--d:80ms">
         <div class="stat-val">$4.700</div>
         <div class="stat-lbl">CLP / mes</div>
       </div>
-      <div class="stat-card" role="listitem">
-        <div class="stat-val" data-count="200" data-suffix="+">—</div>
+      <div class="stat-card fade-in" role="listitem" style="--d:160ms">
+        <div class="stat-val" data-count="200" data-suffix="+">200+</div>
         <div class="stat-lbl">Indicadores</div>
       </div>
-      <div class="stat-card" role="listitem">
+      <div class="stat-card fade-in" role="listitem" style="--d:240ms">
         <div class="stat-val">24/7</div>
         <div class="stat-lbl">Disponible</div>
       </div>
@@ -382,55 +820,61 @@ footer{background:var(--bg2);padding:64px 24px 32px}
 </div>
 
 <!-- EL PROBLEMA -->
-<section id="problema" aria-labelledby="problema-title">
+<section id="problema" class="pad bg-soft" aria-labelledby="problema-title">
   <div class="container">
-    <div class="section-header">
+    <div class="section-header fade-in">
       <div class="section-tag">El problema</div>
       <h2 class="section-title" id="problema-title">El papel dice algo…<br>¿pero qué significa?</h2>
       <p class="section-sub">El 76% de los pacientes no entiende sus resultados de laboratorio. No es culpa tuya — es que nadie los explica.</p>
     </div>
     <div class="problema-grid" role="list">
-      <div class="problema-card" role="listitem">
+
+      <div class="problema-card fade-in" role="listitem">
         <div class="problema-icon" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF4B6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
         <div class="problema-title">Siglas incomprensibles</div>
         <div class="problema-desc">GOT, GPT, TSH, LDH, PCR… tu examen es un documento que nadie te enseñó a leer.</div>
       </div>
-      <div class="problema-card" role="listitem">
+
+      <div class="problema-card fade-in" role="listitem">
         <div class="problema-icon" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF4B6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
         <div class="problema-title">Meses de espera</div>
         <div class="problema-desc">Una hora con el médico para que te expliquen el papel puede tomar semanas — mientras tu resultado caduca.</div>
       </div>
-      <div class="problema-card" role="listitem">
+
+      <div class="problema-card fade-in" role="listitem">
         <div class="problema-icon" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF4B6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         </div>
         <div class="problema-title">Consultas costosas</div>
         <div class="problema-desc">$50.000 o más por una consulta privada solo para escuchar que tus exámenes "están bien".</div>
       </div>
-      <div class="problema-card" role="listitem">
+
+      <div class="problema-card fade-in" role="listitem">
         <div class="problema-icon" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF4B6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </div>
         <div class="problema-title">Ansiedad innecesaria</div>
         <div class="problema-desc">No entender tus resultados genera más estrés que los propios valores. La información es salud.</div>
       </div>
+
     </div>
   </div>
 </section>
 
 <!-- FEATURES -->
-<section id="features" aria-labelledby="features-title">
+<section id="features" class="pad bg-white" aria-labelledby="features-title">
   <div class="container">
-    <div class="section-header">
+    <div class="section-header fade-in">
       <div class="section-tag">La solución</div>
-      <h2 class="section-title" id="features-title">Todo lo que necesitas<br>para <span class="grad">entender tu salud</span></h2>
+      <h2 class="section-title" id="features-title">Todo lo que necesitas<br>para <span class="accent">entender tu salud</span></h2>
       <p class="section-sub">Tecnología de IA médica al alcance de todos. Sin esperas, sin tecnicismos, sin complicaciones.</p>
     </div>
     <div class="features-grid" role="list" aria-label="Funcionalidades de VitalIA">
+
       <div class="feature-card" role="listitem">
         <div class="feat-icon" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
@@ -438,56 +882,63 @@ footer{background:var(--bg2);padding:64px 24px 32px}
         <h3 class="feat-title">Análisis de laboratorio</h3>
         <p class="feat-desc">Hemograma, bioquímica, hormonas, orina y más de 200 indicadores interpretados en lenguaje claro. PDF o foto.</p>
       </div>
+
       <div class="feature-card" role="listitem">
-        <div class="feat-icon violet" aria-hidden="true">
+        <div class="feat-icon" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
         <h3 class="feat-title">Cargas familiares</h3>
         <p class="feat-desc">Agrega a tus hijos, padres o pareja. Una sola cuenta para toda la familia — sin costo adicional.</p>
       </div>
+
       <div class="feature-card" role="listitem">
-        <div class="feat-icon rose" aria-hidden="true">
+        <div class="feat-icon" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </div>
         <h3 class="feat-title">Diagnóstico visual</h3>
         <p class="feat-desc">Sube foto de un síntoma o herida y la IA te orienta sobre qué podría ser y si debes consultar urgente.</p>
       </div>
+
       <div class="feature-card" role="listitem">
-        <div class="feat-icon amber" aria-hidden="true">
+        <div class="feat-icon" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         </div>
         <h3 class="feat-title">Plan de acción</h3>
         <p class="feat-desc">Plan personalizado de nutrición, ejercicio y hábitos directamente vinculado a tus biomarcadores alterados.</p>
       </div>
+
       <div class="feature-card" role="listitem">
-        <div class="feat-icon sky" aria-hidden="true">
+        <div class="feat-icon" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </div>
         <h3 class="feat-title">Dr. VitalIA 24/7</h3>
         <p class="feat-desc">Chat médico con IA disponible siempre. Pregunta sobre remedios, síntomas y dieta — respuestas empáticas y claras.</p>
       </div>
+
       <div class="feature-card" role="listitem">
-        <div class="feat-icon emerald" aria-hidden="true">
+        <div class="feat-icon" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         </div>
         <h3 class="feat-title">Evolución histórica</h3>
         <p class="feat-desc">Compara exámenes en el tiempo. Tendencias, predicciones y progreso visible de tus biomarcadores.</p>
       </div>
+
     </div>
   </div>
 </section>
 
 <!-- CÓMO FUNCIONA -->
-<section id="como-funciona" aria-labelledby="como-title">
+<section id="como-funciona" class="pad bg-soft" aria-labelledby="como-title">
   <div class="container">
-    <div class="section-header">
+    <div class="section-header fade-in">
       <div class="section-tag">Proceso</div>
-      <h2 class="section-title" id="como-title">3 pasos hacia una<br><span class="grad">mejor salud</span></h2>
+      <h2 class="section-title" id="como-title">3 pasos hacia una<br><span class="accent">mejor salud</span></h2>
       <p class="section-sub">Tan simple como tomar una foto. Resultados interpretados en menos de 30 segundos.</p>
     </div>
     <div class="steps-wrap" role="list" aria-label="Pasos del proceso VitalIA">
       <div class="steps-line" aria-hidden="true"></div>
       <div class="steps-progress" id="steps-progress" aria-hidden="true"></div>
+
       <div class="step" role="listitem">
         <div class="step-num" aria-label="Paso 1">1</div>
         <div class="step-body">
@@ -496,6 +947,7 @@ footer{background:var(--bg2);padding:64px 24px 32px}
           <span class="step-tag">⚡ Menos de 10 segundos</span>
         </div>
       </div>
+
       <div class="step" role="listitem">
         <div class="step-num" aria-label="Paso 2">2</div>
         <div class="step-body">
@@ -504,6 +956,7 @@ footer{background:var(--bg2);padding:64px 24px 32px}
           <span class="step-tag">⚡ En menos de 30 segundos</span>
         </div>
       </div>
+
       <div class="step" role="listitem">
         <div class="step-num" aria-label="Paso 3">3</div>
         <div class="step-body">
@@ -512,38 +965,52 @@ footer{background:var(--bg2);padding:64px 24px 32px}
           <span class="step-tag">⚡ Disponible 24/7</span>
         </div>
       </div>
+
     </div>
   </div>
 </section>
 
-<!-- DR. DIGITAL -->
-<section id="dr-digital" aria-labelledby="dr-title">
+<!-- DR. VITALIA -->
+<section id="dr-digital" class="pad bg-white" aria-labelledby="dr-title">
   <div class="dr-grid">
-    <div>
+    <div class="fade-in">
       <div class="section-tag">Dr. VitalIA</div>
       <h2 class="section-title" id="dr-title">Un médico siempre<br>a tu lado</h2>
-      <p style="font-size:16px;color:var(--text2);line-height:1.8;margin-top:16px;">El Dr. VitalIA interpreta tus exámenes, explica diagnósticos y te orienta de forma empática — como un médico de confianza disponible siempre.</p>
+      <p style="font-size:16px;color:var(--text-2);line-height:1.8;margin-top:16px;">El Dr. VitalIA interpreta tus exámenes, explica diagnósticos y te orienta de forma empática — como un médico de confianza disponible siempre.</p>
       <ul class="dr-feature-list" aria-label="Características del Dr. VitalIA">
         <li>
           <div class="dr-check" aria-hidden="true">✓</div>
-          <div><div class="dr-feature-title">Interpretación en lenguaje simple</div><div class="dr-feature-desc">Sin tecnicismos. Explicaciones que cualquier persona entiende.</div></div>
+          <div>
+            <div class="dr-feature-title">Interpretación en lenguaje simple</div>
+            <div class="dr-feature-desc">Sin tecnicismos. Explicaciones que cualquier persona entiende.</div>
+          </div>
         </li>
         <li>
           <div class="dr-check" aria-hidden="true">✓</div>
-          <div><div class="dr-feature-title">Orientación sobre medicamentos</div><div class="dr-feature-desc">Información general sobre tratamientos y posibles interacciones.</div></div>
+          <div>
+            <div class="dr-feature-title">Orientación sobre medicamentos</div>
+            <div class="dr-feature-desc">Información general sobre tratamientos y posibles interacciones.</div>
+          </div>
         </li>
         <li>
           <div class="dr-check" aria-hidden="true">✓</div>
-          <div><div class="dr-feature-title">Recomendaciones de estilo de vida</div><div class="dr-feature-desc">Dieta, ejercicio y hábitos según tus resultados específicos.</div></div>
+          <div>
+            <div class="dr-feature-title">Recomendaciones de estilo de vida</div>
+            <div class="dr-feature-desc">Dieta, ejercicio y hábitos según tus resultados específicos.</div>
+          </div>
         </li>
         <li>
           <div class="dr-check" aria-hidden="true">✓</div>
-          <div><div class="dr-feature-title">Preguntas para tu médico</div><div class="dr-feature-desc">La IA sugiere qué preguntarle a tu doctor en la próxima consulta.</div></div>
+          <div>
+            <div class="dr-feature-title">Preguntas para tu médico</div>
+            <div class="dr-feature-desc">La IA sugiere qué preguntarle a tu doctor en la próxima consulta.</div>
+          </div>
         </li>
       </ul>
       <a href="/register" class="btn-primary" aria-label="Consultar con Dr. VitalIA">Consultar ahora →</a>
     </div>
-    <div class="chat-ui" role="region" aria-label="Demo del Dr. VitalIA">
+
+    <div class="chat-ui fade-in" role="region" aria-label="Demo del Dr. VitalIA">
       <div class="chat-topbar">
         <div class="chat-avatar" aria-hidden="true">🩺</div>
         <div>
@@ -572,32 +1039,44 @@ footer{background:var(--bg2);padding:64px 24px 32px}
 </section>
 
 <!-- INDICADORES DEMO -->
-<section id="indicadores" aria-labelledby="ind-title">
+<section id="indicadores" class="pad-sm bg-soft" aria-labelledby="ind-title">
   <div class="container">
     <div class="ind-section">
-      <div>
+      <div class="fade-in">
         <div class="section-tag">Dashboard</div>
         <h2 class="section-title" style="font-size:clamp(26px,3.5vw,38px);" id="ind-title">Tus indicadores,<br>al instante</h2>
-        <p style="color:var(--text2);font-size:15px;line-height:1.8;margin-top:16px;">Cada valor se clasifica automáticamente. Verde normal, rojo alto, amarillo bajo. Sin ambigüedades, sin esperas.</p>
+        <p style="color:var(--text-2);font-size:15px;line-height:1.8;margin-top:16px;">Cada valor se clasifica automáticamente. Azul normal, destacado alto, gris bajo. Sin ambigüedades, sin esperas.</p>
       </div>
-      <div class="ind-list" role="table" aria-label="Ejemplo de indicadores">
+      <div class="ind-list fade-in" role="table" aria-label="Ejemplo de indicadores">
         <div class="ind-row" role="row">
-          <span class="ind-name" role="cell">Glucosa</span><span class="ind-val" role="cell">92 mg/dL</span><span class="ind-badge ind-ok" role="cell">Normal</span>
+          <span class="ind-name" role="cell">Glucosa</span>
+          <span class="ind-val" role="cell">92 mg/dL</span>
+          <span class="ind-badge ind-ok" role="cell">Normal</span>
         </div>
         <div class="ind-row" role="row">
-          <span class="ind-name" role="cell">Colesterol Total</span><span class="ind-val" role="cell">218 mg/dL</span><span class="ind-badge ind-hi" role="cell">Alto</span>
+          <span class="ind-name" role="cell">Colesterol Total</span>
+          <span class="ind-val" role="cell">218 mg/dL</span>
+          <span class="ind-badge ind-hi" role="cell">Alto</span>
         </div>
         <div class="ind-row" role="row">
-          <span class="ind-name" role="cell">Triglicéridos</span><span class="ind-val" role="cell">165 mg/dL</span><span class="ind-badge ind-ok" role="cell">Normal</span>
+          <span class="ind-name" role="cell">Triglicéridos</span>
+          <span class="ind-val" role="cell">165 mg/dL</span>
+          <span class="ind-badge ind-ok" role="cell">Normal</span>
         </div>
         <div class="ind-row" role="row">
-          <span class="ind-name" role="cell">Hemoglobina</span><span class="ind-val" role="cell">11.2 g/dL</span><span class="ind-badge ind-lo" role="cell">Bajo</span>
+          <span class="ind-name" role="cell">Hemoglobina</span>
+          <span class="ind-val" role="cell">11.2 g/dL</span>
+          <span class="ind-badge ind-lo" role="cell">Bajo</span>
         </div>
         <div class="ind-row" role="row">
-          <span class="ind-name" role="cell">Vitamina D</span><span class="ind-val" role="cell">28 ng/mL</span><span class="ind-badge ind-lo" role="cell">Bajo</span>
+          <span class="ind-name" role="cell">Vitamina D</span>
+          <span class="ind-val" role="cell">28 ng/mL</span>
+          <span class="ind-badge ind-lo" role="cell">Bajo</span>
         </div>
         <div class="ind-row" role="row">
-          <span class="ind-name" role="cell">TSH</span><span class="ind-val" role="cell">2.1 mUI/L</span><span class="ind-badge ind-ok" role="cell">Normal</span>
+          <span class="ind-name" role="cell">TSH</span>
+          <span class="ind-val" role="cell">2.1 mUI/L</span>
+          <span class="ind-badge ind-ok" role="cell">Normal</span>
         </div>
       </div>
     </div>
@@ -605,15 +1084,16 @@ footer{background:var(--bg2);padding:64px 24px 32px}
 </section>
 
 <!-- PRICING -->
-<section id="precios" aria-labelledby="precios-title">
+<section id="precios" class="pad bg-white" aria-labelledby="precios-title">
   <div class="container">
-    <div class="section-header">
+    <div class="section-header fade-in">
       <div class="section-tag">Precios</div>
       <h2 class="section-title" id="precios-title">Simple y transparente</h2>
       <p class="section-sub">Un solo plan que incluye todo. Sin sorpresas, sin cobros por análisis.</p>
     </div>
     <div class="pricing-grid">
-      <div class="pricing-card" aria-label="Plan gratuito">
+
+      <div class="pricing-card fade-in" aria-label="Plan gratuito">
         <div class="pricing-plan">Exploración</div>
         <div class="pricing-price"><sup>$</sup>0</div>
         <div class="pricing-period">Siempre gratis · Sin tarjeta de crédito</div>
@@ -624,12 +1104,13 @@ footer{background:var(--bg2);padding:64px 24px 32px}
           <li><span class="ck" aria-hidden="true">✓</span> Chat Dr. VitalIA</li>
           <li><span class="ck" aria-hidden="true">✓</span> <strong>1 análisis incluido</strong></li>
           <li><span class="ck" aria-hidden="true">✓</span> Diagnóstico visual</li>
-          <li><span class="dash" aria-hidden="true">—</span> <span style="color:var(--text3);">Exámenes ilimitados</span></li>
-          <li><span class="dash" aria-hidden="true">—</span> <span style="color:var(--text3);">Cargas familiares</span></li>
+          <li><span class="dash" aria-hidden="true">—</span> <span style="color:var(--text-3)">Exámenes ilimitados</span></li>
+          <li><span class="dash" aria-hidden="true">—</span> <span style="color:var(--text-3)">Cargas familiares</span></li>
         </ul>
         <a href="/register" class="pricing-btn ghost" aria-label="Comenzar gratis">Comenzar gratis</a>
       </div>
-      <div class="pricing-card featured" aria-label="Plan mensual $4.700 CLP — más popular">
+
+      <div class="pricing-card featured fade-in" aria-label="Plan mensual $4.700 CLP — más popular">
         <div class="pricing-badge">⭐ Más popular</div>
         <div class="pricing-plan">Suscripción Mensual</div>
         <div class="pricing-price"><sup>$</sup>4.700</div>
@@ -646,19 +1127,20 @@ footer{background:var(--bg2);padding:64px 24px 32px}
         </ul>
         <a href="/register" class="pricing-btn primary" aria-label="Activar suscripción $4.700 CLP">Activar suscripción →</a>
       </div>
+
     </div>
     <p class="pricing-note">🔒 Pagos por <strong>MercadoPago</strong> &nbsp;·&nbsp; Sin renovación automática &nbsp;·&nbsp; Reactiva cuando quieras</p>
   </div>
 </section>
 
-<!-- CTA -->
+<!-- CTA FINAL -->
 <section class="cta-section" aria-labelledby="cta-title">
-  <div class="cta-glow" aria-hidden="true"></div>
   <div class="cta-inner">
-    <h2 id="cta-title">Conoce tu salud hoy.<br>No esperes más.</h2>
-    <p>Crea tu cuenta gratis y activa tu suscripción por solo <strong style="color:var(--teal);">$4.700 CLP</strong>.</p>
-    <a href="/register" class="btn-primary pulse" style="font-size:17px;padding:18px 48px;" aria-label="Comenzar ahora — crear cuenta">🩺 Comenzar ahora</a>
-    <div class="disclaimer" role="note">
+    <div class="section-tag fade-in">Empieza hoy</div>
+    <h2 class="fade-in" id="cta-title">Conoce tu salud hoy.<br>No esperes más.</h2>
+    <p class="fade-in">Crea tu cuenta gratis y activa tu suscripción por solo <strong style="color:var(--cta)">$4.700 CLP</strong>.</p>
+    <a href="/register" class="btn-primary fade-in" style="font-size:17px;padding:18px 48px;" aria-label="Comenzar ahora — crear cuenta">🩺 Comenzar ahora</a>
+    <div class="disclaimer fade-in" role="note">
       <strong>⚠️ Aviso:</strong> VitalIA es una herramienta de orientación informativa. No reemplaza la consulta médica presencial. Ante cualquier duda, consulta siempre con tu médico.
     </div>
   </div>
@@ -693,9 +1175,9 @@ footer{background:var(--bg2);padding:64px 24px 32px}
   <div class="footer-inner">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a href="/" class="nav-logo" aria-label="VitalIA — inicio">
-          <div class="logo-icon" aria-hidden="true">🩺</div>
-          <span class="logo-text">VitalIA</span>
+        <a href="/" aria-label="VitalIA — inicio" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+          <div class="logo-icon" aria-hidden="true" style="flex-shrink:0">🩺</div>
+          <span class="footer-logo-text">VitalIA</span>
         </a>
         <p>Tu doctor digital con inteligencia artificial. Análisis de exámenes médicos rápido, preciso y siempre disponible.</p>
       </div>
@@ -711,9 +1193,9 @@ footer{background:var(--bg2);padding:64px 24px 32px}
       <div class="footer-col">
         <h4>Legal</h4>
         <ul>
-          <li><a href="#">Términos de uso</a></li>
-          <li><a href="#">Privacidad</a></li>
-          <li><a href="#">Aviso médico</a></li>
+          <li><a href="/terminos">Términos de uso</a></li>
+          <li><a href="/terminos">Privacidad</a></li>
+          <li><a href="/terminos">Aviso médico</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -747,14 +1229,18 @@ function toggleMenu() {
   m.style.display = _menuOpen ? 'block' : 'none';
   m.setAttribute('aria-hidden', String(!_menuOpen));
   btn.setAttribute('aria-expanded', String(_menuOpen));
+  btn.setAttribute('aria-label', _menuOpen ? 'Cerrar menú' : 'Abrir menú');
 }
 function closeMenu() {
   _menuOpen = false;
   const m = document.getElementById('mobile-menu');
   m.style.display = 'none';
   m.setAttribute('aria-hidden', 'true');
-  document.querySelector('.hamburger').setAttribute('aria-expanded', 'false');
+  const btn = document.querySelector('.hamburger');
+  btn.setAttribute('aria-expanded', 'false');
+  btn.setAttribute('aria-label', 'Abrir menú');
 }
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && _menuOpen) closeMenu(); });
 window.addEventListener('scroll', () => { if (_menuOpen) closeMenu(); }, { passive: true });
 
 /* ── STICKY CTA ── */
@@ -768,35 +1254,23 @@ if (_hero && _sticky) {
 
 const _reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ── FEATURE STAGGER ── */
+/* ── SCROLL FADE-IN ── */
 if (!_reduced) {
-  const _cards = document.querySelectorAll('.feature-card');
-  new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        setTimeout(() => e.target.classList.add('visible'), parseInt(e.target.dataset.delay || 0));
-      }
-    });
-  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }).observe.call(
-    new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          setTimeout(() => e.target.classList.add('visible'), parseInt(e.target.dataset.delay || 0));
-        }
-      });
-    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }),
-    ..._cards
-  );
-  // Re-init properly
   const _fObs = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (e.isIntersecting) {
-        setTimeout(() => e.target.classList.add('visible'), parseInt(e.target.dataset.delay || 0));
+        const delay = parseInt(e.target.style.getPropertyValue('--d') || '0');
+        setTimeout(() => e.target.classList.add('visible'), delay);
         _fObs.unobserve(e.target);
       }
     });
   }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-  _cards.forEach((c, i) => { c.dataset.delay = i * 90; _fObs.observe(c); });
+  document.querySelectorAll('.fade-in,.feature-card').forEach(el => _fObs.observe(el));
+  /* Stagger feature cards */
+  document.querySelectorAll('.feature-card').forEach((c, i) => {
+    c.style.setProperty('--d', String(i * 90) + 'ms');
+    c.dataset.delay = i * 90;
+  });
 }
 
 /* ── COUNTERS ── */
@@ -807,8 +1281,8 @@ function _animCount(el) {
   const dur = 1400, t0 = performance.now();
   function tick(now) {
     const p = Math.min((now - t0) / dur, 1);
-    const e = 1 - Math.pow(1 - p, 3);
-    el.textContent = prefix + Math.floor(e * target) + suffix;
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = prefix + Math.floor(ease * target) + suffix;
     if (p < 1) requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
@@ -816,7 +1290,9 @@ function _animCount(el) {
 const _cEls = document.querySelectorAll('[data-count]');
 if (!_reduced) {
   const _cObs = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) { _animCount(e.target); _cObs.unobserve(e.target); } });
+    entries.forEach(e => {
+      if (e.isIntersecting) { _animCount(e.target); _cObs.unobserve(e.target); }
+    });
   }, { threshold: 0.5 });
   _cEls.forEach(el => _cObs.observe(el));
 } else {
@@ -825,14 +1301,14 @@ if (!_reduced) {
   });
 }
 
-/* ── STEP PROGRESS ── */
+/* ── STEP PROGRESS (#2272FF bar) ── */
 if (!_reduced) {
   const _stepsSection = document.getElementById('como-funciona');
   const _prog = document.getElementById('steps-progress');
   if (_stepsSection && _prog) {
     new IntersectionObserver(([e]) => {
       if (e.isIntersecting) {
-        _prog.classList.add('animate');
+        _prog.style.height = '100%';
         document.querySelectorAll('.step').forEach((s, i) => {
           setTimeout(() => s.classList.add('active'), i * 420);
         });
@@ -840,6 +1316,18 @@ if (!_reduced) {
     }, { threshold: 0.3 }).observe(_stepsSection);
   }
 }
+
+/* ── NAV SCROLL SHADOW ── */
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('nav');
+  if (nav) {
+    if (window.scrollY > 10) {
+      nav.style.boxShadow = '0 2px 20px rgba(29,29,29,.10)';
+    } else {
+      nav.style.boxShadow = '0 1px 0 rgba(29,29,29,.06)';
+    }
+  }
+}, { passive: true });
 </script>
 </body>
 </html>
