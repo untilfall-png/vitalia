@@ -6,43 +6,44 @@
   <title>VitalIA — Inteligencia Médica en tu Bolsillo</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     /* ═══════════════ TOKENS ═══════════════ */
     :root {
-      --bg:        #080d1a;
-      --bg2:       #0d1526;
-      --bg3:       #172034;
-      --bg4:       #1e2a40;
+      --bg:        #0A0F1E;
+      --bg2:       #0D1528;
+      --bg3:       #121B35;
+      --bg4:       #172040;
 
-      --primary:   #0ea5e9;
-      --primary-d: #0284c7;
-      --primary-l: #38bdf8;
+      --primary:   #00C9A7;
+      --primary-d: #00A88B;
+      --primary-l: #33D4BA;
       --accent:    #6366f1;
       --accent-d:  #4f46e5;
       --secondary: #10b981;
       --warning:   #f59e0b;
       --danger:    #ef4444;
 
-      --text:      #f1f5f9;
-      --text2:     #94a3b8;
-      --text3:     #3d5068;
+      --text:      #F0F4FF;
+      --text2:     #9BA3B4;
+      --text3:     #5A6480;
       --border:    rgba(255,255,255,0.07);
-      --border2:   rgba(255,255,255,0.13);
+      --border2:   rgba(255,255,255,0.12);
       --glass:     rgba(255,255,255,0.03);
-      --glass2:    rgba(255,255,255,0.06);
+      --glass2:    rgba(255,255,255,0.05);
 
-      --p-06: rgba(14,165,233,0.06);
-      --p-08: rgba(14,165,233,0.08);
-      --p-10: rgba(14,165,233,0.10);
-      --p-12: rgba(14,165,233,0.12);
-      --p-15: rgba(14,165,233,0.15);
-      --p-20: rgba(14,165,233,0.20);
-      --p-25: rgba(14,165,233,0.25);
-      --p-30: rgba(14,165,233,0.30);
-      --p-40: rgba(14,165,233,0.40);
+      --p-06: rgba(0,201,167,0.06);
+      --p-08: rgba(0,201,167,0.08);
+      --p-10: rgba(0,201,167,0.10);
+      --p-12: rgba(0,201,167,0.12);
+      --p-15: rgba(0,201,167,0.15);
+      --p-20: rgba(0,201,167,0.20);
+      --p-25: rgba(0,201,167,0.25);
+      --p-30: rgba(0,201,167,0.30);
+      --p-40: rgba(0,201,167,0.40);
 
       --a-08: rgba(99,102,241,0.08);
       --a-10: rgba(99,102,241,0.10);
@@ -70,46 +71,46 @@
       --shadow-sm:  0 1px 4px rgba(0,0,0,0.4);
       --shadow-md:  0 4px 20px rgba(0,0,0,0.45);
       --shadow-lg:  0 16px 48px rgba(0,0,0,0.55);
-      --glow-p:     0 0 28px rgba(14,165,233,0.30);
-      --glow-p-lg:  0 0 56px rgba(14,165,233,0.45);
+      --glow-p:     0 0 28px rgba(0,201,167,0.30);
+      --glow-p-lg:  0 0 56px rgba(0,201,167,0.45);
       --glow-a:     0 0 28px rgba(99,102,241,0.30);
 
-      --nav-bg:     rgba(8,13,26,0.85);
+      --nav-bg:     rgba(10,15,30,0.88);
       --trans: background .3s ease, color .3s ease, border-color .3s ease, box-shadow .3s ease;
     }
 
     [data-theme="light"] {
-      --bg:        #f4f6fb;
-      --bg2:       #eaecf4;
-      --bg3:       #dde1ee;
-      --bg4:       #cfd4e5;
+      --bg:        #F4F7F5;
+      --bg2:       #E8F0EC;
+      --bg3:       #DDE8E4;
+      --bg4:       #CFE0DA;
 
-      --primary:   #0284c7;
-      --primary-d: #0369a1;
-      --primary-l: #0ea5e9;
+      --primary:   #009E84;
+      --primary-d: #007A67;
+      --primary-l: #00C9A7;
       --accent:    #4f46e5;
       --accent-d:  #4338ca;
       --secondary: #059669;
       --warning:   #d97706;
       --danger:    #dc2626;
 
-      --text:      #0f172a;
+      --text:      #0F172A;
       --text2:     #475569;
       --text3:     #94a3b8;
       --border:    rgba(15,23,42,0.08);
-      --border2:   rgba(15,23,42,0.15);
+      --border2:   rgba(15,23,42,0.14);
       --glass:     rgba(255,255,255,0.60);
       --glass2:    rgba(255,255,255,0.85);
 
-      --p-06: rgba(2,132,199,0.06);
-      --p-08: rgba(2,132,199,0.08);
-      --p-10: rgba(2,132,199,0.10);
-      --p-12: rgba(2,132,199,0.12);
-      --p-15: rgba(2,132,199,0.15);
-      --p-20: rgba(2,132,199,0.20);
-      --p-25: rgba(2,132,199,0.25);
-      --p-30: rgba(2,132,199,0.30);
-      --p-40: rgba(2,132,199,0.40);
+      --p-06: rgba(0,158,132,0.06);
+      --p-08: rgba(0,158,132,0.08);
+      --p-10: rgba(0,158,132,0.10);
+      --p-12: rgba(0,158,132,0.12);
+      --p-15: rgba(0,158,132,0.15);
+      --p-20: rgba(0,158,132,0.20);
+      --p-25: rgba(0,158,132,0.25);
+      --p-30: rgba(0,158,132,0.30);
+      --p-40: rgba(0,158,132,0.40);
 
       --a-08: rgba(79,70,229,0.08);
       --a-10: rgba(79,70,229,0.10);
@@ -137,19 +138,19 @@
       --shadow-sm:  0 1px 4px rgba(15,23,42,0.07);
       --shadow-md:  0 4px 20px rgba(15,23,42,0.10);
       --shadow-lg:  0 16px 48px rgba(15,23,42,0.13);
-      --glow-p:     0 0 24px rgba(2,132,199,0.20);
-      --glow-p-lg:  0 0 48px rgba(2,132,199,0.30);
+      --glow-p:     0 0 24px rgba(0,158,132,0.20);
+      --glow-p-lg:  0 0 48px rgba(0,158,132,0.30);
       --glow-a:     0 0 24px rgba(79,70,229,0.20);
 
-      --nav-bg:     rgba(244,246,251,0.88);
+      --nav-bg:     rgba(244,247,245,0.92);
     }
 
     /* ═══════════════ BASE ═══════════════ */
     html { scroll-behavior: smooth; }
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'DM Sans', system-ui, sans-serif;
       background: var(--bg); color: var(--text);
-      overflow-x: hidden;
+      overflow-x: hidden; line-height: 1.6;
       transition: var(--trans);
     }
 
@@ -171,7 +172,7 @@
       font-size: 19px; box-shadow: var(--glow-p); flex-shrink: 0;
     }
     .nav-logo-text {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Syne', sans-serif;
       font-size: 20px; font-weight: 800;
       background: linear-gradient(135deg, var(--primary), var(--accent));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
@@ -207,7 +208,7 @@
       text-decoration: none; color: #fff;
       background: linear-gradient(135deg, var(--primary), var(--primary-d));
       box-shadow: var(--glow-p);
-      font-family: 'Plus Jakarta Sans', sans-serif; transition: all .2s;
+      font-family: 'Syne', sans-serif; transition: all .2s;
     }
     .nav-cta:hover { transform: translateY(-1px); box-shadow: var(--glow-p-lg); }
 
@@ -337,7 +338,7 @@
 
     /* Hero title */
     .hero-title {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Syne', sans-serif;
       margin-bottom: 20px;
       animation: fadeInUp .65s ease .2s both;
     }
@@ -386,7 +387,7 @@
     }
     .hero-stat { text-align: center; padding: 0 24px; }
     .hero-stat-val {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Syne', sans-serif;
       font-size: 28px; font-weight: 900; color: var(--primary);
       display: block; line-height: 1;
     }
@@ -410,7 +411,7 @@
       text-decoration: none; color: #fff;
       background: linear-gradient(135deg, var(--primary), var(--accent));
       box-shadow: var(--glow-p), 0 8px 32px rgba(14,165,233,0.25);
-      font-family: 'Plus Jakarta Sans', sans-serif; transition: all .25s;
+      font-family: 'Syne', sans-serif; transition: all .25s;
       letter-spacing: -.2px;
     }
     .btn-hero-primary:hover {
@@ -422,7 +423,7 @@
       font-size: 16px; font-weight: 700;
       text-decoration: none; color: var(--text);
       border: 1px solid var(--border2); background: var(--glass2);
-      font-family: 'Plus Jakarta Sans', sans-serif; transition: var(--trans);
+      font-family: 'Syne', sans-serif; transition: var(--trans);
     }
     .btn-hero-ghost:hover {
       border-color: var(--primary); color: var(--primary); background: var(--p-08);
@@ -478,7 +479,7 @@
     .section-badge.amber  { background: var(--w-12); border: 1px solid var(--w-30); color: var(--warning); }
     .section-badge.red    { background: var(--d-10); border: 1px solid var(--d-20); color: var(--danger); }
     .section-title {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Syne', sans-serif;
       font-size: clamp(26px, 3.8vw, 40px); font-weight: 800;
       margin-bottom: 14px; letter-spacing: -.4px; line-height: 1.2;
     }
@@ -591,7 +592,7 @@
     .step-circle-num {
       width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 15px; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px; font-weight: 800; font-family: 'Syne', sans-serif;
     }
     .step-circle-num.s1 { background: var(--p-15); border: 2px solid var(--p-30); color: var(--primary); }
     .step-circle-num.s2 { background: var(--a-15); border: 2px solid var(--a-30); color: var(--accent); }
@@ -692,7 +693,7 @@
       padding: 36px 32px; text-align: center;
       box-shadow: var(--shadow-lg);
     }
-    .precio-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 68px; font-weight: 900; color: var(--primary); line-height: 1; margin-bottom: 4px; }
+    .precio-amount { font-family: 'Syne', sans-serif; font-size: 68px; font-weight: 900; color: var(--primary); line-height: 1; margin-bottom: 4px; }
     .precio-amount sup { font-size: 28px; vertical-align: top; margin-top: 14px; display: inline-block; }
     .precio-per { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
     .precio-features { text-align: left; margin-bottom: 24px; display: grid; gap: 9px; }
