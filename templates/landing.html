@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>try{var t=localStorage.getItem('vitalia-theme');if(t){document.documentElement.setAttribute('data-theme',t)}else if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}</script>
   <style>
 /* ── RESET ──────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -44,6 +45,37 @@
   --shadow-md: 0 8px 32px rgba(29,29,29,.10);
   --shadow-lg: 0 20px 60px rgba(29,29,29,.12);
 }
+
+/* ── DARK MODE ───────────────────────────────────────── */
+[data-theme="dark"]{
+  --bg:       #080d1a;
+  --bg-soft:  #0d1526;
+  --text:     #f1f5f9;
+  --text-2:   rgba(241,245,249,.62);
+  --text-3:   rgba(241,245,249,.38);
+  --b-06:     rgba(255,255,255,.06);
+  --b-12:     rgba(255,255,255,.10);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.3);
+  --shadow-md: 0 8px 32px rgba(0,0,0,.45);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,.55);
+}
+[data-theme="dark"] nav{background:rgba(8,13,26,.92)}
+[data-theme="dark"] #mobile-menu{background:rgba(8,13,26,.98)}
+[data-theme="dark"] .sticky-cta{background:rgba(8,13,26,.97);border-top-color:var(--b-12)}
+
+/* Theme toggle button */
+.theme-toggle{
+  width:40px;height:40px;border-radius:10px;
+  background:var(--b-06);border:1px solid var(--b-12);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:17px;flex-shrink:0;
+  transition:all .2s;min-width:40px;
+}
+.theme-toggle:hover{background:var(--p-08);border-color:var(--p-25)}
+.t-sun{display:none}
+.t-moon{display:block}
+[data-theme="dark"] .t-sun{display:block}
+[data-theme="dark"] .t-moon{display:none}
 
 /* ── BASE ────────────────────────────────────────────── */
 html{scroll-behavior:smooth;font-size:16px}
@@ -710,6 +742,10 @@ footer{background:var(--text);padding:64px 24px 32px}
     <li><a href="#precios">Precios</a></li>
   </ul>
   <div class="nav-actions">
+    <button class="theme-toggle" onclick="toggleLandingTheme()" aria-label="Cambiar tema">
+      <span class="t-sun">☀️</span>
+      <span class="t-moon">🌙</span>
+    </button>
     <a href="/login" class="nav-login">Iniciar sesión</a>
     <a href="/register" class="nav-cta">Comenzar gratis →</a>
   </div>
@@ -1328,6 +1364,24 @@ window.addEventListener('scroll', () => {
     }
   }
 }, { passive: true });
+
+/* ── DARK / LIGHT TOGGLE ── */
+function toggleLandingTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  try { localStorage.setItem('vitalia-theme', next); } catch(e){}
+}
+(function(){
+  try {
+    const saved = localStorage.getItem('vitalia-theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  } catch(e){}
+})();
 </script>
 </body>
 </html>
