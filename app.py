@@ -37,6 +37,10 @@ from google import genai
 from google.genai import types as genai_types
 import PIL.Image
 import stripe
+try:
+    import mercadopago as _mp_module
+except ImportError:
+    _mp_module = None
 
 # ── Config ────────────────────────────────────────────────────────────────────
 BASE_DIR   = Path(__file__).parent
@@ -105,11 +109,16 @@ def _detect_gemini_model(api_key: str) -> str:
 GEMINI_MODEL = _detect_gemini_model(GOOGLE_API_KEY)
 MAX_MB = 20
 
-# Stripe
+# MercadoPago
+MP_ACCESS_TOKEN  = os.environ.get("MP_ACCESS_TOKEN",  "")
+MP_PUBLIC_KEY    = os.environ.get("MP_PUBLIC_KEY",    "")
+SUB_PRICE_MP     = float(os.environ.get("MP_PRICE",    "4.99"))   # USD
+SUB_CURRENCY_MP  = os.environ.get("MP_CURRENCY",      "USD")
+
+# Stripe (legacy — mantenido para compatibilidad con filas DB existentes)
 STRIPE_SECRET_KEY      = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
 STRIPE_WEBHOOK_SECRET  = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
-SUB_PRICE_CENTS        = 300  # $3.00 USD / mes (suscripción mensual)
 
 # Admin
 ADMIN_EMAIL    = os.environ.get("ADMIN_EMAIL", "admin@vitalia.app")
@@ -445,17 +454,14 @@ def _get_active_subscription(uid):
 
 def _activate_subscription(pi_id):
     """Marca la suscripción como activa y calcula inicio/fin (31 días)."""
-    from datetime import datetime, timedelta
-    now = datetime.now()
-    fin = now + timedelta(days=31)
     with get_db() as db:
         db.execute(
             """UPDATE suscripciones
                SET estado='activa',
                    inicio=datetime('now','localtime'),
-                   fin=?
-               WHERE stripe_payment_intent_id=?""",
-            (fin.strftime("%Y-%m-%d %H:%M:%S"), pi_id)
+                   fin=datetime('now','+31 days','localtime')
+               WHERE stripe_payment_intent_id=? AND estado='pendiente'""",
+            (pi_id,)
         )
         db.commit()
 
@@ -535,12 +541,12 @@ _ALLOWED_ORIGINS = {
 
 _CSP = (
     "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' https://js.stripe.com https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
+    "script-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
     "font-src 'self' data: https://fonts.gstatic.com; "
     "img-src 'self' data: blob: https:; "
-    "connect-src 'self' https://api.stripe.com https://generativelanguage.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
-    "frame-src https://js.stripe.com; "
+    "connect-src 'self' https://api.mercadopago.com https://generativelanguage.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
+    "frame-src 'none'; "
     "object-src 'none'; "
     "base-uri 'self'; "
     "form-action 'self';"
@@ -1523,10 +1529,9 @@ def app_main():
                            examenes=[dict(e) for e in examenes],
                            paciente=dict(paciente) if paciente else {},
                            api_key_ok=bool(os.environ.get("GOOGLE_API_KEY","") or os.environ.get("GEMINI_API_KEY","")),
-                           stripe_pk=STRIPE_PUBLISHABLE_KEY,
-                           stripe_configured=bool(STRIPE_SECRET_KEY),
+                           mp_configured=bool(MP_ACCESS_TOKEN),
                            usuario_nombre=session.get("usuario_nombre",""),
-                           sub_price=SUB_PRICE_CENTS,
+                           sub_price=int(SUB_PRICE_MP * 100),
                            suscripcion=sub_dict,
                            es_admin=is_admin())
 
@@ -1724,106 +1729,176 @@ def bulk_delete_examenes():
     return jsonify({"ok": True, "deleted": len(valid_ids)})
 
 
-# ── API: Suscripción mensual ───────────────────────────────────────────────────
-@app.route("/api/suscribir", methods=["POST"])
+# ── API: MercadoPago — Crear preferencia de pago ──────────────────────────────
+@app.route("/api/mercadopago/create-preference", methods=["POST"])
 @login_required
-def crear_suscripcion():
-    """Crea un PaymentIntent de Stripe por $3 USD para suscripción mensual."""
-    uid = session["usuario_id"]
+def mp_create_preference():
+    """Crea preferencia MercadoPago y retorna init_point para redirigir al usuario."""
+    uid   = session["usuario_id"]
+    email = session.get("usuario_email", "")
 
-    # Verificar si ya tiene suscripción activa
     if _get_active_subscription(uid):
         return jsonify({"error": "Ya tienes una suscripción activa"}), 400
 
-    if not STRIPE_SECRET_KEY:
-        # Modo desarrollo: activar suscripción automáticamente
-        dev_pi_id = f"pi_dev_{uuid.uuid4().hex}"
-        from datetime import datetime, timedelta
-        ahora = datetime.now()
-        fin = ahora + timedelta(days=31)
+    # ── Modo desarrollo (sin token configurado) ───────────────────────────────
+    if not MP_ACCESS_TOKEN:
+        dev_id = f"mp_dev_{uuid.uuid4().hex}"
         with get_db() as db:
             db.execute("DELETE FROM suscripciones WHERE usuario_id=?", (uid,))
             db.execute(
                 """INSERT INTO suscripciones
-                   (usuario_id, stripe_payment_intent_id, monto, estado, inicio, fin)
-                   VALUES (?,?,?,'activa',datetime('now','localtime'),?)""",
-                (uid, dev_pi_id, SUB_PRICE_CENTS, fin.strftime("%Y-%m-%d %H:%M:%S"))
+                   (usuario_id, stripe_payment_intent_id, monto, estado,
+                    inicio, fin)
+                   VALUES (?,?,?,'activa',
+                       datetime('now','localtime'),
+                       datetime('now','+31 days','localtime'))""",
+                (uid, dev_id, int(SUB_PRICE_MP * 100))
             )
             db.commit()
         return jsonify({
             "dev_mode": True,
-            "payment_intent_id": dev_pi_id,
-            "message": "Modo desarrollo: suscripción activada automáticamente."
+            "message": "Modo desarrollo: suscripción activada automáticamente. "
+                       "Configura MP_ACCESS_TOKEN para pagos reales."
         })
 
-    try:
-        email = session.get("usuario_email", "")
-        idempotency_key = f"vitalia-sub-{uid}-{uuid.uuid4().hex}"
+    # ── Producción ────────────────────────────────────────────────────────────
+    if not _mp_module:
+        return jsonify({"error": "SDK de MercadoPago no instalado. Ejecuta: pip install mercadopago"}), 500
 
-        intent = stripe.PaymentIntent.create(
-            amount=SUB_PRICE_CENTS,
-            currency="usd",
-            receipt_email=email or None,
-            metadata={
-                "usuario_id": str(uid),
-                "app": "vitalia",
-                "tipo": "suscripcion_mensual",
-                "descripcion": "Suscripción mensual VitalIA — acceso total 31 días"
+    try:
+        sdk = _mp_module.SDK(MP_ACCESS_TOKEN)
+        preference_data = {
+            "items": [{
+                "title": "Suscripción mensual VitalIA",
+                "quantity": 1,
+                "unit_price": SUB_PRICE_MP,
+                "currency_id": SUB_CURRENCY_MP,
+                "description": "Análisis ilimitados de exámenes médicos · 31 días",
+            }],
+            "payer": {"email": email} if email else {},
+            "back_urls": {
+                "success": f"{APP_URL}/mercadopago/success",
+                "failure": f"{APP_URL}/mercadopago/failure",
+                "pending": f"{APP_URL}/mercadopago/pending",
             },
-            idempotency_key=idempotency_key,
-        )
+            "auto_return": "approved",
+            "external_reference": str(uid),
+            "notification_url": f"{APP_URL}/mercadopago/webhook",
+            "statement_descriptor": "VitalIA",
+            "metadata": {"usuario_id": str(uid), "app": "vitalia"},
+        }
+        response = sdk.preference().create(preference_data)
+        if response["status"] not in (200, 201):
+            msg = response.get("response", {}).get("message", "Error al crear preferencia de pago")
+            return jsonify({"error": msg}), 400
+
+        preference = response["response"]
+        pref_id    = preference["id"]
+        init_point = preference.get("init_point") or preference.get("sandbox_init_point")
 
         with get_db() as db:
-            db.execute("DELETE FROM suscripciones WHERE usuario_id=?", (uid,))
+            db.execute("DELETE FROM suscripciones WHERE usuario_id=? AND estado='pendiente'", (uid,))
             db.execute(
                 """INSERT INTO suscripciones
                    (usuario_id, stripe_payment_intent_id, monto, estado)
                    VALUES (?,?,?,'pendiente')""",
-                (uid, intent.id, SUB_PRICE_CENTS)
+                (uid, f"mp_pref_{pref_id}", int(SUB_PRICE_MP * 100))
             )
             db.commit()
 
-        return jsonify({
-            "client_secret": intent.client_secret,
-            "payment_intent_id": intent.id,
-            "amount": SUB_PRICE_CENTS,
-        })
-    except stripe.error.StripeError as e:
-        return jsonify({"error": str(e.user_message or e)}), 400
-
-
-@app.route("/api/verificar-suscripcion/<pi_id>", methods=["GET"])
-@login_required
-def verificar_suscripcion(pi_id):
-    """Verifica el pago y activa la suscripción mensual."""
-    uid = session["usuario_id"]
-
-    with get_db() as db:
-        sub = db.execute(
-            "SELECT * FROM suscripciones WHERE stripe_payment_intent_id=? AND usuario_id=?",
-            (pi_id, uid)
-        ).fetchone()
-
-    if not sub:
-        return jsonify({"error": "Suscripción no encontrada"}), 404
-
-    # Modo dev: ya está activa
-    if pi_id.startswith("pi_dev_"):
-        sub2 = _get_active_subscription(uid)
-        return jsonify({"estado": "activa", "ok": True, "fin": sub2["fin"] if sub2 else None})
-
-    if not STRIPE_SECRET_KEY:
-        return jsonify({"error": "Stripe no configurado"}), 400
-
-    try:
-        intent = stripe.PaymentIntent.retrieve(pi_id)
-        if intent.status == "succeeded":
-            _activate_subscription(pi_id)
-            sub2 = _get_active_subscription(uid)
-            return jsonify({"estado": "activa", "ok": True, "fin": sub2["fin"] if sub2 else None})
-        return jsonify({"estado": intent.status, "ok": False})
-    except stripe.error.StripeError as e:
+        return jsonify({"init_point": init_point, "preference_id": pref_id})
+    except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+
+# ── MercadoPago back_urls ──────────────────────────────────────────────────────
+@app.route("/mercadopago/success")
+@login_required
+def mp_success():
+    """MP redirige aquí tras pago aprobado. Activa la suscripción."""
+    uid               = session["usuario_id"]
+    status            = request.args.get("status",              "")
+    collection_status = request.args.get("collection_status",   "")
+    preference_id     = request.args.get("preference_id",       "")
+    payment_id        = request.args.get("payment_id",          "")
+
+    # El webhook puede haberse adelantado
+    if _get_active_subscription(uid):
+        return redirect("/?mp_status=approved")
+
+    if (status == "approved" or collection_status == "approved") and preference_id:
+        with get_db() as db:
+            db.execute(
+                """UPDATE suscripciones
+                   SET estado='activa',
+                       inicio=datetime('now','localtime'),
+                       fin=datetime('now','+31 days','localtime')
+                   WHERE stripe_payment_intent_id=? AND usuario_id=? AND estado='pendiente'""",
+                (f"mp_pref_{preference_id}", uid)
+            )
+            db.commit()
+        print(f"[VitalIA] MP suscripción activada: uid={uid} pref={preference_id} pay={payment_id}")
+
+    return redirect(f"/?mp_status={status or 'approved'}")
+
+
+@app.route("/mercadopago/failure")
+def mp_failure():
+    return redirect("/?mp_status=failure")
+
+
+@app.route("/mercadopago/pending")
+def mp_pending():
+    return redirect("/?mp_status=pending")
+
+
+# ── MercadoPago Webhook IPN ────────────────────────────────────────────────────
+@app.route("/mercadopago/webhook", methods=["POST", "GET"])
+def mp_webhook():
+    """Webhook IPN de MercadoPago — activa suscripciones de forma asíncrona."""
+    if not MP_ACCESS_TOKEN or not _mp_module:
+        return jsonify({"received": True})
+
+    payment_id = None
+
+    # Formato nuevo: POST JSON {"type":"payment","data":{"id":"xxx"}}
+    try:
+        body = request.get_json(force=True, silent=True) or {}
+        if body.get("type") == "payment":
+            payment_id = str(body.get("data", {}).get("id", ""))
+    except Exception:
+        pass
+
+    # Formato legacy IPN: query params ?topic=payment&id=xxx
+    if not payment_id:
+        if request.args.get("topic") == "payment":
+            payment_id = request.args.get("id", "")
+
+    if payment_id:
+        try:
+            sdk  = _mp_module.SDK(MP_ACCESS_TOKEN)
+            info = sdk.payment().get(payment_id)
+            if info["status"] == 200:
+                payment = info["response"]
+                if payment.get("status") == "approved":
+                    pref_id = payment.get("preference_id", "")
+                    ext_ref = payment.get("external_reference", "")
+                    if pref_id:
+                        with get_db() as db:
+                            db.execute(
+                                """UPDATE suscripciones
+                                   SET estado='activa',
+                                       inicio=datetime('now','localtime'),
+                                       fin=datetime('now','+31 days','localtime')
+                                   WHERE stripe_payment_intent_id=? AND estado='pendiente'""",
+                                (f"mp_pref_{pref_id}",)
+                            )
+                            db.commit()
+                        print(f"[VitalIA] MP webhook: suscripción activada pref={pref_id} ref={ext_ref}")
+        except Exception as e:
+            print(f"[VitalIA] MP webhook error: {e}")
+
+    return jsonify({"received": True})
 
 
 @app.route("/api/estado-suscripcion", methods=["GET"])
@@ -1837,60 +1912,6 @@ def estado_suscripcion():
     if sub:
         return jsonify({"activa": True, "fin": sub["fin"], "inicio": sub["inicio"]})
     return jsonify({"activa": False})
-
-
-# ── Webhook Stripe ────────────────────────────────────────────────────────────
-@app.route("/stripe/webhook", methods=["POST"])
-def stripe_webhook():
-    """Webhook de Stripe para confirmar suscripciones de forma asíncrona."""
-    payload = request.get_data()
-    sig_header = request.headers.get("Stripe-Signature", "")
-
-    try:
-        if STRIPE_WEBHOOK_SECRET:
-            event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
-        else:
-            event = json.loads(payload)
-    except (ValueError, stripe.error.SignatureVerificationError) as e:
-        return jsonify({"error": str(e)}), 400
-
-    if event["type"] == "payment_intent.succeeded":
-        pi = event["data"]["object"]
-        pi_id = pi["id"]
-        # Activar suscripción si corresponde a una suscripción pendiente
-        with get_db() as db:
-            sub = db.execute(
-                "SELECT * FROM suscripciones WHERE stripe_payment_intent_id=? AND estado='pendiente'",
-                (pi_id,)
-            ).fetchone()
-        if sub:
-            _activate_subscription(pi_id)
-            print(f"[VitalIA] Suscripción activada vía webhook: {pi_id}")
-        else:
-            # Compatibilidad con pagos legacy de la tabla pagos
-            with get_db() as db:
-                db.execute(
-                    "UPDATE pagos SET estado='completado' WHERE stripe_payment_intent_id=?",
-                    (pi_id,)
-                )
-                db.commit()
-
-    elif event["type"] == "payment_intent.payment_failed":
-        pi = event["data"]["object"]
-        pi_id = pi["id"]
-        with get_db() as db:
-            db.execute(
-                "UPDATE suscripciones SET estado='fallido' WHERE stripe_payment_intent_id=?",
-                (pi_id,)
-            )
-            db.execute(
-                "UPDATE pagos SET estado='fallido' WHERE stripe_payment_intent_id=?",
-                (pi_id,)
-            )
-            db.commit()
-        print(f"[VitalIA] Pago fallido: {pi_id}")
-
-    return jsonify({"received": True})
 
 
 # ── API: OCR + Análisis ───────────────────────────────────────────────────────

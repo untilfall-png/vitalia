@@ -13,6 +13,16 @@ services:
         sync: false
       - key: ADMIN_EMAIL
         sync: false
+      - key: MP_ACCESS_TOKEN
+        sync: false
+      - key: MP_PUBLIC_KEY
+        sync: false
+      - key: MP_PRICE
+        value: "4.99"
+      - key: MP_CURRENCY
+        value: "USD"
+      - key: APP_URL
+        sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY

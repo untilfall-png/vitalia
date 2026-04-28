@@ -10,7 +10,6 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-  <script src="https://js.stripe.com/v3/"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1077,7 +1076,7 @@
           <i data-lucide="alert-circle" style="width:18px;height:18px;flex-shrink:0;"></i>
           <div style="flex:1;">
             <span style="font-weight:600;">Sin suscripción activa</span>
-            <span style="color:var(--text2);font-size:13px;margin-left:8px;">Activa tu plan mensual por $3.00 USD para analizar exámenes ilimitados.</span>
+            <span style="color:var(--text2);font-size:13px;margin-left:8px;">Activa tu plan mensual por $4.99 USD para analizar exámenes ilimitados.</span>
           </div>
           <button onclick="startSubscriptionFlow()" style="
             background:var(--warning);color:#000;border:none;border-radius:8px;
@@ -1110,7 +1109,7 @@
             {% else %}
             <button type="button" class="btn btn-primary btn-block" id="analyze-btn" onclick="startSubscriptionFlow()" disabled style="padding:14px;margin-bottom:16px;">
               <i data-lucide="star" style="width:16px;height:16px;"></i>
-              Suscribirse para analizar — $3.00/mes
+              Suscribirse para analizar — $4.99/mes
             </button>
             {% endif %}
             {% endif %}
@@ -1428,48 +1427,48 @@
     <div class="modal-drag"></div>
     <div class="modal-title">⭐ Suscripción mensual</div>
 
-    <div class="payment-badge">🔒 Pago procesado por Stripe · SSL</div>
-
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding:14px 16px;background:var(--glass);border-radius:12px;border:1px solid var(--border);">
-      <div>
-        <div style="font-size:13px;color:var(--text2);">Acceso total · 31 días · Exámenes ilimitados</div>
-        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;margin-top:2px;">$3.00 <span style="font-size:13px;font-weight:400;color:var(--text2);">USD / mes</span></div>
-      </div>
-      <div style="font-size:32px;">🩺</div>
+    <!-- MP badge -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 14px;background:rgba(0,158,227,0.1);border:1px solid rgba(0,158,227,0.3);border-radius:10px;margin-bottom:18px;font-size:12px;color:#009EE3;font-weight:600;">
+      <svg width="18" height="18" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><circle cx="16" cy="16" r="16" fill="#009EE3"/><path d="M8 16.5c0-4.694 3.806-8.5 8.5-8.5S25 11.806 25 16.5 21.194 25 16.5 25 8 21.194 8 16.5z" fill="#fff"/><path d="M16.5 12a4.5 4.5 0 100 9 4.5 4.5 0 000-9z" fill="#009EE3"/></svg>
+      Pago seguro con MercadoPago · SSL 256-bit
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
-      <div style="padding:10px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);">✅ Exámenes ilimitados</div>
-      <div style="padding:10px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);">✅ Análisis con IA</div>
-      <div style="padding:10px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);">✅ Chat médico IA</div>
-      <div style="padding:10px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);">✅ Reportes PDF</div>
+    <!-- Price card -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding:14px 16px;background:var(--glass);border-radius:12px;border:1px solid var(--border);">
+      <div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:2px;">Acceso total · 31 días · Exámenes ilimitados</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:800;line-height:1;">$4.99 <span style="font-size:13px;font-weight:400;color:var(--text2);">USD / mes</span></div>
+        <div style="font-size:11px;color:var(--secondary);margin-top:3px;">≈ $0.17 USD al día · cancela cuando quieras</div>
+      </div>
+      <div style="font-size:36px;">🩺</div>
+    </div>
+
+    <!-- Feature grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:18px;">
+      <div style="padding:9px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);">✅ Exámenes ilimitados</div>
+      <div style="padding:9px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);">✅ Análisis con IA</div>
+      <div style="padding:9px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);">✅ Chat Dr. VitalIA 24/7</div>
+      <div style="padding:9px 12px;background:var(--glass);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);">✅ Cargas familiares</div>
     </div>
 
     <!-- Dev mode notice -->
     <div class="dev-mode-box" id="dev-mode-notice" style="display:none;">
-      ⚠️ <strong>Modo desarrollo:</strong> Stripe no configurado. La suscripción será activada automáticamente. Configura <code>STRIPE_SECRET_KEY</code> para pagos reales.
+      ⚠️ <strong>Modo desarrollo:</strong> MP_ACCESS_TOKEN no configurado. La suscripción se activará automáticamente.
     </div>
 
-    <!-- Stripe card element -->
-    <div id="stripe-card-container" style="display:none;">
-      <div class="form-group">
-        <label class="form-label">Datos de tarjeta</label>
-        <div class="stripe-element-wrap" id="stripe-card-element"></div>
-      </div>
-      <div class="pay-error" id="pay-error"></div>
-    </div>
+    <div class="pay-error" id="pay-error"></div>
 
-    <button class="pay-btn" id="pay-btn" onclick="confirmSubscription()">
-      <i data-lucide="star" style="width:15px;height:15px;"></i>
-      Activar suscripción — $3.00 USD
+    <button class="pay-btn" id="pay-btn" onclick="confirmSubscription()" style="background:linear-gradient(135deg,#009EE3,#0077C2);font-size:15px;padding:14px;">
+      <svg width="18" height="18" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;vertical-align:middle;margin-right:6px"><circle cx="16" cy="16" r="16" fill="rgba(255,255,255,0.25)"/><path d="M8 16.5c0-4.694 3.806-8.5 8.5-8.5S25 11.806 25 16.5 21.194 25 16.5 25 8 21.194 8 16.5z" fill="#fff"/><path d="M16.5 12a4.5 4.5 0 100 9 4.5 4.5 0 000-9z" fill="#0077C2"/></svg>
+      Pagar $4.99 con MercadoPago
     </button>
 
     <div class="pay-info">
       <i data-lucide="shield-check" style="width:13px;height:13px;flex-shrink:0;"></i>
-      Tus datos de pago son procesados directamente por Stripe. VitalIA nunca almacena tu tarjeta. La suscripción dura exactamente 31 días desde la activación.
+      Serás redirigido al checkout seguro de MercadoPago. VitalIA nunca almacena datos de tu tarjeta. La suscripción dura exactamente 31 días desde la activación.
     </div>
 
-    <button class="btn btn-ghost btn-block" style="margin-top:14px;" onclick="closeModal('modal-pago')">Cancelar</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:12px;" onclick="closeModal('modal-pago')">Cancelar</button>
   </div>
 </div>
 
@@ -1596,15 +1595,10 @@ let state = {
   currentExamenId: null,
   apiKeyOk: {{ 'true' if api_key_ok else 'false' }},
   chatStreaming: false,
-  stripeConfigured: {{ 'true' if stripe_configured else 'false' }},
-  stripePK: '{{ stripe_pk }}',
+  mpConfigured: {{ 'true' if mp_configured else 'false' }},
   subPrice: {{ sub_price }},
   suscripcionActiva: {{ 'true' if suscripcion else 'false' }},
   subFin: '{{ suscripcion.fin if suscripcion else "" }}',
-  pendingPaymentIntentId: null,
-  stripeInstance: null,
-  stripeElements: null,
-  stripeCardElement: null,
   esAdmin: {{ 'true' if es_admin else 'false' }}
 };
 
@@ -1614,7 +1608,19 @@ document.addEventListener('DOMContentLoaded', () => {
   loadExamenes();
   loadPerfil();
   loadEvolucion();
-  initStripe();
+  // Check MercadoPago return status
+  const _mpStatus = new URLSearchParams(window.location.search).get('mp_status');
+  if (_mpStatus) {
+    window.history.replaceState({}, '', window.location.pathname);
+    if (_mpStatus === 'approved') {
+      setTimeout(() => toast('✅ ¡Suscripción activada! Acceso completo por 31 días'), 600);
+      if (!state.suscripcionActiva) setTimeout(() => location.reload(), 2200);
+    } else if (_mpStatus === 'failure') {
+      setTimeout(() => toast('❌ El pago no pudo completarse. Intenta de nuevo.'), 600);
+    } else if (_mpStatus === 'pending') {
+      setTimeout(() => toast('⏳ Pago pendiente de confirmación. Te avisaremos cuando se acredite.'), 600);
+    }
+  }
   if (state.suscripcionActiva && state.subFin) {
     updateSubCountdown();
     setInterval(updateSubCountdown, 60000);
@@ -1895,17 +1901,8 @@ function examCard(e) {
 }
 
 // ════════════════════════════════════════════
-// STRIPE INIT
+// MERCADOPAGO helpers (no SDK needed — full redirect)
 // ════════════════════════════════════════════
-function initStripe() {
-  if (state.stripeConfigured && state.stripePK) {
-    try {
-      state.stripeInstance = Stripe(state.stripePK);
-    } catch(e) {
-      console.warn('Stripe init failed:', e);
-    }
-  }
-}
 
 // ════════════════════════════════════════════
 // ADMIN: análisis sin pago
@@ -1964,114 +1961,52 @@ function updateSubCountdown() {
   else if (hours > 0) el.textContent = `${hours}h ${mins}m restantes`;
   else el.textContent = `${mins}m restantes`;
 }
-// ── Paso 1: iniciar flujo de suscripción ────────────────────────────────────
-async function startSubscriptionFlow() {
+// ── Paso 1: abrir modal de suscripción ─────────────────────────────────────
+function startSubscriptionFlow() {
   if (!state.apiKeyOk) { openModal('modal-config'); toast('⚠️ Configura tu API Key primero'); return; }
+  const btn = document.getElementById('pay-btn');
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;vertical-align:middle;margin-right:6px"><circle cx="16" cy="16" r="16" fill="rgba(255,255,255,0.25)"/><path d="M8 16.5c0-4.694 3.806-8.5 8.5-8.5S25 11.806 25 16.5 21.194 25 16.5 25 8 21.194 8 16.5z" fill="#fff"/><path d="M16.5 12a4.5 4.5 0 100 9 4.5 4.5 0 000-9z" fill="#0077C2"/></svg>Pagar $4.99 con MercadoPago`;
+  }
+  document.getElementById('dev-mode-notice').style.display = 'none';
+  document.getElementById('pay-error').style.display = 'none';
+  openModal('modal-pago');
+}
 
-  const payBtn = document.getElementById('pay-btn');
-  payBtn.disabled = true;
-  payBtn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;"></span>Preparando suscripción...';
+// ── Paso 2: redirigir a MercadoPago ────────────────────────────────────────
+async function confirmSubscription() {
+  const btn   = document.getElementById('pay-btn');
+  const errEl = document.getElementById('pay-error');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;"></span>Preparando pago...';
 
   try {
-    const res = await fetch('/api/suscribir', { method: 'POST', headers: {'Content-Type':'application/json'} });
+    const res  = await fetch('/api/mercadopago/create-preference', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'}
+    });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    state.pendingPaymentIntentId = data.payment_intent_id;
-
-    const devNotice = document.getElementById('dev-mode-notice');
-    const cardContainer = document.getElementById('stripe-card-container');
-
     if (data.dev_mode) {
-      devNotice.style.display = 'block';
-      cardContainer.style.display = 'none';
-      payBtn.innerHTML = '<i data-lucide="zap" style="width:15px;height:15px;"></i> Simular pago y activar';
-    } else {
-      devNotice.style.display = 'none';
-      cardContainer.style.display = 'block';
-
-      if (state.stripeInstance) {
-        // Destroy any previous element to avoid double-mount
-        if (state.stripeCardElement) {
-          try { state.stripeCardElement.destroy(); } catch(e) {}
-          state.stripeCardElement = null;
-          state.stripeElements = null;
-          document.getElementById('stripe-card-element').innerHTML = '';
-        }
-        const appearance = {
-          theme: 'night',
-          variables: {
-            colorPrimary: '#0ea5e9', colorBackground: '#1e293b',
-            colorText: '#f1f5f9', colorDanger: '#ef4444',
-            fontFamily: 'Inter, sans-serif', borderRadius: '8px',
-          }
-        };
-        state.stripeElements = state.stripeInstance.elements({ clientSecret: data.client_secret, appearance });
-        state.stripeCardElement = state.stripeElements.create('payment');
-        state.stripeCardElement.mount('#stripe-card-element');
-        state.stripeCardElement._clientSecret = data.client_secret;
-      }
-      payBtn.innerHTML = '<i data-lucide="lock" style="width:15px;height:15px;"></i> Pagar $3.00 y activar suscripción';
+      closeModal('modal-pago');
+      document.getElementById('dev-mode-notice').style.display = 'block';
+      toast('✅ ' + data.message);
+      setTimeout(() => location.reload(), 1800);
+      return;
     }
 
-    payBtn.disabled = false;
-    lucide.createIcons();
-    openModal('modal-pago');
+    // Redirigir al checkout seguro de MercadoPago
+    btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;"></span>Redirigiendo...';
+    window.location.href = data.init_point;
 
-  } catch (err) {
-    payBtn.disabled = false;
-    payBtn.innerHTML = 'Activar suscripción — $3.00 USD';
-    toast('❌ ' + err.message);
-  }
-}
-
-// ── Paso 2: confirmar suscripción ──────────────────────────────────────────
-async function confirmSubscription() {
-  const payBtn = document.getElementById('pay-btn');
-  const payErr = document.getElementById('pay-error');
-  payErr.style.display = 'none';
-  payBtn.disabled = true;
-  payBtn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;"></span>Procesando pago...';
-
-  try {
-    const devNotice = document.getElementById('dev-mode-notice');
-    const isDevMode = devNotice.style.display !== 'none';
-
-    if (!isDevMode && state.stripeInstance && state.stripeCardElement) {
-      const { error } = await state.stripeInstance.confirmPayment({
-        elements: state.stripeElements,
-        confirmParams: { return_url: window.location.href },
-        redirect: 'if_required'
-      });
-      if (error) {
-        payErr.textContent = error.message;
-        payErr.style.display = 'block';
-        payBtn.disabled = false;
-        payBtn.innerHTML = '<i data-lucide="lock" style="width:15px;height:15px;"></i> Reintentar pago';
-        lucide.createIcons();
-        return;
-      }
-    }
-
-    const verRes = await fetch(`/api/verificar-suscripcion/${state.pendingPaymentIntentId}`);
-    const verData = await verRes.json();
-    if (!verData.ok) throw new Error('La suscripción no pudo ser verificada. Intenta de nuevo.');
-
-    closeModal('modal-pago');
-    state.stripeCardElement = null;
-    state.stripeElements = null;
-    state.pendingPaymentIntentId = null;
-
-    // Actualizar estado local y recargar para reflejar suscripción
-    toast('✅ Suscripción activada — acceso completo por 31 días');
-    setTimeout(() => location.reload(), 1500);
-
-  } catch (err) {
-    payErr.textContent = err.message;
-    payErr.style.display = 'block';
-    payBtn.disabled = false;
-    payBtn.innerHTML = '<i data-lucide="lock" style="width:15px;height:15px;"></i> Reintentar';
-    lucide.createIcons();
+  } catch(err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;vertical-align:middle;margin-right:6px"><circle cx="16" cy="16" r="16" fill="rgba(255,255,255,0.25)"/><path d="M8 16.5c0-4.694 3.806-8.5 8.5-8.5S25 11.806 25 16.5 21.194 25 16.5 25 8 21.194 8 16.5z" fill="#fff"/><path d="M16.5 12a4.5 4.5 0 100 9 4.5 4.5 0 000-9z" fill="#0077C2"/></svg>Reintentar con MercadoPago`;
   }
 }
 
