@@ -112,8 +112,8 @@ MAX_MB = 20
 # MercadoPago
 MP_ACCESS_TOKEN  = os.environ.get("MP_ACCESS_TOKEN",  "")
 MP_PUBLIC_KEY    = os.environ.get("MP_PUBLIC_KEY",    "")
-SUB_PRICE_MP     = float(os.environ.get("MP_PRICE",    "4.99"))   # USD
-SUB_CURRENCY_MP  = os.environ.get("MP_CURRENCY",      "USD")
+SUB_PRICE_MP     = float(os.environ.get("MP_PRICE",    "4700"))   # CLP
+SUB_CURRENCY_MP  = os.environ.get("MP_CURRENCY",      "CLP")
 
 # Stripe (legacy — mantenido para compatibilidad con filas DB existentes)
 STRIPE_SECRET_KEY      = os.environ.get("STRIPE_SECRET_KEY", "")
@@ -1225,7 +1225,7 @@ def admin_stats():
         total_examenes  = db.execute("SELECT COUNT(*) FROM examenes").fetchone()[0]
         examenes_mes    = db.execute("SELECT COUNT(*) FROM examenes WHERE creado_en >= date('now','start of month')").fetchone()[0]
         alto_riesgo     = db.execute("SELECT COUNT(*) FROM examenes WHERE riesgo IN ('alto','critico')").fetchone()[0]
-        # Ingresos (monto en centavos → USD)
+        # Ingresos (monto en CLP)
         rec_total       = db.execute("SELECT COALESCE(SUM(monto),0) FROM pagos WHERE estado='completado'").fetchone()[0]
         rec_mes         = db.execute("SELECT COALESCE(SUM(monto),0) FROM pagos WHERE estado='completado' AND creado_en >= date('now','start of month')").fetchone()[0]
         transacciones   = db.execute("SELECT COUNT(*) FROM pagos WHERE estado='completado'").fetchone()[0]
@@ -1531,7 +1531,7 @@ def app_main():
                            api_key_ok=bool(os.environ.get("GOOGLE_API_KEY","") or os.environ.get("GEMINI_API_KEY","")),
                            mp_configured=bool(MP_ACCESS_TOKEN),
                            usuario_nombre=session.get("usuario_nombre",""),
-                           sub_price=int(SUB_PRICE_MP * 100),
+                           sub_price=int(SUB_PRICE_MP),
                            suscripcion=sub_dict,
                            es_admin=is_admin())
 
@@ -1752,7 +1752,7 @@ def mp_create_preference():
                    VALUES (?,?,?,'activa',
                        datetime('now','localtime'),
                        datetime('now','+31 days','localtime'))""",
-                (uid, dev_id, int(SUB_PRICE_MP * 100))
+                (uid, dev_id, int(SUB_PRICE_MP))
             )
             db.commit()
         return jsonify({
@@ -1802,7 +1802,7 @@ def mp_create_preference():
                 """INSERT INTO suscripciones
                    (usuario_id, stripe_payment_intent_id, monto, estado)
                    VALUES (?,?,?,'pendiente')""",
-                (uid, f"mp_pref_{pref_id}", int(SUB_PRICE_MP * 100))
+                (uid, f"mp_pref_{pref_id}", int(SUB_PRICE_MP))
             )
             db.commit()
 
@@ -2266,7 +2266,7 @@ def analizar_examen():
         if not sub_activa:
             return jsonify({
                 "error": "Se requiere suscripción activa para analizar exámenes. "
-                         "Activa tu suscripción mensual por $3 USD."
+                         "Activa tu suscripción mensual por $4.700 CLP."
             }), 402
 
     payment_intent_id = f"pi_admin_{uuid.uuid4().hex}" if admin_mode else "pi_sub_ok"
@@ -2975,9 +2975,9 @@ if __name__ == "__main__":
     print(f"  Clave   : {ADMIN_PASSWORD}")
     print("  (sin cobros · acceso demo completo)")
     print(sep)
-    print(f"  Suscripción mensual: ${SUB_PRICE_CENTS/100:.2f} USD / 31 días")
-    if not STRIPE_SECRET_KEY:
-        print("  ⚠️  STRIPE_SECRET_KEY no configurada — suscripciones en modo demo")
+    print(f"  Suscripción mensual: ${int(SUB_PRICE_MP):,.0f} {SUB_CURRENCY_MP} / 31 días")
+    if not MP_ACCESS_TOKEN:
+        print("  ⚠️  MP_ACCESS_TOKEN no configurado — suscripciones en modo demo")
         print(sep)
     print("  Ctrl+C para detener")
     print(sep)

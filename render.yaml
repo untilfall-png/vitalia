@@ -18,9 +18,9 @@ services:
       - key: MP_PUBLIC_KEY
         sync: false
       - key: MP_PRICE
-        value: "4.99"
+        value: "4700"
       - key: MP_CURRENCY
-        value: "USD"
+        value: "CLP"
       - key: APP_URL
         sync: false
       - key: STRIPE_SECRET_KEY
