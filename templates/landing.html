@@ -222,7 +222,8 @@ nav{
 /* ── HERO (VIDEO ONLY) ── */
 .hero{
   position:relative;width:100%;
-  aspect-ratio:16/9;max-height:100vh;
+  aspect-ratio:16/9;max-height:calc(100vh - 70px);
+  margin-top:70px;
   overflow:hidden;background:#0a0f1e;
 }
 .hero-video-wrap{position:absolute;inset:0}
@@ -257,7 +258,7 @@ nav{
 
 /* Mobile: keep video playing, fill height */
 @media(max-width:768px){
-  .hero{aspect-ratio:unset;min-height:56vw;max-height:70vh}
+  .hero{aspect-ratio:unset;min-height:56vw;max-height:calc(70vh - 70px)}
 }
 @media(prefers-reduced-motion:reduce){
   .hero-video{display:none}
