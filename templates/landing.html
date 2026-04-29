@@ -255,12 +255,9 @@ nav{
 .hero-end-cta.visible{display:flex}
 .hero-end-cta p{font-size:20px;color:rgba(255,255,255,.75);font-weight:400;max-width:480px}
 
-/* Mobile: poster only */
+/* Mobile: keep video playing, fill height */
 @media(max-width:768px){
-  .hero{aspect-ratio:4/3}
-  .hero-video{display:none}
-  .hero-poster-img{display:block}
-  .hero-play-btn{display:none}
+  .hero{aspect-ratio:unset;min-height:56vw;max-height:70vh}
 }
 @media(prefers-reduced-motion:reduce){
   .hero-video{display:none}
