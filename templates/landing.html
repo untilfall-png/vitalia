@@ -219,155 +219,90 @@ nav{
 #mobile-menu a:hover{color:var(--cta)}
 .mobile-cta-wrap{margin-top:20px;display:flex;flex-direction:column;gap:10px}
 
-/* ── HERO ── */
+/* ── HERO (VIDEO) ── */
 .hero{
-  min-height:100vh;display:flex;align-items:center;
-  padding:130px 28px 100px;
-  position:relative;overflow:hidden;
-  background:var(--bg);
+  position:relative;min-height:100vh;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
 }
-.hero-bg{
-  position:absolute;inset:0;pointer-events:none;overflow:hidden;
+.hero-video-wrap{position:absolute;inset:0;z-index:0}
+.hero-video{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.hero-poster-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center;display:none;
 }
-.hero-bg::before{
-  content:'';position:absolute;
-  width:800px;height:800px;
-  top:-200px;right:-200px;
-  background:radial-gradient(circle,rgba(0,171,228,.07) 0%,transparent 65%);
-  border-radius:50%;
+.hero-overlay{
+  position:absolute;inset:0;z-index:1;
+  background:linear-gradient(to bottom,rgba(8,13,26,.65) 0%,rgba(8,13,26,.40) 50%,rgba(8,13,26,.72) 100%);
 }
-.hero-bg::after{
-  content:'';position:absolute;
-  width:600px;height:600px;
-  bottom:-100px;left:-100px;
-  background:radial-gradient(circle,rgba(34,114,255,.06) 0%,transparent 65%);
-  border-radius:50%;
+.hero-content{
+  position:relative;z-index:2;
+  text-align:center;padding:130px 28px 120px;
+  max-width:800px;margin:0 auto;width:100%;
 }
-.hero-grid{
-  max-width:1100px;margin:0 auto;width:100%;
-  display:grid;grid-template-columns:1fr 1fr;
-  gap:60px;align-items:center;position:relative;
-}
-.hero-left{max-width:560px}
 .hero-badge{
   display:inline-flex;align-items:center;gap:9px;
-  background:var(--p-06);border:1px solid var(--p-25);border-radius:50px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);border-radius:50px;
   padding:8px 18px;margin-bottom:32px;
-  font-size:12px;font-weight:700;color:var(--primary);
-  letter-spacing:.5px;
+  font-size:12px;font-weight:700;color:#fff;letter-spacing:.5px;
 }
-.badge-pulse{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--primary);flex-shrink:0;
-}
+.badge-pulse{width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0}
 .hero-h1{
-  font-size:clamp(40px,5.5vw,68px);font-weight:700;
+  font-size:clamp(40px,5.5vw,72px);font-weight:700;
   line-height:1.08;margin-bottom:26px;
-  font-family:'Playfair Display',serif;
+  font-family:'Playfair Display',serif;color:#fff;
 }
 .hero-h1 em{
-  font-style:italic;background:var(--grad);
+  font-style:italic;
+  background:linear-gradient(135deg,#00ABE4,#2272FF);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
-.hero-desc{
-  font-size:18px;color:var(--text-2);
-  line-height:1.78;margin-bottom:40px;font-weight:400;
-}
-.hero-desc strong{color:var(--text);font-weight:600}
-.hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:48px}
-.hero-trust{display:flex;gap:20px;flex-wrap:wrap}
+.hero-desc{font-size:18px;color:rgba(255,255,255,.75);line-height:1.78;margin-bottom:40px;font-weight:400}
+.hero-desc strong{color:#fff;font-weight:600}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:48px;justify-content:center}
+.hero-actions .btn-ghost{border-color:rgba(255,255,255,.35);color:#fff}
+.hero-actions .btn-ghost:hover{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.6)}
+.hero-trust{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
 .hero-trust-item{
   display:flex;align-items:center;gap:6px;
-  font-size:12px;color:var(--text-3);font-weight:600;letter-spacing:.4px;
+  font-size:12px;color:rgba(255,255,255,.55);font-weight:600;letter-spacing:.4px;
 }
 .hero-trust-item svg{color:var(--primary);flex-shrink:0}
 
-/* Hero right — product mockup */
-.hero-right{position:relative;display:flex;justify-content:center}
-.mockup-card{
-  width:100%;max-width:440px;
-  background:var(--bg-card);
-  border:1px solid var(--b-08);
-  border-radius:24px;
-  box-shadow:var(--shadow-xl);
-  overflow:hidden;
-  position:relative;
-}
-.mockup-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:3px;
-  background:var(--grad);
-}
-.mockup-topbar{
-  display:flex;align-items:center;gap:10px;
-  padding:18px 20px 14px;
-  border-bottom:1px solid var(--b-08);
-}
-.mockup-avatar{
-  width:36px;height:36px;border-radius:50%;
-  background:var(--grad);display:flex;align-items:center;justify-content:center;
-  font-size:18px;flex-shrink:0;box-shadow:0 2px 10px var(--c-30);
-}
-.mockup-name{font-weight:700;font-size:14px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif}
-.mockup-status{font-size:11px;color:var(--primary);font-weight:600;margin-top:1px}
-.mockup-badge{
-  margin-left:auto;padding:4px 12px;border-radius:20px;
-  background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);
-  font-size:11px;font-weight:700;color:#10b981;white-space:nowrap;
-}
-.mockup-body{padding:18px 20px}
-.mockup-exam-title{
-  font-size:13px;color:var(--text-3);text-transform:uppercase;
-  letter-spacing:1px;font-weight:700;margin-bottom:12px;
-}
-.mockup-indicators{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
-.mi{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 14px;border-radius:10px;
-  background:var(--b-04);border:1px solid var(--b-08);
-  font-size:13px;
-}
-.mi-name{font-weight:600;color:var(--text)}
-.mi-val{color:var(--text-2);font-size:12px;font-family:'Plus Jakarta Sans',monospace}
-.mi-badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700}
-.mi-ok{background:var(--p-06);color:var(--primary);border:1px solid var(--p-25)}
-.mi-hi{background:rgba(239,68,68,.08);color:#ef4444;border:1px solid rgba(239,68,68,.25)}
-.mi-lo{background:rgba(245,158,11,.08);color:#d97706;border:1px solid rgba(245,158,11,.25)}
-.mockup-ai-box{
-  background:var(--bg-soft);
-  border-radius:12px;padding:14px;
-  border-left:3px solid var(--primary);
-  font-size:13px;color:var(--text-2);line-height:1.65;
-  margin-bottom:16px;
-}
-.mockup-ai-box strong{color:var(--primary);font-size:12px;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.mockup-actions{display:flex;gap:8px}
-.mockup-btn{
-  flex:1;padding:10px;border-radius:8px;
-  font-size:12px;font-weight:700;cursor:pointer;
-  font-family:'Plus Jakarta Sans',sans-serif;border:none;
-  transition:all .2s;
-}
-.mockup-btn.primary{background:var(--grad);color:#fff}
-.mockup-btn.ghost{background:var(--c-06);color:var(--cta);border:1px solid var(--c-12)}
-
-/* Floating stats */
-.float-stat{
-  position:absolute;
-  background:var(--bg-card);border:1px solid var(--b-08);
-  border-radius:14px;padding:10px 16px;
-  box-shadow:var(--shadow-md);
-  display:flex;align-items:center;gap:10px;
-  white-space:nowrap;
-}
-.float-stat-icon{
-  width:34px;height:34px;border-radius:10px;
+/* Play/pause toggle */
+.hero-play-btn{
+  position:absolute;bottom:28px;right:28px;z-index:3;
+  width:48px;height:48px;border-radius:50%;
+  background:rgba(255,255,255,.15);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1.5px solid rgba(255,255,255,.30);color:#fff;
   display:flex;align-items:center;justify-content:center;
-  font-size:17px;flex-shrink:0;
+  cursor:pointer;transition:all .2s;
 }
-.float-stat-val{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--text);line-height:1}
-.float-stat-lbl{font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
-.float-1{top:-20px;left:-40px}
-.float-2{bottom:20px;right:-40px}
+.hero-play-btn:hover{background:rgba(255,255,255,.28);transform:scale(1.08)}
+.hero-play-btn:focus-visible{outline:3px solid var(--cta);outline-offset:3px}
+
+/* End-of-video CTA */
+.hero-end-cta{
+  position:absolute;inset:0;z-index:4;
+  background:rgba(8,13,26,.80);
+  align-items:center;justify-content:center;
+  flex-direction:column;gap:20px;padding:28px;text-align:center;
+  display:none;
+}
+.hero-end-cta.visible{display:flex}
+.hero-end-cta p{font-size:20px;color:rgba(255,255,255,.75);font-weight:400;max-width:480px}
+
+/* Mobile: poster only, no video */
+@media(max-width:768px){
+  .hero-video{display:none}
+  .hero-poster-img{display:block}
+  .hero-play-btn{display:none}
+  .hero-content{padding:120px 24px 100px}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero-video{display:none}
+  .hero-poster-img{display:block}
+  .hero-play-btn{display:none}
+}
 
 /* ── TRUST TICKER ── */
 .ticker-wrap{
@@ -880,118 +815,87 @@ footer{background:var(--text);padding:72px 28px 36px}
   </div>
 </div>
 
-<!-- ═══ HERO ═══ -->
+<!-- ═══ HERO (VIDEO) ═══ -->
 <section class="hero" aria-label="Presentación de VitalIA">
-  <div class="hero-bg" aria-hidden="true"></div>
-  <div class="hero-grid">
 
-    <!-- LEFT -->
-    <div class="hero-left">
-      <div class="hero-badge" role="status">
-        <span class="badge-pulse" aria-hidden="true"></span>
-        Powered by Claude AI · Anthropic
-      </div>
-
-      <h1 class="hero-h1">
-        Tu salud, <em>finalmente</em><br>explicada con claridad
-      </h1>
-
-      <p class="hero-desc">
-        Sube tu examen de laboratorio y recibe una interpretación completa en lenguaje simple, sin esperas y sin jerga médica.<br>
-        <strong>Para ti y toda tu familia — $4.700 CLP al mes.</strong>
-      </p>
-
-      <div class="hero-actions">
-        <a href="/register" class="btn-primary" aria-label="Analizar mi examen — crear cuenta gratis">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Analizar mi examen
-        </a>
-        <a href="#como-funciona" class="btn-ghost">
-          Ver cómo funciona
-        </a>
-      </div>
-
-      <div class="hero-trust" role="list">
-        <div class="hero-trust-item" role="listitem">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-          Sin tarjeta de crédito
-        </div>
-        <div class="hero-trust-item" role="listitem">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-          1 análisis gratis
-        </div>
-        <div class="hero-trust-item" role="listitem">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-          Respuesta en &lt;30 segundos
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT — Product mockup -->
-    <div class="hero-right" aria-hidden="true">
-      <!-- Floating stats -->
-      <div class="float-stat float-1">
-        <div class="float-stat-icon" style="background:rgba(0,171,228,.1)">⚡</div>
-        <div>
-          <div class="float-stat-val">&lt;30s</div>
-          <div class="float-stat-lbl">Análisis</div>
-        </div>
-      </div>
-
-      <div class="mockup-card">
-        <div class="mockup-topbar">
-          <div class="mockup-avatar">🩺</div>
-          <div>
-            <div class="mockup-name">Dr. VitalIA</div>
-            <div class="mockup-status">● Análisis completado</div>
-          </div>
-          <div class="mockup-badge">✓ Listo</div>
-        </div>
-        <div class="mockup-body">
-          <div class="mockup-exam-title">Hemograma Completo · 28 Abr 2026</div>
-          <div class="mockup-indicators">
-            <div class="mi">
-              <span class="mi-name">Glucosa</span>
-              <span class="mi-val">92 mg/dL</span>
-              <span class="mi-badge mi-ok">Normal</span>
-            </div>
-            <div class="mi">
-              <span class="mi-name">Colesterol LDL</span>
-              <span class="mi-val">148 mg/dL</span>
-              <span class="mi-badge mi-hi">↑ Alto</span>
-            </div>
-            <div class="mi">
-              <span class="mi-name">Vitamina D</span>
-              <span class="mi-val">22 ng/mL</span>
-              <span class="mi-badge mi-lo">↓ Bajo</span>
-            </div>
-            <div class="mi">
-              <span class="mi-name">Hemoglobina</span>
-              <span class="mi-val">14.1 g/dL</span>
-              <span class="mi-badge mi-ok">Normal</span>
-            </div>
-          </div>
-          <div class="mockup-ai-box">
-            <strong>Dr. VitalIA</strong>
-            Tu glucosa está perfecta. El colesterol LDL elevado y la vitamina D baja son los puntos a trabajar. Te preparé un plan personalizado con dieta y suplementación.
-          </div>
-          <div class="mockup-actions">
-            <button class="mockup-btn primary">Ver plan de acción →</button>
-            <button class="mockup-btn ghost">Preguntar al Dr.</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="float-stat float-2">
-        <div class="float-stat-icon" style="background:rgba(34,114,255,.1)">👨‍👩‍👧</div>
-        <div>
-          <div class="float-stat-val">Familia</div>
-          <div class="float-stat-lbl">Sin costo extra</div>
-        </div>
-      </div>
-    </div>
-
+  <!-- Video background -->
+  <div class="hero-video-wrap" aria-hidden="true">
+    <video
+      id="hero-vid"
+      class="hero-video"
+      src="{{ url_for('static', filename='videos/vitalia-demo.mp4') }}"
+      poster="{{ url_for('static', filename='videos/vitalia-demo-poster.jpg') }}"
+      autoplay muted loop playsinline
+      preload="metadata"
+      aria-hidden="true"
+    ></video>
+    <img
+      class="hero-poster-img"
+      src="{{ url_for('static', filename='videos/vitalia-demo-poster.jpg') }}"
+      alt=""
+      aria-hidden="true"
+    >
   </div>
+
+  <!-- Dark overlay for text readability -->
+  <div class="hero-overlay" aria-hidden="true"></div>
+
+  <!-- Centered content -->
+  <div class="hero-content">
+    <div class="hero-badge" role="status">
+      <span class="badge-pulse" aria-hidden="true"></span>
+      Powered by Claude AI · Anthropic
+    </div>
+
+    <h1 class="hero-h1">
+      Tu salud, <em>finalmente</em><br>explicada con claridad
+    </h1>
+
+    <p class="hero-desc">
+      Sube tu examen de laboratorio y recibe una interpretación completa en lenguaje simple, sin esperas y sin jerga médica.<br>
+      <strong>Para ti y toda tu familia — $4.700 CLP al mes.</strong>
+    </p>
+
+    <div class="hero-actions">
+      <a href="/register" class="btn-primary" aria-label="Analizar mi examen — crear cuenta gratis">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Analizar mi examen
+      </a>
+      <a href="#como-funciona" class="btn-ghost">
+        Ver cómo funciona
+      </a>
+    </div>
+
+    <div class="hero-trust" role="list">
+      <div class="hero-trust-item" role="listitem">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        Sin tarjeta de crédito
+      </div>
+      <div class="hero-trust-item" role="listitem">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        1 análisis gratis
+      </div>
+      <div class="hero-trust-item" role="listitem">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        Respuesta en &lt;30 segundos
+      </div>
+    </div>
+  </div>
+
+  <!-- Play/pause toggle (bottom-right) -->
+  <button class="hero-play-btn" id="hero-play-btn" aria-label="Pausar video" title="Pausar video">
+    <svg id="hero-pause-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+    <svg id="hero-play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+  </button>
+
+  <!-- CTA shown when video ends (non-looping) -->
+  <div class="hero-end-cta" id="hero-end-cta" aria-live="polite" aria-atomic="true">
+    <p>¿Listo para entender tu salud?</p>
+    <a href="/register" class="btn-primary" style="font-size:17px;padding:18px 44px">
+      Analizar mi examen gratis →
+    </a>
+  </div>
+
 </section>
 
 <!-- ═══ TRUST TICKER ═══ -->
@@ -1628,6 +1532,38 @@ window.addEventListener('scroll', () => {
       : 'none';
   }
 }, { passive: true });
+
+/* ── HERO VIDEO CONTROLS ── */
+(function(){
+  var vid = document.getElementById('hero-vid');
+  var btn = document.getElementById('hero-play-btn');
+  var endCta = document.getElementById('hero-end-cta');
+  var pauseIcon = document.getElementById('hero-pause-icon');
+  var playIcon = document.getElementById('hero-play-icon');
+  if (!vid || !btn) return;
+
+  btn.addEventListener('click', function(){
+    if (vid.paused) {
+      vid.play();
+      btn.setAttribute('aria-label', 'Pausar video');
+      pauseIcon.style.display = '';
+      playIcon.style.display = 'none';
+      endCta.classList.remove('visible');
+    } else {
+      vid.pause();
+      btn.setAttribute('aria-label', 'Reproducir video');
+      pauseIcon.style.display = 'none';
+      playIcon.style.display = '';
+    }
+  });
+
+  vid.addEventListener('ended', function(){
+    endCta.classList.add('visible');
+    pauseIcon.style.display = 'none';
+    playIcon.style.display = '';
+    btn.setAttribute('aria-label', 'Reproducir video');
+  });
+})();
 
 /* ── DARK / LIGHT TOGGLE ── */
 function toggleLandingTheme() {

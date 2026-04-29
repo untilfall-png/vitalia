@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1920px; height: 1080px; overflow: hidden; background: #0a0f1e; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+  .scene { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+
+  /* Scene 1 – Hero */
+  #s1 { background: #0a0f1e; }
+  #s1 .bg-glow {
+    position: absolute; width: 900px; height: 900px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+  }
+  #s1 .grid-lines {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(59,130,246,0.06) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(59,130,246,0.06) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+  #s1 .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.4);
+    border-radius: 100px; padding: 10px 24px;
+    font-size: 22px; color: #93c5fd; letter-spacing: 0.05em; text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  #s1 .dot { width: 10px; height: 10px; border-radius: 50%; background: #3b82f6; }
+  #s1 h1 {
+    font-size: 96px; font-weight: 700; line-height: 1.05;
+    color: #fff; text-align: center; margin-bottom: 28px;
+    letter-spacing: -2px;
+  }
+  #s1 h1 span { color: #3b82f6; }
+  #s1 .sub {
+    font-size: 32px; color: rgba(255,255,255,0.55); text-align: center;
+    max-width: 900px; line-height: 1.5;
+  }
+  #s1 .content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
+
+  /* Scene 2 – Problem */
+  #s2 { background: #0d0d0d; }
+  #s2 .content { display: flex; flex-direction: column; align-items: center; }
+  #s2 h2 { font-size: 64px; font-weight: 700; color: #fff; margin-bottom: 16px; }
+  #s2 .sub { font-size: 28px; color: rgba(255,255,255,0.45); margin-bottom: 72px; }
+  #s2 .stats { display: flex; gap: 48px; }
+  .stat-card {
+    background: #1a1a1a; border: 1px solid #2a2a2a;
+    border-radius: 24px; padding: 48px 56px; text-align: center;
+    min-width: 280px;
+  }
+  .stat-card .num {
+    font-size: 88px; font-weight: 800; line-height: 1;
+    margin-bottom: 12px;
+  }
+  .stat-card .label { font-size: 22px; color: rgba(255,255,255,0.5); line-height: 1.4; }
+  .stat-card.red .num { color: #ef4444; }
+  .stat-card.amber .num { color: #f59e0b; }
+  .stat-card.blue .num { color: #3b82f6; }
+
+  /* Scene 3 – Product UI mockup */
+  #s3 { background: #060b18; }
+  #s3 .bg-glow {
+    position: absolute; width: 1200px; height: 600px;
+    background: radial-gradient(ellipse, rgba(59,130,246,0.08) 0%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+  }
+  #s3 .content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
+  #s3 h2 { font-size: 56px; font-weight: 700; color: #fff; margin-bottom: 56px; text-align: center; }
+  .phone-frame {
+    width: 360px; height: 640px; background: #111827;
+    border-radius: 40px; border: 2px solid #1f2937;
+    overflow: hidden; position: relative;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+  }
+  .phone-top { background: #1f2937; padding: 20px 24px 16px; border-bottom: 1px solid #374151; }
+  .phone-top .logo { font-size: 18px; font-weight: 700; color: #3b82f6; }
+  .phone-top .logo span { color: #fff; }
+  .phone-body { padding: 24px; }
+  .upload-zone {
+    background: rgba(59,130,246,0.08); border: 2px dashed rgba(59,130,246,0.4);
+    border-radius: 16px; padding: 28px 20px; text-align: center; margin-bottom: 20px;
+  }
+  .upload-zone .icon { font-size: 36px; margin-bottom: 8px; }
+  .upload-zone p { font-size: 14px; color: rgba(255,255,255,0.5); }
+  .upload-zone strong { color: #3b82f6; }
+  .result-card {
+    background: #1f2937; border-radius: 16px; padding: 20px; margin-bottom: 14px;
+  }
+  .result-card .badge {
+    display: inline-block; padding: 4px 12px; border-radius: 100px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+  .badge.ok { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .badge.warn { background: rgba(245,158,11,0.15); color: #fbbf24; }
+  .result-card .title { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+  .result-card .desc { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.5; }
+  .result-card .value { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .value.ok { color: #4ade80; }
+  .value.warn { color: #fbbf24; }
+
+  /* Scene 4 – How it works */
+  #s4 { background: #0a0f1e; }
+  #s4 .bg-glow {
+    position: absolute; width: 1000px; height: 1000px;
+    background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+  }
+  #s4 .content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
+  #s4 h2 { font-size: 64px; font-weight: 700; color: #fff; margin-bottom: 72px; text-align: center; }
+  .steps { display: flex; align-items: center; gap: 0; }
+  .step {
+    display: flex; flex-direction: column; align-items: center;
+    width: 260px;
+  }
+  .step-num {
+    width: 72px; height: 72px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 800; margin-bottom: 24px;
+  }
+  .step:nth-child(1) .step-num { background: rgba(59,130,246,0.2); color: #3b82f6; border: 2px solid rgba(59,130,246,0.4); }
+  .step:nth-child(3) .step-num { background: rgba(99,102,241,0.2); color: #818cf8; border: 2px solid rgba(99,102,241,0.4); }
+  .step:nth-child(5) .step-num { background: rgba(34,197,94,0.2); color: #4ade80; border: 2px solid rgba(34,197,94,0.4); }
+  .step-icon { font-size: 36px; margin-bottom: 16px; }
+  .step-title { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 10px; text-align: center; }
+  .step-desc { font-size: 17px; color: rgba(255,255,255,0.45); text-align: center; line-height: 1.5; }
+  .step-arrow { font-size: 32px; color: rgba(255,255,255,0.2); margin: 0 8px; margin-bottom: 80px; }
+
+  /* Scene 5 – Pricing / CTA */
+  #s5 { background: #0a0f1e; }
+  #s5 .bg-glow {
+    position: absolute; width: 1200px; height: 700px;
+    background: radial-gradient(ellipse, rgba(59,130,246,0.15) 0%, transparent 65%);
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+  }
+  #s5 .content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
+  #s5 h2 { font-size: 72px; font-weight: 800; color: #fff; text-align: center; margin-bottom: 16px; letter-spacing: -1.5px; }
+  #s5 h2 span { color: #3b82f6; }
+  #s5 .sub { font-size: 28px; color: rgba(255,255,255,0.45); margin-bottom: 64px; text-align: center; }
+  .price-badge {
+    background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.35);
+    border-radius: 24px; padding: 48px 80px; text-align: center; margin-bottom: 56px;
+  }
+  .price-badge .amount { font-size: 80px; font-weight: 800; color: #fff; }
+  .price-badge .period { font-size: 26px; color: rgba(255,255,255,0.4); margin-left: 8px; }
+  .price-badge .detail { font-size: 20px; color: #3b82f6; margin-top: 8px; }
+  .chips { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .chip {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 100px; padding: 14px 28px;
+    font-size: 20px; color: rgba(255,255,255,0.7);
+  }
+  .chip .ck { color: #4ade80; font-size: 22px; }
+  .cta-btn {
+    display: inline-block; margin-top: 52px;
+    background: #3b82f6; color: #fff;
+    padding: 24px 72px; border-radius: 100px;
+    font-size: 28px; font-weight: 700; letter-spacing: -0.3px;
+    box-shadow: 0 0 60px rgba(59,130,246,0.4);
+  }
+
+  /* Visibility */
+  .scene { opacity: 0; }
+</style>
+</head>
+<body>
+
+<!-- SCENE 1: Hero (0s – 7s) -->
+<div class="scene" id="s1"
+     data-composition-id="vitalia-demo"
+     data-width="1920" data-height="1080"
+     data-start="0" data-duration="47">
+  <div class="bg-glow"></div>
+  <div class="grid-lines"></div>
+  <div class="content" id="s1-content">
+    <div class="pill"><div class="dot"></div>IA Médica para Chile</div>
+    <h1>Tu salud,<br>finalmente<br><span>explicada.</span></h1>
+    <p class="sub">Sube tu examen de laboratorio y recibe una interpretación completa en lenguaje simple.</p>
+  </div>
+</div>
+
+<!-- SCENE 2: Problem stats (7s – 16s) -->
+<div class="scene clip" id="s2"
+     data-start="7" data-duration="9">
+  <div class="content">
+    <h2>El problema es real</h2>
+    <p class="sub">Lo que pasa cuando nadie explica tus exámenes</p>
+    <div class="stats">
+      <div class="stat-card red">
+        <div class="num" id="pct-num">0%</div>
+        <div class="label">no entiende<br>sus resultados</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="num">3 sem</div>
+        <div class="label">espera promedio<br>de cita médica</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="num">$50K</div>
+        <div class="label">consulta privada<br>mínima (CLP)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 3: Product UI (16s – 27s) -->
+<div class="scene clip" id="s3"
+     data-start="16" data-duration="11">
+  <div class="bg-glow"></div>
+  <div class="content">
+    <h2>El Dr. VitalIA interpreta tus exámenes</h2>
+    <div class="phone-frame">
+      <div class="phone-top">
+        <span class="logo">Vital<span>IA</span></span>
+      </div>
+      <div class="phone-body">
+        <div class="upload-zone" id="upload-zone">
+          <div class="icon">🔬</div>
+          <p><strong>Sube tu examen</strong><br>PDF o foto — respuesta en &lt;30 seg</p>
+        </div>
+        <div class="result-card" id="rc1" style="opacity:0">
+          <span class="badge ok">Normal</span>
+          <div class="title">Glucosa</div>
+          <div class="value ok">89 mg/dL</div>
+          <div class="desc">Tu nivel de azúcar en sangre es normal. Sigue con tu dieta actual.</div>
+        </div>
+        <div class="result-card" id="rc2" style="opacity:0">
+          <span class="badge warn">Revisar</span>
+          <div class="title">Colesterol LDL</div>
+          <div class="value warn">142 mg/dL</div>
+          <div class="desc">Levemente elevado. Te recomendamos reducir grasas saturadas.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 4: How it works (27s – 37s) -->
+<div class="scene clip" id="s4"
+     data-start="27" data-duration="10">
+  <div class="bg-glow"></div>
+  <div class="content">
+    <h2>Cómo funciona</h2>
+    <div class="steps">
+      <div class="step" id="step1" style="opacity:0">
+        <div class="step-num">1</div>
+        <div class="step-icon">📤</div>
+        <div class="step-title">Sube tu examen</div>
+        <div class="step-desc">Foto o PDF desde tu celular en segundos</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step" id="step2" style="opacity:0">
+        <div class="step-num">2</div>
+        <div class="step-icon">🤖</div>
+        <div class="step-title">IA lo analiza</div>
+        <div class="step-desc">Interpretación médica en menos de 30 segundos</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step" id="step3" style="opacity:0">
+        <div class="step-num">3</div>
+        <div class="step-icon">✅</div>
+        <div class="step-title">Entiendes tu salud</div>
+        <div class="step-desc">Lenguaje simple + recomendaciones concretas</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 5: Pricing CTA (37s – 47s) -->
+<div class="scene clip" id="s5"
+     data-start="37" data-duration="10">
+  <div class="bg-glow"></div>
+  <div class="content">
+    <h2>Para ti y toda<br>tu <span>familia</span></h2>
+    <p class="sub">Sin esperas. Sin jerga médica. Sin complicaciones.</p>
+    <div class="price-badge">
+      <div>
+        <span class="amount">$4.700</span><span class="period">CLP / mes</span>
+      </div>
+      <div class="detail">1 análisis gratis — sin tarjeta de crédito</div>
+    </div>
+    <div class="chips">
+      <div class="chip"><span class="ck">✓</span> Interpretación en lenguaje simple</div>
+      <div class="chip"><span class="ck">✓</span> Plan de estilo de vida personalizado</div>
+      <div class="chip"><span class="ck">✓</span> Preguntas para tu médico</div>
+    </div>
+    <div class="cta-btn">Analizar mi examen gratis →</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+const tl = gsap.timeline({ paused: true });
+
+// ── SCENE 1: Hero ──────────────────────────────────────────
+tl.to('#s1', { opacity: 1, duration: 0.01 }, 0)
+  .from('#s1 .pill', { y: 30, opacity: 0, duration: 0.6, ease: 'power3.out' }, 0.2)
+  .from('#s1 h1', { y: 60, opacity: 0, duration: 0.8, ease: 'power3.out' }, 0.5)
+  .from('#s1 .sub', { y: 30, opacity: 0, duration: 0.6, ease: 'power2.out' }, 0.9)
+  .to('#s1', { opacity: 0, duration: 0.5, ease: 'power2.in' }, 6.5)
+
+// ── SCENE 2: Problem ───────────────────────────────────────
+tl.to('#s2', { opacity: 1, duration: 0.01 }, 7)
+  .from('#s2 h2', { y: 40, opacity: 0, duration: 0.6, ease: 'power3.out' }, 7.1)
+  .from('#s2 .sub', { y: 20, opacity: 0, duration: 0.5, ease: 'power2.out' }, 7.5)
+  .from('.stat-card', { y: 50, opacity: 0, duration: 0.6, stagger: 0.2, ease: 'power3.out' }, 7.9)
+
+// Counter animation for 76%
+tl.add(() => {
+  let obj = { val: 0 };
+  gsap.to(obj, {
+    val: 76, duration: 2.5, ease: 'power2.out',
+    onUpdate: () => { document.getElementById('pct-num').textContent = Math.round(obj.val) + '%'; }
+  });
+}, 8.2)
+
+tl.to('#s2', { opacity: 0, duration: 0.5, ease: 'power2.in' }, 15.5)
+
+// ── SCENE 3: Product UI ────────────────────────────────────
+tl.to('#s3', { opacity: 1, duration: 0.01 }, 16)
+  .from('#s3 h2', { y: 40, opacity: 0, duration: 0.6, ease: 'power3.out' }, 16.1)
+  .from('.phone-frame', { y: 60, opacity: 0, scale: 0.95, duration: 0.8, ease: 'power3.out' }, 16.4)
+  // simulate upload interaction
+  .to('#upload-zone', { background: 'rgba(59,130,246,0.18)', duration: 0.4, yoyo: true, repeat: 1, ease: 'power2.inOut' }, 17.8)
+  // results appear
+  .to('#rc1', { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 19.0)
+  .from('#rc1', { y: 20 }, 19.0)
+  .to('#rc2', { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 20.2)
+  .from('#rc2', { y: 20 }, 20.2)
+  .to('#s3', { opacity: 0, duration: 0.5, ease: 'power2.in' }, 26.5)
+
+// ── SCENE 4: How it works ──────────────────────────────────
+tl.to('#s4', { opacity: 1, duration: 0.01 }, 27)
+  .from('#s4 h2', { y: 40, opacity: 0, duration: 0.6, ease: 'power3.out' }, 27.1)
+  .to('#step1', { opacity: 1, duration: 0.5, ease: 'power2.out' }, 28.0)
+  .from('#step1', { x: -30 }, 28.0)
+  .to('#step2', { opacity: 1, duration: 0.5, ease: 'power2.out' }, 29.5)
+  .from('#step2', { x: -30 }, 29.5)
+  .to('#step3', { opacity: 1, duration: 0.5, ease: 'power2.out' }, 31.0)
+  .from('#step3', { x: -30 }, 31.0)
+  .to('#s4', { opacity: 0, duration: 0.5, ease: 'power2.in' }, 36.5)
+
+// ── SCENE 5: CTA ───────────────────────────────────────────
+tl.to('#s5', { opacity: 1, duration: 0.01 }, 37)
+  .from('#s5 h2', { y: 50, opacity: 0, duration: 0.7, ease: 'power3.out' }, 37.1)
+  .from('#s5 .sub', { y: 20, opacity: 0, duration: 0.5, ease: 'power2.out' }, 37.7)
+  .from('.price-badge', { y: 40, opacity: 0, scale: 0.97, duration: 0.7, ease: 'power3.out' }, 38.0)
+  .from('.chip', { y: 20, opacity: 0, stagger: 0.15, duration: 0.5, ease: 'power2.out' }, 38.8)
+  .from('.cta-btn', { y: 30, opacity: 0, scale: 0.95, duration: 0.6, ease: 'back.out(1.7)' }, 39.6)
+  // subtle pulse on CTA
+  .to('.cta-btn', { boxShadow: '0 0 90px rgba(59,130,246,0.7)', duration: 0.8, yoyo: true, repeat: 7, ease: 'sine.inOut' }, 40.2)
+
+window.__timelines = window.__timelines || {};
+window.__timelines['vitalia-demo'] = tl;
+</script>
+</body>
+</html>
